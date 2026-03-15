@@ -69,6 +69,25 @@ export interface InsuranceInputs {
   miscBufferPercent: number;
 }
 
+export type CustomFieldBasis =
+  | 'flat_per_container'
+  | 'flat_per_unit'
+  | 'flat_total'
+  | 'percent_of_cif'
+  | 'percent_of_landed'
+  | 'percent_of_product';
+
+export type CustomFieldEffect = 'cost' | 'benefit';
+
+export interface CustomField {
+  id: string;
+  name: string;
+  basis: CustomFieldBasis;
+  value: number;
+  effect: CustomFieldEffect;
+  enabled: boolean;
+}
+
 export interface CostingInputs {
   name: string;
   tradeRoute: TradeRoute;
@@ -78,6 +97,14 @@ export interface CostingInputs {
   domestic: DomesticTransportInputs;
   insurance: InsuranceInputs;
   targetSellingPricePerUnit: number;
+  customFields: CustomField[];
+}
+
+export interface CustomFieldResult {
+  id: string;
+  name: string;
+  effect: CustomFieldEffect;
+  amountGBP: number;
 }
 
 export interface CostingBreakdown {
@@ -105,6 +132,7 @@ export interface CostingBreakdown {
   bankChargesGBP: number;
   financingCostGBP: number;
   miscBufferGBP: number;
+  customFieldsGBP: number;
 }
 
 export interface CostingResults {
@@ -125,6 +153,9 @@ export interface CostingResults {
   breakEvenSellingPriceGBP: number;
   roiPercent: number;
   totalUnits: number;
+  customFieldResults: CustomFieldResult[];
+  totalCustomCostsGBP: number;
+  totalCustomBenefitsGBP: number;
 }
 
 export interface SavedCosting {

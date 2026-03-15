@@ -1,4 +1,4 @@
-import { CostingInputs, CostingResults, CostingBreakdown } from '../types/costing';
+import { CostingInputs, CostingResults, CostingBreakdown, CustomFieldResult } from '../types/costing';
 
 export function computeCosting(inputs: CostingInputs): CostingResults {
   const { product, freight, clearance, domestic, insurance } = inputs;
@@ -52,6 +52,44 @@ export function computeCosting(inputs: CostingInputs): CostingResults {
     deliveryCostGBP + bankChargesGBP + financingCostGBP;
   const miscBufferGBP = totalBeforeBuffer * (insurance.miscBufferPercent / 100);
 
+  const baseBeforeCustom =
+    totalBeforeBuffer + miscBufferGBP;
+
+  const customFieldResults: CustomFieldResult[] = (inputs.customFields ?? [])
+    .filter(f => f.enabled)
+    .map(f => {
+      let raw = 0;
+      switch (f.basis) {
+        case 'flat_per_container':
+          raw = f.value * containers;
+          break;
+        case 'flat_per_unit':
+          raw = f.value * totalUnits;
+          break;
+        case 'flat_total':
+          raw = f.value;
+          break;
+        case 'percent_of_cif':
+          raw = cifValueGBP * (f.value / 100);
+          break;
+        case 'percent_of_landed':
+          raw = baseBeforeCustom * (f.value / 100);
+          break;
+        case 'percent_of_product':
+          raw = productCostGBP * (f.value / 100);
+          break;
+      }
+      return { id: f.id, name: f.name, effect: f.effect, amountGBP: raw };
+    });
+
+  const totalCustomCostsGBP = customFieldResults
+    .filter(r => r.effect === 'cost')
+    .reduce((s, r) => s + r.amountGBP, 0);
+  const totalCustomBenefitsGBP = customFieldResults
+    .filter(r => r.effect === 'benefit')
+    .reduce((s, r) => s + r.amountGBP, 0);
+  const customFieldsGBP = totalCustomCostsGBP - totalCustomBenefitsGBP;
+
   const breakdown: CostingBreakdown = {
     productCostGBP,
     packingCostGBP,
@@ -77,6 +115,7 @@ export function computeCosting(inputs: CostingInputs): CostingResults {
     bankChargesGBP,
     financingCostGBP,
     miscBufferGBP,
+    customFieldsGBP,
   };
 
   const totalProductCostGBP = productCostGBP + packingCostGBP + inlandOriginGBP;
@@ -85,7 +124,7 @@ export function computeCosting(inputs: CostingInputs): CostingResults {
   const totalDomesticGBP = portToWarehouseGBP + devanningGBP + warehouseCostGBP + labellingCostGBP + deliveryCostGBP;
   const totalInsuranceOverheadGBP = bankChargesGBP + financingCostGBP + miscBufferGBP;
 
-  const totalLandedCostGBP = totalProductCostGBP + totalFreightGBP + totalClearanceGBP + totalDomesticGBP + totalInsuranceOverheadGBP;
+  const totalLandedCostGBP = totalProductCostGBP + totalFreightGBP + totalClearanceGBP + totalDomesticGBP + totalInsuranceOverheadGBP + customFieldsGBP;
   const landedCostPerUnitGBP = totalUnits > 0 ? totalLandedCostGBP / totalUnits : 0;
 
   const dutyAndTaxTotalGBP = customsDutyGBP + antiDumpingDutyGBP + vatGBP;
@@ -115,5 +154,8 @@ export function computeCosting(inputs: CostingInputs): CostingResults {
     breakEvenSellingPriceGBP,
     roiPercent,
     totalUnits,
+    customFieldResults,
+    totalCustomCostsGBP,
+    totalCustomBenefitsGBP,
   };
 }

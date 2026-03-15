@@ -1,17 +1,20 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Save, Trash2, FolderOpen, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { Save, Trash2, FolderOpen, ChevronDown, ChevronUp, RotateCcw, MessageCircle, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { CostingInputs, TradeRoute, ContainerSize, Incoterm, PurchaseCurrency } from '../types/costing';
+import { CostingInputs, TradeRoute, ContainerSize, Incoterm, PurchaseCurrency, CustomField } from '../types/costing';
 import { TRADE_ROUTES } from '../data/cnCodes';
 import { computeCosting } from '../utils/costingCalc';
 import { saveCostingCalculation, fetchCostingCalculations, deleteCostingCalculation } from '../lib/costings';
 import { CNCodePanel } from '../components/costings/CNCodePanel';
 import { CostingResults } from '../components/costings/CostingResults';
+import { CustomFieldsSection } from '../components/costings/CustomFieldsSection';
+import { CostingChatPanel } from '../components/costings/CostingChatPanel';
 import type { SavedCosting } from '../types/costing';
 
 const DEFAULT_INPUTS: CostingInputs = {
   name: '',
   tradeRoute: 'china-uk',
+  customFields: [],
   product: {
     purchasePricePerUnit: 0,
     purchaseCurrency: 'USD',
@@ -172,6 +175,7 @@ export function CostingsPage() {
   const [saving, setSaving] = useState(false);
   const [loadingList, setLoadingList] = useState(false);
   const [saveName, setSaveName] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
 
   const results = useMemo(() => computeCosting(inputs), [inputs]);
   const tradeRoute = TRADE_ROUTES.find(r => r.id === inputs.tradeRoute)!;
@@ -716,6 +720,13 @@ export function CostingsPage() {
               </div>
             </Section>
 
+            <Section title="G — Custom Fields" subtitle="Add your own costs or benefits · AI can manage these for you" defaultOpen={false}>
+              <CustomFieldsSection
+                fields={inputs.customFields ?? []}
+                onChange={fields => setInputs(prev => ({ ...prev, customFields: fields }))}
+              />
+            </Section>
+
           </div>
 
           <div className="p-4 bg-slate-950 border-t xl:border-t-0 border-slate-800">
@@ -729,6 +740,28 @@ export function CostingsPage() {
           </div>
         </div>
       </div>
+
+      <button
+        onClick={() => setChatOpen(o => !o)}
+        className={`fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-3 border-2 font-black text-xs uppercase tracking-widest transition-all shadow-lg ${
+          chatOpen
+            ? 'border-slate-500 bg-slate-800 text-slate-300 hover:border-slate-400'
+            : 'border-sky-500 bg-sky-600 text-white hover:bg-sky-500'
+        }`}
+        style={{ boxShadow: chatOpen ? '3px 3px 0 #0f172a' : '3px 3px 0 #0c4a6e' }}
+      >
+        {chatOpen ? <X size={14} strokeWidth={2.5} /> : <MessageCircle size={14} strokeWidth={2.5} />}
+        {chatOpen ? 'Close' : 'AI Assistant'}
+      </button>
+
+      {chatOpen && (
+        <CostingChatPanel
+          inputs={inputs}
+          results={results}
+          onApplyCustomFields={fields => setInputs(prev => ({ ...prev, customFields: fields }))}
+          onClose={() => setChatOpen(false)}
+        />
+      )}
     </div>
   );
 }

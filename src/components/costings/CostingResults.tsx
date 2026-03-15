@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, DollarSign, Package, Ship, FileCheck, Truck, Shield } from 'lucide-react';
+import { TrendingUp, TrendingDown, Package, Ship, FileCheck, Truck, Shield, Sliders } from 'lucide-react';
 import { CostingResults as Results } from '../../types/costing';
 
 interface Props {
@@ -50,9 +50,11 @@ function CostWaterfall({ results }: WaterfallProps) {
     { label: 'Product', value: results.totalProductCostGBP, color: '#0ea5e9' },
     { label: 'Freight', value: results.totalFreightGBP, color: '#f59e0b' },
     { label: 'Duty & Tax', value: results.totalClearanceGBP, color: '#ef4444' },
-    { label: 'Domestic', value: results.totalDomesticGBP, color: '#8b5cf6' },
+    { label: 'Domestic', value: results.totalDomesticGBP, color: '#0891b2' },
     { label: 'Overhead', value: results.totalInsuranceOverheadGBP, color: '#64748b' },
-  ];
+    ...(results.totalCustomCostsGBP > 0 ? [{ label: 'Custom +', value: results.totalCustomCostsGBP, color: '#dc2626' }] : []),
+    ...(results.totalCustomBenefitsGBP > 0 ? [{ label: 'Custom -', value: -results.totalCustomBenefitsGBP, color: '#059669' }] : []),
+  ].filter(s => s.value > 0);
 
   const revenue = results.revenueGBP;
   const grandTotal = revenue > 0 ? revenue : total;
@@ -172,6 +174,26 @@ export function CostingResults({ results, targetSellingPrice, onTargetSellingPri
           <CostRow icon={<FileCheck size={12} />} label="Clearance & Duty" value={results.totalClearanceGBP} />
           <CostRow icon={<Truck size={12} />} label="Domestic Transport" value={results.totalDomesticGBP} />
           <CostRow icon={<Shield size={12} />} label="Insurance & Overheads" value={results.totalInsuranceOverheadGBP} />
+          {results.customFieldResults.length > 0 && (
+            <>
+              {results.customFieldResults.map(cf => (
+                <div key={cf.id} className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500"><Sliders size={12} /></span>
+                    <div>
+                      <span className="text-sm text-slate-300 font-medium">{cf.name || 'Custom field'}</span>
+                      <span className={`block font-mono text-[10px] ${cf.effect === 'cost' ? 'text-red-400' : 'text-emerald-400'}`}>
+                        {cf.effect === 'cost' ? 'Extra cost' : 'Benefit / deduction'}
+                      </span>
+                    </div>
+                  </div>
+                  <span className={`font-mono text-sm font-bold ${cf.effect === 'cost' ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {cf.effect === 'cost' ? '+' : '-'}£{fmt(cf.amountGBP)}
+                  </span>
+                </div>
+              ))}
+            </>
+          )}
         </div>
       </div>
 
