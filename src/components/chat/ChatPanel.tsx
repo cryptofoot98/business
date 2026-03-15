@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, KeyboardEvent } from 'react';
 import { Send, Trash2, Loader } from 'lucide-react';
 import {
   AIChatAction,
+  AIChatContext,
   ChatMessage,
   callAIChat,
   clearChatMessages,
@@ -14,10 +15,11 @@ interface Props {
   userId: string;
   session: string;
   firstName: string;
+  context: AIChatContext;
   onApplyAction: (action: AIChatAction) => void;
 }
 
-export function ChatPanel({ open, userId, session, firstName, onApplyAction }: Props) {
+export function ChatPanel({ open, userId, session, firstName, context, onApplyAction }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,7 +37,7 @@ export function ChatPanel({ open, userId, session, firstName, onApplyAction }: P
         const greeting = await insertChatMessage(
           userId,
           'assistant',
-          `Hi ${firstName}`,
+          `Hi ${firstName}. I can see your current load setup. Ask me to optimize it, change dimensions, or explain any result.`,
           null,
         );
         setMessages([greeting]);
@@ -67,12 +69,12 @@ export function ChatPanel({ open, userId, session, firstName, onApplyAction }: P
     setLoading(true);
     try {
       const history = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
-      const { message, action } = await callAIChat(history, session);
+      const { message, action } = await callAIChat(history, session, context);
 
       const assistantMsg = await insertChatMessage(userId, 'assistant', message, action);
       setMessages(prev => [...prev, assistantMsg]);
 
-      if (action) {
+      if (action && action.type !== 'suggest_only') {
         onApplyAction(action);
       }
     } catch {
@@ -101,6 +103,10 @@ export function ChatPanel({ open, userId, session, firstName, onApplyAction }: P
     setInitialized(false);
   };
 
+  const contextSummary = context.result
+    ? `${context.container.name} · ${context.result.total_boxes} boxes · ${context.result.volume_utilization_pct}% vol`
+    : `${context.container.name} · no result yet`;
+
   return (
     <div
       className={`fixed bottom-0 right-0 z-40 flex flex-col transition-all duration-300 ease-in-out ${
@@ -121,11 +127,14 @@ export function ChatPanel({ open, userId, session, firstName, onApplyAction }: P
           className="flex items-center justify-between px-5 py-4 border-b-2 border-brut-hdr-dark shrink-0"
           style={{ backgroundColor: '#0e1a14' }}
         >
-          <div className="flex items-center gap-2.5">
-            <div className="w-2 h-2 rounded-full bg-brut-hdr" />
-            <span className="font-mono text-xs font-bold uppercase tracking-widest text-white/70">
-              AI Assistant
-            </span>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2 h-2 rounded-full bg-brut-hdr" />
+              <span className="font-mono text-xs font-bold uppercase tracking-widest text-white/70">
+                AI Loading Advisor
+              </span>
+            </div>
+            <span className="font-mono text-[9px] text-white/30 ml-4.5 tracking-wide">{contextSummary}</span>
           </div>
           <button
             onClick={handleClear}
@@ -155,6 +164,13 @@ export function ChatPanel({ open, userId, session, firstName, onApplyAction }: P
                 }}
               >
                 {msg.content}
+                {msg.action && msg.action.type !== 'suggest_only' && (
+                  <div className="mt-2 pt-2 border-t border-white/15 font-mono text-[9px] text-white/40 uppercase tracking-wider">
+                    {msg.action.type === 'setup' && 'Applied: full setup'}
+                    {msg.action.type === 'update_product' && `Applied: product ${(msg.action.product_index ?? 0) + 1} updated`}
+                    {msg.action.type === 'update_container' && 'Applied: container changed'}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -184,7 +200,7 @@ export function ChatPanel({ open, userId, session, firstName, onApplyAction }: P
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               rows={1}
-              placeholder="Ask me about your container load..."
+              placeholder="Ask about fit, optimization, weight, dimensions..."
               className="flex-1 resize-none bg-white/8 border-2 border-white/15 text-white text-sm px-4 py-3 placeholder-white/30 outline-none focus:border-brut-hdr transition-colors leading-relaxed"
               style={{
                 minHeight: '46px',

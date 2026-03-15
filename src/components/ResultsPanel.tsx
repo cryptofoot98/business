@@ -1,6 +1,6 @@
 import { PackingResult } from '../types';
 import { PRODUCT_LABELS } from '../utils/colors';
-import { RotateCcw, Printer, Download, FileText } from 'lucide-react';
+import { RotateCcw, Printer, Download, FileText, Lightbulb } from 'lucide-react';
 import { exportResultsCSV, printLoadReport } from '../utils/exportUtils';
 import { printLoadPlan } from '../utils/loadPlanPDF';
 
@@ -13,6 +13,61 @@ interface Props {
 function formatWeight(kg: number): string {
   if (kg >= 1000) return `${(kg / 1000).toFixed(2)} t`;
   return `${kg.toFixed(0)} kg`;
+}
+
+function computeOptimizationTip(result: PackingResult): string | null {
+  if (result.totalCount === 0) return null;
+  const volPct = result.volumeUtilization * 100;
+  if (volPct >= 90) return null;
+
+  const c = result.container;
+  const tips: string[] = [];
+
+  for (const pr of result.productResults) {
+    if (pr.count === 0) continue;
+    const [bL, bW, bH] = pr.orientation;
+
+    const wasteH = c.innerHeight - pr.nZ * bH;
+    const wasteL = c.innerLength - pr.nX * bL;
+    const wasteW = c.innerWidth - pr.nY * bW;
+
+    if (wasteH >= bH * 0.5 && pr.nZ >= 1) {
+      const newH = Math.floor(c.innerHeight / (pr.nZ + 1));
+      if (newH > 0 && newH < bH) {
+        const gained = pr.nX * pr.nY;
+        tips.push(`Reduce ${pr.product.name} height to ${newH} cm to fit layer ${pr.nZ + 1}: +${gained} boxes`);
+      }
+    }
+
+    if (wasteL >= bL * 0.5) {
+      const newL = Math.floor(c.innerLength / (pr.nX + 1));
+      if (newL > 0 && newL < bL) {
+        const gained = pr.nY * pr.nZ;
+        tips.push(`Reduce ${pr.product.name} length to ${newL} cm to fit row ${pr.nX + 1}: +${gained} boxes`);
+      }
+    }
+
+    if (wasteW >= bW * 0.5) {
+      const newW = Math.floor(c.innerWidth / (pr.nY + 1));
+      if (newW > 0 && newW < bW) {
+        const gained = pr.nX * pr.nZ;
+        tips.push(`Reduce ${pr.product.name} width to ${newW} cm to fit column ${pr.nY + 1}: +${gained} boxes`);
+      }
+    }
+  }
+
+  if (tips.length === 0) {
+    if (volPct < 60) return `Volume utilization is ${volPct.toFixed(1)}% — try a smaller container or ask the AI advisor for dimension recommendations.`;
+    return null;
+  }
+
+  tips.sort((a, b) => {
+    const numA = parseInt(a.match(/\+(\d+)/)?.[1] ?? '0');
+    const numB = parseInt(b.match(/\+(\d+)/)?.[1] ?? '0');
+    return numB - numA;
+  });
+
+  return tips[0];
 }
 
 function UtilBar({ value, color }: { value: number; color: string }) {
@@ -49,6 +104,8 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
   const volColor = volPct > 90 ? '#c63320' : volPct > 70 ? '#d96a1c' : '#1572b6';
   const wtPct = weightUtilization * 100;
   const wtColor = wtPct > 90 ? '#c63320' : wtPct > 70 ? '#d96a1c' : '#1572b6';
+
+  const optimizationTip = computeOptimizationTip(result);
 
   const ax = container.axleConfig;
   const cogX = result.centerOfGravityX ?? 0;
@@ -132,6 +189,18 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
           </div>
         </div>
       </div>
+
+      {optimizationTip && (
+        <div className="border-2 border-brut-black bg-white overflow-hidden" style={{ boxShadow: '3px 3px 0px #d96a1c' }}>
+          <div className="flex items-center gap-2 px-4 py-2 border-b-2 border-brut-black" style={{ backgroundColor: '#d96a1c' }}>
+            <Lightbulb size={12} className="text-white shrink-0" />
+            <span className="font-mono text-[10px] font-black uppercase tracking-widest text-white">Optimization Tip</span>
+          </div>
+          <div className="px-4 py-3 text-xs font-medium text-brut-black leading-relaxed">
+            {optimizationTip}
+          </div>
+        </div>
+      )}
 
       {ax && cogX > 0 && (
         <div className="brut-card p-4 space-y-3">

@@ -17,7 +17,7 @@ import { CONTAINERS } from './data/containers';
 import { calculatePacking, calculateMultiContainer } from './utils/packing';
 import { PRODUCT_COLORS, PRODUCT_LABELS, MAX_PRODUCTS } from './utils/colors';
 import { saveLoad, SavedLoad } from './lib/loads';
-import { AIChatAction } from './lib/chat';
+import { AIChatAction, buildChatContext } from './lib/chat';
 import { Loader } from 'lucide-react';
 
 function makeProduct(idx: number): Product {
@@ -214,31 +214,60 @@ function MainApp() {
   }, []);
 
   const handleAIAction = useCallback((action: AIChatAction) => {
-    const container = CONTAINERS.find(c => c.id === action.container_id);
-    if (container) setSelectedContainer(container);
-    setUnit(action.unit);
-    setLoadingMode(action.loading_mode);
-    if (action.loading_mode === 'pallet' && action.pallet_id) {
-      const pallet = STANDARD_PALLETS.find(p => p.id === action.pallet_id);
-      if (pallet) setPalletConfig(pallet);
+    if (action.type === 'setup') {
+      const container = CONTAINERS.find(c => c.id === action.container_id);
+      if (container) setSelectedContainer(container);
+      if (action.unit) setUnit(action.unit);
+      if (action.loading_mode) setLoadingMode(action.loading_mode);
+      if (action.loading_mode === 'pallet' && action.pallet_id) {
+        const pallet = STANDARD_PALLETS.find(p => p.id === action.pallet_id);
+        if (pallet) setPalletConfig(pallet);
+      }
+      if (action.products) {
+        const newProducts = action.products.slice(0, MAX_PRODUCTS).map((p, idx) => ({
+          id: `product-${idx}`,
+          name: p.name ?? (PRODUCT_LABELS[idx] ?? `Product ${idx + 1}`),
+          color: PRODUCT_COLORS[idx % PRODUCT_COLORS.length],
+          length: p.length,
+          width: p.width,
+          height: p.height,
+          netWeight: p.net_weight,
+          grossWeight: p.gross_weight,
+          stackable: true,
+          fragile: false,
+          orientationLock: 'none' as const,
+          priority: 5,
+        }));
+        setProducts(newProducts);
+      }
+      setMultiContainerIndex(0);
+    } else if (action.type === 'update_container') {
+      const container = CONTAINERS.find(c => c.id === action.container_id);
+      if (container) {
+        setSelectedContainer(container);
+        setMultiContainerIndex(0);
+      }
+    } else if (action.type === 'update_product') {
+      const idx = action.product_index ?? 0;
+      setProducts(prev => prev.map((p, i) => {
+        if (i !== idx) return p;
+        return {
+          ...p,
+          length: action.length ?? p.length,
+          width: action.width ?? p.width,
+          height: action.height ?? p.height,
+          netWeight: action.net_weight ?? p.netWeight,
+          grossWeight: action.gross_weight ?? p.grossWeight,
+        };
+      }));
+      setMultiContainerIndex(0);
     }
-    const newProducts = action.products.slice(0, MAX_PRODUCTS).map((p, idx) => ({
-      id: `product-${idx}`,
-      name: PRODUCT_LABELS[idx] ?? `Product ${idx + 1}`,
-      color: PRODUCT_COLORS[idx % PRODUCT_COLORS.length],
-      length: p.length,
-      width: p.width,
-      height: p.height,
-      netWeight: p.net_weight,
-      grossWeight: p.gross_weight,
-      stackable: true,
-      fragile: false,
-      orientationLock: 'none' as const,
-      priority: 5,
-    }));
-    setProducts(newProducts);
-    setMultiContainerIndex(0);
   }, []);
+
+  const chatContext = useMemo(
+    () => buildChatContext(selectedContainer, products, unit, loadingMode, packingResult),
+    [selectedContainer, products, unit, loadingMode, packingResult],
+  );
 
   const activeProductColors = products.map(p => p.color);
 
@@ -362,6 +391,7 @@ function MainApp() {
             userId={user.id}
             session={session.access_token}
             firstName={firstName}
+            context={chatContext}
             onApplyAction={handleAIAction}
           />
           <ChatFAB open={chatOpen} onClick={() => setChatOpen(o => !o)} />

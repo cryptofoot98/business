@@ -41,6 +41,130 @@ function formatDateEn(d: Date): string {
   return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+function buildLoadingSequence(result: PackingResult): string {
+  const sorted = [...result.productResults]
+    .filter(pr => pr.count > 0)
+    .sort((a, b) => b.product.grossWeight - a.product.grossWeight);
+
+  const rows = sorted.map((pr, i) => {
+    const flags: string[] = [];
+    if (pr.product.fragile) flags.push('FRAGILE — single layer max');
+    if (pr.product.stackable === false) flags.push('DO NOT STACK');
+    if (pr.product.orientationLock && pr.product.orientationLock !== 'none') {
+      flags.push(pr.product.orientationLock === 'upright' ? 'THIS SIDE UP' : 'LAY FLAT');
+    }
+    const note = flags.length > 0 ? `<span style="color:#c63320;font-weight:700;">${flags.join(' · ')}</span>` : '—';
+    return `<tr style="${i % 2 === 1 ? 'background:#f9f7f4;' : ''}">
+      <td style="text-align:center;font-weight:800;font-size:14px;width:36px;">${i + 1}</td>
+      <td style="font-weight:700;">${pr.product.name}</td>
+      <td style="text-align:center;">${pr.count.toLocaleString()}</td>
+      <td style="text-align:center;">${pr.nZ}</td>
+      <td style="text-align:center;">${pr.product.grossWeight > 0 ? pr.product.grossWeight.toFixed(1) + ' kg' : '—'}</td>
+      <td>${note}</td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <div style="margin-bottom:28px;page-break-inside:avoid;">
+      <div style="font-size:14px;font-weight:800;margin:0 0 8px;border-bottom:2px solid #1a1a1a;padding-bottom:6px;display:flex;justify-content:space-between;align-items:baseline;">
+        <span>ลำดับการบรรจุ (Loading Sequence)</span>
+        <span style="font-size:11px;font-weight:400;color:#666;">Load heaviest products first · Fragile on top</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <thead>
+          <tr style="background:#1a1a1a;color:#fff;">
+            <th style="padding:6px 8px;text-align:center;">#</th>
+            <th style="padding:6px 8px;text-align:left;">Product</th>
+            <th style="padding:6px 8px;text-align:center;">Qty</th>
+            <th style="padding:6px 8px;text-align:center;">Layers</th>
+            <th style="padding:6px 8px;text-align:center;">Gross/box</th>
+            <th style="padding:6px 8px;text-align:left;">Handling Notes</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="margin-top:8px;font-size:10px;color:#888;font-style:italic;">
+        Load from the back of the container towards the door. Distribute weight evenly across the floor width.
+      </div>
+    </div>`;
+}
+
+function buildWeightDistribution(result: PackingResult): string {
+  const cogX = result.centerOfGravityX;
+  const cogY = result.centerOfGravityY;
+  if (!cogX || cogX <= 0) return '';
+
+  const lengthPct = Math.round((cogX / result.container.innerLength) * 100);
+  const widthPct = cogY ? Math.round((cogY / result.container.innerWidth) * 100) : 50;
+
+  const ax = result.container.axleConfig;
+  let axleHtml = '';
+  if (ax && result.totalGrossWeight > 0) {
+    const span = ax.rearAxleX - ax.frontAxleX;
+    const distFromFront = cogX - ax.frontAxleX;
+    const rearLoad = result.totalGrossWeight * (distFromFront / span);
+    const frontLoad = result.totalGrossWeight - rearLoad;
+    const frontPct = Math.min((frontLoad / ax.maxFrontAxleKg) * 100, 100);
+    const rearPct = Math.min((rearLoad / ax.maxRearAxleKg) * 100, 100);
+    const frontOver = frontLoad > ax.maxFrontAxleKg;
+    const rearOver = rearLoad > ax.maxRearAxleKg;
+
+    axleHtml = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">
+        <div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;margin-bottom:4px;">Front Axle Load</div>
+          <div style="font-size:15px;font-weight:800;color:${frontOver ? '#c63320' : '#1a1a1a'};">${frontLoad.toFixed(0)} kg ${frontOver ? '<span style="font-size:10px;color:#c63320;">OVERLOAD</span>' : ''}</div>
+          <div style="height:6px;background:#eee;border:1px solid #ccc;margin-top:4px;overflow:hidden;">
+            <div style="height:100%;width:${frontPct}%;background:${frontOver ? '#c63320' : '#1572b6'};"></div>
+          </div>
+          <div style="font-size:9px;color:#999;margin-top:2px;">max ${ax.maxFrontAxleKg.toLocaleString()} kg</div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;margin-bottom:4px;">Rear Axle Load</div>
+          <div style="font-size:15px;font-weight:800;color:${rearOver ? '#c63320' : '#1a1a1a'};">${rearLoad.toFixed(0)} kg ${rearOver ? '<span style="font-size:10px;color:#c63320;">OVERLOAD</span>' : ''}</div>
+          <div style="height:6px;background:#eee;border:1px solid #ccc;margin-top:4px;overflow:hidden;">
+            <div style="height:100%;width:${rearPct}%;background:${rearOver ? '#c63320' : '#1572b6'};"></div>
+          </div>
+          <div style="font-size:9px;color:#999;margin-top:2px;">max ${ax.maxRearAxleKg.toLocaleString()} kg</div>
+        </div>
+      </div>`;
+  }
+
+  const barLeft = Math.max(2, Math.min(lengthPct - 1, 97));
+  const dotLeft = Math.max(2, Math.min(widthPct, 98));
+
+  return `
+    <div style="margin-bottom:28px;page-break-inside:avoid;">
+      <div style="font-size:14px;font-weight:800;margin:0 0 8px;border-bottom:2px solid #1a1a1a;padding-bottom:6px;">
+        การกระจายน้ำหนัก (Weight Distribution &amp; Centre of Gravity)
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;margin-bottom:6px;">Longitudinal CoG (front→back)</div>
+          <div style="position:relative;height:28px;background:linear-gradient(90deg,#e8f4e8 0%,#fff8e1 50%,#fce4ec 100%);border:1px solid #bbb;border-radius:2px;">
+            <div style="position:absolute;top:0;bottom:0;left:${barLeft}%;width:2px;background:#c63320;"></div>
+            <div style="position:absolute;top:50%;left:${barLeft}%;transform:translate(-50%,-50%);background:#c63320;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;white-space:nowrap;">${lengthPct}%</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:#999;margin-top:3px;"><span>FRONT (door)</span><span>REAR</span></div>
+          <div style="margin-top:6px;font-size:11px;font-weight:700;">CoG at ${Math.round(cogX)} cm from front</div>
+          <div style="font-size:10px;color:#666;margin-top:2px;">Ideal range: 40–60% of container length</div>
+          ${lengthPct < 35 || lengthPct > 65 ? `<div style="margin-top:6px;padding:5px 8px;background:#fff3cd;border:1px solid #ffc107;font-size:10px;font-weight:700;color:#856404;">WARNING: Load is unbalanced. Redistribute weight towards the ${lengthPct < 35 ? 'rear' : 'front'}.</div>` : ''}
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;margin-bottom:6px;">Lateral CoG (left→right)</div>
+          <div style="position:relative;height:28px;background:linear-gradient(90deg,#fce4ec 0%,#fff8e1 50%,#fce4ec 100%);border:1px solid #bbb;border-radius:2px;">
+            <div style="position:absolute;top:0;bottom:0;left:${dotLeft}%;width:2px;background:#1572b6;"></div>
+            <div style="position:absolute;top:50%;left:${dotLeft}%;transform:translate(-50%,-50%);background:#1572b6;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;white-space:nowrap;">${widthPct}%</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:#999;margin-top:3px;"><span>LEFT</span><span>RIGHT</span></div>
+          <div style="margin-top:6px;font-size:11px;font-weight:700;">Lateral balance: ${widthPct > 40 && widthPct < 60 ? 'Good' : 'Check distribution'}</div>
+          <div style="font-size:10px;color:#666;margin-top:2px;">Ideal range: 40–60% of container width</div>
+        </div>
+      </div>
+      ${axleHtml}
+    </div>`;
+}
+
 export function printLoadPlan(result: PackingResult, unit: string): void {
   const today = new Date();
   const thaiDate = formatDate(today);
@@ -87,12 +211,19 @@ export function printLoadPlan(result: PackingResult, unit: string): void {
     const grossTotal = (pr.count * pr.product.grossWeight).toFixed(3);
     const netTotal = (pr.count * pr.product.netWeight).toFixed(3);
 
+    const handlingBadges: string[] = [];
+    if (pr.product.fragile) handlingBadges.push('<span style="background:#c63320;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;margin-right:4px;text-transform:uppercase;">FRAGILE</span>');
+    if (pr.product.stackable === false) handlingBadges.push('<span style="background:#d96a1c;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;margin-right:4px;text-transform:uppercase;">DO NOT STACK</span>');
+    if (pr.product.orientationLock === 'upright') handlingBadges.push('<span style="background:#1572b6;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;margin-right:4px;text-transform:uppercase;">THIS SIDE UP</span>');
+    if (pr.product.orientationLock === 'on-side') handlingBadges.push('<span style="background:#1572b6;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;margin-right:4px;text-transform:uppercase;">LAY FLAT</span>');
+
     return `
       <div style="margin-bottom:32px;page-break-inside:avoid;">
         <div style="background:#1a1a1a;color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:0;">
           <span style="font-weight:800;font-size:13px;">${pr.product.name}</span>
           <span style="font-size:11px;opacity:.7;">${dimNote}</span>
         </div>
+        ${handlingBadges.length > 0 ? `<div style="padding:5px 12px;background:#fff3cd;border:1px solid #ffc107;border-top:none;">${handlingBadges.join('')}</div>` : ''}
         <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #ccc;">
           <thead>
             <tr style="background:#f0ece4;">
@@ -114,10 +245,11 @@ export function printLoadPlan(result: PackingResult, unit: string): void {
             </tr>
           </tbody>
         </table>
-        <div style="margin-top:8px;padding:8px 12px;background:#f7f4ed;border:1px solid #ddd;font-size:11px;display:flex;gap:32px;">
+        <div style="margin-top:8px;padding:8px 12px;background:#f7f4ed;border:1px solid #ddd;font-size:11px;display:flex;gap:32px;flex-wrap:wrap;">
           <span><strong>บรรจุภัณฑ์ / Packages:</strong> ${pr.count.toLocaleString()} cartons</span>
           <span><strong>น้ำหนักรวม / Gross Weight:</strong> ${grossTotal} KGS</span>
           <span><strong>น้ำหนักสุทธิ / Net Weight:</strong> ${netTotal} KGS</span>
+          <span><strong>Layers / Rows / Cols:</strong> ${pr.nZ} × ${pr.nX} × ${pr.nY}</span>
         </div>
       </div>`;
   }).join('');
@@ -137,6 +269,9 @@ export function printLoadPlan(result: PackingResult, unit: string): void {
   const volPct = (result.volumeUtilization * 100).toFixed(1);
   const wtPct = (result.weightUtilization * 100).toFixed(1);
   const unitLabel = unit.toUpperCase();
+
+  const loadingSequenceHtml = buildLoadingSequence(result);
+  const weightDistHtml = buildWeightDistribution(result);
 
   const html = `<!DOCTYPE html>
 <html lang="th">
@@ -198,15 +333,47 @@ export function printLoadPlan(result: PackingResult, unit: string): void {
     margin-left: 8px;
     vertical-align: middle;
   }
+  .no-print {
+    position: fixed;
+    top: 12px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    z-index: 999;
+  }
+  .btn-print, .btn-close {
+    padding: 8px 18px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    cursor: pointer;
+    border: 2px solid #1a1a1a;
+    background: #1a1a1a;
+    color: #fff;
+    box-shadow: 3px 3px 0 #666;
+  }
+  .btn-close {
+    background: #fff;
+    color: #1a1a1a;
+  }
   @media print {
-    body { padding: 12px 16px; font-size: 11px; }
-    .no-print { display: none; }
-    h1 { font-size: 15px; }
+    body { padding: 10mm 12mm; font-size: 10px; }
+    .no-print { display: none !important; }
+    h1 { font-size: 14px; }
+    .section-title { font-size: 14px; }
     table, tr, td, th { page-break-inside: avoid; }
+    div[style*="page-break-inside:avoid"] { page-break-inside: avoid; }
+    @page { size: A4; margin: 10mm; }
   }
 </style>
 </head>
 <body>
+
+<div class="no-print">
+  <button class="btn-print" onclick="window.print()">Save as PDF / Print</button>
+  <button class="btn-close" onclick="window.close()">Close</button>
+</div>
 
 <div class="section-title">รายละเอียดผลิตภัณฑ์ในตู้สินค้า</div>
 <div class="section-subtitle">Checklist of Product Items in Container</div>
@@ -256,13 +423,22 @@ export function printLoadPlan(result: PackingResult, unit: string): void {
   </tr>
 </table>
 
-<div style="margin-bottom:8px;display:flex;gap:16px;align-items:center;font-size:11px;">
+<div style="margin-bottom:12px;padding:8px 12px;background:#f5f2ec;border:1px solid #ccc;display:flex;gap:20px;flex-wrap:wrap;align-items:center;font-size:11px;">
   <span><strong>ตู้สินค้า / Container:</strong> ${result.container.name} ${isReefer ? '<span class="badge">REEFER</span>' : ''}</span>
   <span><strong>ขนาด / Dimensions:</strong> ${containerDimNote}</span>
   <span><strong>หน่วย / Unit:</strong> ${unitLabel}</span>
   <span><strong>การบรรจุ / Load mode:</strong> ${result.loadingMode === 'handload' ? 'Hand Load' : 'Pallet Load'}</span>
   <span><strong>Volume:</strong> ${volPct}%</span>
   <span><strong>Payload:</strong> ${wtPct}%</span>
+  <span><strong>Total Cartons:</strong> ${totalCartons.toLocaleString()}</span>
+</div>
+
+${loadingSequenceHtml}
+
+${weightDistHtml}
+
+<div style="font-size:14px;font-weight:800;margin:0 0 8px;border-bottom:2px solid #1a1a1a;padding-bottom:6px;">
+  ตารางการบรรจุสินค้า (Container Packing Grid — Position by Row × Column)
 </div>
 
 ${productSections}
@@ -325,13 +501,16 @@ ${productSections}
 </body>
 </html>`;
 
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `load-plan-${result.container.shortName.replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.html`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  const printWin = window.open('', '_blank', 'width=1000,height=800');
+  if (!printWin) return;
+  printWin.document.open();
+  printWin.document.write(html);
+  printWin.document.close();
+
+  printWin.onload = () => {
+    setTimeout(() => {
+      printWin.focus();
+      printWin.print();
+    }, 800);
+  };
 }
