@@ -11,6 +11,7 @@ import { ChatFAB } from './components/chat/ChatFAB';
 import { ChatPanel } from './components/chat/ChatPanel';
 import { AuthPage } from './pages/AuthPage';
 import { LandingPage } from './pages/LandingPage';
+import { CostingsPage } from './pages/CostingsPage';
 import { useAuth } from './contexts/AuthContext';
 import { ContainerType, LoadingMode, PalletConfig, Product, STANDARD_PALLETS, UnitSystem } from './types';
 import { CONTAINERS } from './data/containers';
@@ -271,6 +272,8 @@ function MainApp() {
 
   const activeProductColors = products.map(p => p.color);
 
+  const [activePage, setActivePage] = useState<'calculator' | 'costings'>('calculator');
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-brut-bg text-brut-black">
       <Header
@@ -279,9 +282,17 @@ function MainApp() {
         onOpenSaves={() => setSavesOpen(true)}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen(o => !o)}
+        activePage={activePage}
+        onNavigate={setActivePage}
       />
 
-      <div className="flex flex-1 overflow-hidden relative">
+      {activePage === 'costings' && (
+        <div className="flex-1 overflow-hidden">
+          <CostingsPage />
+        </div>
+      )}
+
+      {activePage === 'calculator' && <div className="flex flex-1 overflow-hidden relative">
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black/50 z-20 md:hidden"
@@ -371,7 +382,7 @@ function MainApp() {
             />
           </div>
         </main>
-      </div>
+      </div>}
 
       {user && (
         <SavedLoadsPanel

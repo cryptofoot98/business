@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { LogOut, Bookmark, Menu, X, SlidersHorizontal } from 'lucide-react';
+import { LogOut, Bookmark, Menu, X, SlidersHorizontal, Calculator, Container } from 'lucide-react';
 import { UnitSystem } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+
+type AppPage = 'calculator' | 'costings';
 
 interface Props {
   unit: UnitSystem;
@@ -9,9 +11,11 @@ interface Props {
   onOpenSaves: () => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
+  activePage: AppPage;
+  onNavigate: (page: AppPage) => void;
 }
 
-export function Header({ unit, onUnitChange, onOpenSaves, sidebarOpen, onToggleSidebar }: Props) {
+export function Header({ unit, onUnitChange, onOpenSaves, sidebarOpen, onToggleSidebar, activePage, onNavigate }: Props) {
   const { user, profile, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -45,6 +49,33 @@ export function Header({ unit, onUnitChange, onOpenSaves, sidebarOpen, onToggleS
         <div className="flex flex-col justify-center">
           <h1 className="text-white font-black text-base sm:text-lg uppercase tracking-tight leading-none">iO Smart Container</h1>
           <span className="text-white/35 font-mono text-[10px] uppercase tracking-widest leading-none hidden sm:block mt-0.5">by Eric Tavares</span>
+        </div>
+
+        <div className="hidden md:flex items-center border-2 border-white/20 ml-2">
+          <button
+            onClick={() => onNavigate('calculator')}
+            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-black uppercase tracking-wider transition-colors ${
+              activePage === 'calculator'
+                ? 'bg-white text-brut-hdr'
+                : 'bg-transparent text-white/50 hover:text-white'
+            }`}
+            style={activePage !== 'calculator' ? { background: 'rgba(255,255,255,0.06)' } : {}}
+          >
+            <Container size={12} strokeWidth={2.5} />
+            <span>Container</span>
+          </button>
+          <button
+            onClick={() => onNavigate('costings')}
+            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-black uppercase tracking-wider border-l-2 border-white/20 transition-colors ${
+              activePage === 'costings'
+                ? 'bg-white text-brut-hdr'
+                : 'bg-transparent text-white/50 hover:text-white'
+            }`}
+            style={activePage !== 'costings' ? { background: 'rgba(255,255,255,0.06)' } : {}}
+          >
+            <Calculator size={12} strokeWidth={2.5} />
+            <span>Costings</span>
+          </button>
         </div>
       </div>
 
@@ -110,6 +141,31 @@ export function Header({ unit, onUnitChange, onOpenSaves, sidebarOpen, onToggleS
             className="absolute right-4 top-[calc(100%+6px)] z-50 w-60 border-3 border-brut-hdr-dark bg-brut-hdr shadow-xl"
             style={{ boxShadow: '4px 4px 0px #0d0d0d' }}
           >
+            <div className="p-3 border-b-2 border-white/15">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-white/40 mb-2">Page</p>
+              <div className="flex border-2 border-white/30">
+                <button
+                  onClick={() => { onNavigate('calculator'); setMobileMenuOpen(false); }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-black uppercase tracking-wider transition-colors ${
+                    activePage === 'calculator' ? 'bg-white text-brut-hdr' : 'bg-transparent text-white/50 hover:text-white'
+                  }`}
+                  style={activePage !== 'calculator' ? { background: 'rgba(255,255,255,0.06)' } : {}}
+                >
+                  <Container size={11} strokeWidth={2.5} />
+                  Container
+                </button>
+                <button
+                  onClick={() => { onNavigate('costings'); setMobileMenuOpen(false); }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-black uppercase tracking-wider border-l-2 border-white/30 transition-colors ${
+                    activePage === 'costings' ? 'bg-white text-brut-hdr' : 'bg-transparent text-white/50 hover:text-white'
+                  }`}
+                  style={activePage !== 'costings' ? { background: 'rgba(255,255,255,0.06)' } : {}}
+                >
+                  <Calculator size={11} strokeWidth={2.5} />
+                  Costings
+                </button>
+              </div>
+            </div>
             <div className="p-3 border-b-2 border-white/15">
               <p className="font-mono text-[9px] uppercase tracking-widest text-white/40 mb-2">Unit</p>
               <div className="flex border-2 border-white/30">
