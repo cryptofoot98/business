@@ -1,0 +1,191 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+  }
+
+  body {
+    background: #ede8df;
+    color: #0d0d0d;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  .brut-card {
+    background: #ffffff;
+    border: 3px solid #0d0d0d;
+    box-shadow: 4px 4px 0px #0d0d0d;
+  }
+
+  .brut-card-red {
+    background: #ffffff;
+    border: 3px solid #0d0d0d;
+    box-shadow: 4px 4px 0px #c63320;
+  }
+
+  .brut-card-orange {
+    background: #ffffff;
+    border: 3px solid #0d0d0d;
+    box-shadow: 4px 4px 0px #d96a1c;
+  }
+
+  .brut-card-green {
+    background: #ffffff;
+    border: 3px solid #0d0d0d;
+    box-shadow: 4px 4px 0px #0e5590;
+  }
+
+  .brut-input {
+    background: #ffffff;
+    border: 2.5px solid #0d0d0d;
+    font-weight: 700;
+    color: #0d0d0d;
+    transition: box-shadow 0.1s ease, transform 0.1s ease;
+  }
+
+  .brut-input:focus {
+    outline: none;
+    box-shadow: 3px 3px 0px #c63320;
+    border-color: #c63320;
+  }
+
+  .brut-btn {
+    background: #0d0d0d;
+    color: #ffffff;
+    border: 2.5px solid #0d0d0d;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    cursor: pointer;
+  }
+
+  .brut-btn:hover {
+    background: #c63320;
+    box-shadow: 3px 3px 0px #0d0d0d;
+    transform: translate(-1px, -1px);
+  }
+
+  .brut-btn:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+  }
+
+  .brut-btn-outline {
+    background: transparent;
+    color: #0d0d0d;
+    border: 2.5px solid #0d0d0d;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s;
+    cursor: pointer;
+  }
+
+  .brut-btn-outline:hover {
+    background: #0d0d0d;
+    color: #ffffff;
+    box-shadow: 3px 3px 0px #c63320;
+    transform: translate(-1px, -1px);
+  }
+
+  .brut-btn-active {
+    background: #0d0d0d;
+    color: #ffffff;
+  }
+
+  .brut-section-label {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #0d0d0d;
+    opacity: 0.45;
+  }
+
+  .brut-divider {
+    border: none;
+    border-top: 2px solid #0d0d0d;
+    opacity: 0.12;
+  }
+
+  /* Dark sidebar context overrides */
+  .dark-chrome .brut-section-label {
+    color: #ffffff;
+    opacity: 0.38;
+  }
+
+  .dark-chrome .brut-divider {
+    border-top-color: rgba(255, 255, 255, 0.12);
+    opacity: 1;
+  }
+
+  .dark-chrome.scrollbar-brut,
+  .dark-chrome .scrollbar-brut {
+    scrollbar-color: rgba(255,255,255,0.20) transparent;
+  }
+
+  .dark-chrome.scrollbar-brut::-webkit-scrollbar-thumb,
+  .dark-chrome .scrollbar-brut::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.18);
+  }
+
+  .dark-chrome.scrollbar-brut::-webkit-scrollbar-thumb:hover,
+  .dark-chrome .scrollbar-brut::-webkit-scrollbar-thumb:hover {
+    background: #0c2844;
+  }
+
+  .scrollbar-brut {
+    scrollbar-width: thin;
+    scrollbar-color: #0d0d0d transparent;
+    scrollbar-gutter: stable;
+  }
+
+  .scrollbar-brut::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-brut::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 4px 0;
+  }
+
+  .scrollbar-brut::-webkit-scrollbar-thumb {
+    background: #0d0d0d;
+    border-radius: 0;
+  }
+
+  .scrollbar-brut::-webkit-scrollbar-thumb:hover {
+    background: #c63320;
+  }
+
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
+
+  .fade-init {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1), transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .fade-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
