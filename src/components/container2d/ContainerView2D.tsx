@@ -437,6 +437,12 @@ const VIEW_LABELS: Record<ViewMode, string> = {
   top: 'Top (L×W)',
 };
 
+const VIEW_LABELS_SHORT: Record<ViewMode, string> = {
+  front: 'Front',
+  side: 'Side',
+  top: 'Top',
+};
+
 export function ContainerView2D({ result, productColors, unit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
@@ -610,40 +616,53 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
     <div className="w-full h-full relative bg-brut-bg">
       <canvas ref={canvasRef} className="w-full h-full block" />
 
-      <div className="absolute top-3 left-3 flex items-center gap-1.5">
+      <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex items-center gap-1 sm:gap-1.5 flex-wrap max-w-[calc(100%-80px)]">
         {(['front', 'side', 'top'] as ViewMode[]).map(mode => (
           <button
             key={mode}
             onClick={() => setViewMode(mode)}
-            className={`px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider border-2 border-brut-black transition-all ${
+            className={`px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-wider border-2 border-brut-black transition-all whitespace-nowrap ${
               viewMode === mode
                 ? 'bg-brut-black text-white shadow-brut-red'
                 : 'bg-white text-brut-black hover:bg-brut-bg shadow-brut-sm'
             }`}
           >
-            {VIEW_LABELS[mode]}
+            <span className="hidden sm:inline">{VIEW_LABELS[mode]}</span>
+            <span className="sm:hidden">{VIEW_LABELS_SHORT[mode]}</span>
           </button>
         ))}
       </div>
 
-      <div className="absolute top-3 right-3 flex items-center gap-2">
+      <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex items-center gap-1 sm:gap-2">
         {isPalletMode && (
-          <div className="flex items-center gap-1.5 px-3 py-2 border-2 border-brut-amber bg-white" style={{ boxShadow: '2px 2px 0px #df9a10' }}>
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 border-2 border-brut-amber bg-white" style={{ boxShadow: '2px 2px 0px #df9a10' }}>
             <div className="w-2 h-2 bg-brut-amber" />
             <span className="font-mono text-[9px] font-black uppercase tracking-widest text-brut-amber">Pallet mode</span>
           </div>
         )}
+        {isPalletMode && (
+          <div className="sm:hidden flex items-center gap-1 px-2 py-1 border-2 border-brut-amber bg-white" style={{ boxShadow: '2px 2px 0px #df9a10' }}>
+            <div className="w-1.5 h-1.5 bg-brut-amber" />
+            <span className="font-mono text-[8px] font-black uppercase text-brut-amber">Pallet</span>
+          </div>
+        )}
         {isReefer && (
-          <div className="flex items-center gap-1.5 px-3 py-2 border-2 border-brut-red bg-white" style={{ boxShadow: '2px 2px 0px #c63320' }}>
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 border-2 border-brut-red bg-white" style={{ boxShadow: '2px 2px 0px #c63320' }}>
             <div className="w-2 h-2 bg-brut-red" />
             <span className="font-mono text-[9px] font-black uppercase tracking-widest text-brut-red">Reefer</span>
           </div>
         )}
+        {isReefer && (
+          <div className="sm:hidden flex items-center gap-1 px-2 py-1 border-2 border-brut-red bg-white" style={{ boxShadow: '2px 2px 0px #c63320' }}>
+            <div className="w-1.5 h-1.5 bg-brut-red" />
+            <span className="font-mono text-[8px] font-black uppercase text-brut-red">Reef</span>
+          </div>
+        )}
         <div
-          className="px-3 py-2 border-2 border-brut-black bg-white"
+          className="px-2 sm:px-3 py-1 sm:py-2 border-2 border-brut-black bg-white"
           style={{ boxShadow: fillPct > 85 ? '3px 3px 0px #d96a1c' : '3px 3px 0px #0e5590' }}
         >
-          <span className="font-mono text-[10px] font-black text-brut-black/40 uppercase mr-2">{result.container.shortName}</span>
+          <span className="hidden sm:inline font-mono text-[10px] font-black text-brut-black/40 uppercase mr-2">{result.container.shortName}</span>
           <span className={`font-mono text-sm font-black ${fillPct > 85 ? 'text-brut-orange' : 'text-brut-green'}`}>{fillPct}%</span>
           <span className="font-mono text-[10px] font-black text-brut-black/35 uppercase ml-1">filled</span>
         </div>

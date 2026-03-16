@@ -354,7 +354,7 @@ function MainApp() {
         </aside>
 
         <main className="flex-1 flex flex-col overflow-hidden bg-brut-bg">
-          <div className="flex-1 min-h-0 p-4">
+          <div className="flex-1 min-h-0 p-2 sm:p-4">
             <div className="w-full h-full border-3 border-brut-black bg-white" style={{ boxShadow: '6px 6px 0px #0d0d0d' }}>
               <ContainerView2D
                 result={packingResult}
@@ -364,7 +364,7 @@ function MainApp() {
             </div>
           </div>
 
-          <div className="shrink-0 border-t-3 border-brut-black overflow-y-auto max-h-96 p-5 bg-brut-paper scrollbar-brut">
+          <div className="shrink-0 border-t-3 border-brut-black overflow-y-auto max-h-48 sm:max-h-64 md:max-h-80 lg:max-h-96 p-3 sm:p-5 bg-brut-paper scrollbar-brut">
             {multiContainerResult && (
               <div className="mb-5">
                 <MultiContainerPlanner

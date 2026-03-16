@@ -35,23 +35,23 @@ export function Header({ unit, onUnitChange, onOpenSaves, sidebarOpen, onToggleS
   }, [mobileMenuOpen]);
 
   return (
-    <header className="shrink-0 flex items-center justify-between px-4 py-0 bg-brut-hdr border-b-3 border-brut-hdr-dark relative" style={{ height: 56 }}>
-      <div className="flex items-center gap-3">
+    <header className="shrink-0 flex items-center justify-between px-3 sm:px-4 py-0 bg-brut-hdr border-b-3 border-brut-hdr-dark relative" style={{ height: 56 }}>
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           onClick={onToggleSidebar}
-          className="md:hidden flex items-center justify-center w-8 h-8 text-white/70 hover:text-white transition-colors"
+          className="md:hidden shrink-0 flex items-center justify-center w-8 h-8 text-white/70 hover:text-white transition-colors"
           aria-label="Toggle sidebar"
         >
           {sidebarOpen ? <X size={20} strokeWidth={2.5} /> : <Menu size={20} strokeWidth={2.5} />}
         </button>
 
-        <img src="/iO_smartcontainer.png" alt="iO Smart Container" className="w-9 h-9 rounded-lg object-cover" />
-        <div className="flex flex-col justify-center">
-          <h1 className="text-white font-black text-base sm:text-lg uppercase tracking-tight leading-none">iO Smart Container</h1>
-          <span className="text-white/35 font-mono text-[10px] uppercase tracking-widest leading-none hidden sm:block mt-0.5">by Eric Tavares</span>
+        <img src="/iO_smartcontainer.png" alt="iO Smart Container" className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-lg object-cover" />
+        <div className="flex flex-col justify-center min-w-0">
+          <h1 className="text-white font-black text-sm sm:text-base lg:text-lg uppercase tracking-tight leading-none truncate">iO Smart Container</h1>
+          <span className="text-white/35 font-mono text-[9px] sm:text-[10px] uppercase tracking-widest leading-none hidden sm:block mt-0.5">by Eric Tavares</span>
         </div>
 
-        <div className="hidden md:flex items-center border-2 border-white/20 ml-2">
+        <div className="hidden md:flex items-center border-2 border-white/20 ml-2 shrink-0">
           <button
             onClick={() => onNavigate('calculator')}
             className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-black uppercase tracking-wider transition-colors ${
@@ -79,7 +79,7 @@ export function Header({ unit, onUnitChange, onOpenSaves, sidebarOpen, onToggleS
         </div>
       </div>
 
-      <div className="hidden md:flex items-center gap-3">
+      <div className="hidden md:flex items-center gap-3 shrink-0">
         <span className="font-mono text-[10px] uppercase tracking-widest text-white/40 hidden lg:inline">Unit</span>
         <div className="flex border-2 border-white/30">
           {(['cm', 'mm', 'in'] as UnitSystem[]).map((u, i) => (
@@ -126,7 +126,7 @@ export function Header({ unit, onUnitChange, onOpenSaves, sidebarOpen, onToggleS
         </div>
       </div>
 
-      <div className="md:hidden" ref={menuRef}>
+      <div className="md:hidden shrink-0" ref={menuRef}>
         <button
           onClick={() => setMobileMenuOpen(o => !o)}
           className="flex items-center gap-1.5 px-3 py-2 border-2 border-white/30 text-white/70 hover:text-white transition-all"
