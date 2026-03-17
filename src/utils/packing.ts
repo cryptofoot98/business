@@ -587,9 +587,9 @@ export function calculatePacking(
   const floorOriginZ = floorClear;
 
   const bodyLength = container.innerLength - evaporatorDepth;
-  // Top clearance is a visual warning line for air circulation — boxes CAN be stacked up to it
-  // but we leave a small safety margin (half the top clearance) to respect airflow
-  const evaHeight = container.innerHeight - floorClear - Math.round(topClear * 0.5);
+  // Top clearance is shown as a visual warning line only — does not reduce stacking height
+  // Boxes can physically be stacked up to this line; airflow is maintained by the T-floor channel
+  const evaHeight = container.innerHeight - floorClear;
 
   if (activeProducts.length === 0) {
     return {
