@@ -3,6 +3,8 @@ import { PackingResult } from '../types';
 import { PRODUCT_LABELS } from '../utils/colors';
 import { RotateCcw, Printer, Download, FileText, Lightbulb, Info } from 'lucide-react';
 import { getPracticalCount } from '../utils/loadPlanPDF';
+
+const PRACTICAL_FILL = 0.913;
 import { exportResultsCSV, printLoadReport } from '../utils/exportUtils';
 import { printLoadPlan } from '../utils/loadPlanPDF';
 
