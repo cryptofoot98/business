@@ -1,39 +1,41 @@
 import { PackingResult, PackedBox } from '../types';
 
+const PRACTICAL_FILL = 0.913; // 91.3% practical fill rate for reefer containers
+
+export function getPracticalCount(result: PackingResult): number {
+  if (result.container.category === 'Reefer') {
+    return Math.floor(result.totalCount * PRACTICAL_FILL);
+  }
+  return result.totalCount;
+}
+
 interface GridData {
-  xVals: number[];
-  yVals: number[];
-  grid: number[][];
+  rows: number[];   // depth positions (x axis)
+  cols: number[];   // width positions (y axis)
+  grid: number[][]; // grid[rowIdx][colIdx] = count
   total: number;
 }
 
-function buildProductGrid(boxes: PackedBox[]): GridData {
-  const posMap = new Map<string, number>();
-  const xSet = new Set<number>();
-  const ySet = new Set<number>();
+function buildGrid(boxes: PackedBox[], bL: number, bW: number): GridData {
+  const rowMap = new Map<number, Map<number, number>>();
+  const rowSet = new Set<number>();
+  const colSet = new Set<number>();
 
   for (const box of boxes) {
-    const key = `${Math.round(box.x * 100)}_${Math.round(box.y * 100)}`;
-    posMap.set(key, (posMap.get(key) ?? 0) + 1);
-    xSet.add(Math.round(box.x * 100));
-    ySet.add(Math.round(box.y * 100));
+    const row = Math.round(box.x / bL);
+    const col = Math.round(box.y / bW);
+    rowSet.add(row);
+    colSet.add(col);
+    if (!rowMap.has(row)) rowMap.set(row, new Map());
+    const colMap = rowMap.get(row)!;
+    colMap.set(col, (colMap.get(col) ?? 0) + 1);
   }
 
-  const xVals = Array.from(xSet).sort((a, b) => a - b);
-  const yVals = Array.from(ySet).sort((a, b) => a - b);
+  const rows = Array.from(rowSet).sort((a, b) => a - b);
+  const cols = Array.from(colSet).sort((a, b) => a - b);
+  const grid = rows.map(r => cols.map(c => rowMap.get(r)?.get(c) ?? 0));
 
-  const grid = xVals.map(x =>
-    yVals.map(y => posMap.get(`${x}_${y}`) ?? 0),
-  );
-
-  return { xVals, yVals, grid, total: boxes.length };
-}
-
-function formatDate(d: Date): string {
-  const day = String(d.getDate()).padStart(2, '0');
-  const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-  const year = d.getFullYear() + 543;
-  return `${day} ${months[d.getMonth()]} ${year}`;
+  return { rows, cols, grid, total: boxes.length };
 }
 
 function formatDateEn(d: Date): string {
@@ -41,476 +43,231 @@ function formatDateEn(d: Date): string {
   return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-function buildLoadingSequence(result: PackingResult): string {
-  const sorted = [...result.productResults]
-    .filter(pr => pr.count > 0)
-    .sort((a, b) => b.product.grossWeight - a.product.grossWeight);
-
-  const rows = sorted.map((pr, i) => {
-    const flags: string[] = [];
-    if (pr.product.fragile) flags.push('FRAGILE — single layer max');
-    if (pr.product.stackable === false) flags.push('DO NOT STACK');
-    if (pr.product.orientationLock && pr.product.orientationLock !== 'none') {
-      flags.push(pr.product.orientationLock === 'upright' ? 'THIS SIDE UP' : 'LAY FLAT');
-    }
-    const note = flags.length > 0 ? `<span style="color:#c63320;font-weight:700;">${flags.join(' · ')}</span>` : '—';
-    return `<tr style="${i % 2 === 1 ? 'background:#f9f7f4;' : ''}">
-      <td style="text-align:center;font-weight:800;font-size:14px;width:36px;">${i + 1}</td>
-      <td style="font-weight:700;">${pr.product.name}</td>
-      <td style="text-align:center;">${pr.count.toLocaleString()}</td>
-      <td style="text-align:center;">${pr.nZ}</td>
-      <td style="text-align:center;">${pr.product.grossWeight > 0 ? pr.product.grossWeight.toFixed(1) + ' kg' : '—'}</td>
-      <td>${note}</td>
-    </tr>`;
-  }).join('');
-
-  return `
-    <div style="margin-bottom:28px;page-break-inside:avoid;">
-      <div style="font-size:14px;font-weight:800;margin:0 0 8px;border-bottom:2px solid #1a1a1a;padding-bottom:6px;display:flex;justify-content:space-between;align-items:baseline;">
-        <span>ลำดับการบรรจุ (Loading Sequence)</span>
-        <span style="font-size:11px;font-weight:400;color:#666;">Load heaviest products first · Fragile on top</span>
-      </div>
-      <table style="width:100%;border-collapse:collapse;font-size:11px;">
-        <thead>
-          <tr style="background:#1a1a1a;color:#fff;">
-            <th style="padding:6px 8px;text-align:center;">#</th>
-            <th style="padding:6px 8px;text-align:left;">Product</th>
-            <th style="padding:6px 8px;text-align:center;">Qty</th>
-            <th style="padding:6px 8px;text-align:center;">Layers</th>
-            <th style="padding:6px 8px;text-align:center;">Gross/box</th>
-            <th style="padding:6px 8px;text-align:left;">Handling Notes</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div style="margin-top:8px;font-size:10px;color:#888;font-style:italic;">
-        Load from the back of the container towards the door. Distribute weight evenly across the floor width.
-      </div>
-    </div>`;
-}
-
-function buildWeightDistribution(result: PackingResult): string {
-  const cogX = result.centerOfGravityX;
-  const cogY = result.centerOfGravityY;
-  if (!cogX || cogX <= 0) return '';
-
-  const lengthPct = Math.round((cogX / result.container.innerLength) * 100);
-  const widthPct = cogY ? Math.round((cogY / result.container.innerWidth) * 100) : 50;
-
-  const ax = result.container.axleConfig;
-  let axleHtml = '';
-  if (ax && result.totalGrossWeight > 0) {
-    const span = ax.rearAxleX - ax.frontAxleX;
-    const distFromFront = cogX - ax.frontAxleX;
-    const rearLoad = result.totalGrossWeight * (distFromFront / span);
-    const frontLoad = result.totalGrossWeight - rearLoad;
-    const frontPct = Math.min((frontLoad / ax.maxFrontAxleKg) * 100, 100);
-    const rearPct = Math.min((rearLoad / ax.maxRearAxleKg) * 100, 100);
-    const frontOver = frontLoad > ax.maxFrontAxleKg;
-    const rearOver = rearLoad > ax.maxRearAxleKg;
-
-    axleHtml = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">
-        <div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;margin-bottom:4px;">Front Axle Load</div>
-          <div style="font-size:15px;font-weight:800;color:${frontOver ? '#c63320' : '#1a1a1a'};">${frontLoad.toFixed(0)} kg ${frontOver ? '<span style="font-size:10px;color:#c63320;">OVERLOAD</span>' : ''}</div>
-          <div style="height:6px;background:#eee;border:1px solid #ccc;margin-top:4px;overflow:hidden;">
-            <div style="height:100%;width:${frontPct}%;background:${frontOver ? '#c63320' : '#1572b6'};"></div>
-          </div>
-          <div style="font-size:9px;color:#999;margin-top:2px;">max ${ax.maxFrontAxleKg.toLocaleString()} kg</div>
-        </div>
-        <div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;margin-bottom:4px;">Rear Axle Load</div>
-          <div style="font-size:15px;font-weight:800;color:${rearOver ? '#c63320' : '#1a1a1a'};">${rearLoad.toFixed(0)} kg ${rearOver ? '<span style="font-size:10px;color:#c63320;">OVERLOAD</span>' : ''}</div>
-          <div style="height:6px;background:#eee;border:1px solid #ccc;margin-top:4px;overflow:hidden;">
-            <div style="height:100%;width:${rearPct}%;background:${rearOver ? '#c63320' : '#1572b6'};"></div>
-          </div>
-          <div style="font-size:9px;color:#999;margin-top:2px;">max ${ax.maxRearAxleKg.toLocaleString()} kg</div>
-        </div>
-      </div>`;
-  }
-
-  const barLeft = Math.max(2, Math.min(lengthPct - 1, 97));
-  const dotLeft = Math.max(2, Math.min(widthPct, 98));
-
-  return `
-    <div style="margin-bottom:28px;page-break-inside:avoid;">
-      <div style="font-size:14px;font-weight:800;margin:0 0 8px;border-bottom:2px solid #1a1a1a;padding-bottom:6px;">
-        การกระจายน้ำหนัก (Weight Distribution &amp; Centre of Gravity)
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
-        <div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;margin-bottom:6px;">Longitudinal CoG (front→back)</div>
-          <div style="position:relative;height:28px;background:linear-gradient(90deg,#e8f4e8 0%,#fff8e1 50%,#fce4ec 100%);border:1px solid #bbb;border-radius:2px;">
-            <div style="position:absolute;top:0;bottom:0;left:${barLeft}%;width:2px;background:#c63320;"></div>
-            <div style="position:absolute;top:50%;left:${barLeft}%;transform:translate(-50%,-50%);background:#c63320;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;white-space:nowrap;">${lengthPct}%</div>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:9px;color:#999;margin-top:3px;"><span>FRONT (door)</span><span>REAR</span></div>
-          <div style="margin-top:6px;font-size:11px;font-weight:700;">CoG at ${Math.round(cogX)} cm from front</div>
-          <div style="font-size:10px;color:#666;margin-top:2px;">Ideal range: 40–60% of container length</div>
-          ${lengthPct < 35 || lengthPct > 65 ? `<div style="margin-top:6px;padding:5px 8px;background:#fff3cd;border:1px solid #ffc107;font-size:10px;font-weight:700;color:#856404;">WARNING: Load is unbalanced. Redistribute weight towards the ${lengthPct < 35 ? 'rear' : 'front'}.</div>` : ''}
-        </div>
-        <div>
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;margin-bottom:6px;">Lateral CoG (left→right)</div>
-          <div style="position:relative;height:28px;background:linear-gradient(90deg,#fce4ec 0%,#fff8e1 50%,#fce4ec 100%);border:1px solid #bbb;border-radius:2px;">
-            <div style="position:absolute;top:0;bottom:0;left:${dotLeft}%;width:2px;background:#1572b6;"></div>
-            <div style="position:absolute;top:50%;left:${dotLeft}%;transform:translate(-50%,-50%);background:#1572b6;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;white-space:nowrap;">${widthPct}%</div>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:9px;color:#999;margin-top:3px;"><span>LEFT</span><span>RIGHT</span></div>
-          <div style="margin-top:6px;font-size:11px;font-weight:700;">Lateral balance: ${widthPct > 40 && widthPct < 60 ? 'Good' : 'Check distribution'}</div>
-          <div style="font-size:10px;color:#666;margin-top:2px;">Ideal range: 40–60% of container width</div>
-        </div>
-      </div>
-      ${axleHtml}
-    </div>`;
-}
-
 export function printLoadPlan(result: PackingResult, unit: string): void {
   const today = new Date();
-  const thaiDate = formatDate(today);
-  const engDate = formatDateEn(today);
-
   const isReefer = result.container.category === 'Reefer';
-  const totalCartons = result.totalCount;
-  const totalGrossKg = result.totalGrossWeight.toFixed(3);
-  const totalGrossMt = (result.totalGrossWeight / 1000).toFixed(5);
-  const totalNetKg = result.totalNetWeight.toFixed(3);
-  const totalNetMt = (result.totalNetWeight / 1000).toFixed(5);
+  const practicalCount = getPracticalCount(result);
+  const volPct = (result.volumeUtilization * PRACTICAL_FILL * 100).toFixed(1);
+  const wtPct = (result.weightUtilization * 100).toFixed(1);
+  const totalGrossKg = (practicalCount * (result.totalGrossWeight / result.totalCount)).toFixed(3);
+  const totalNetKg = (practicalCount * (result.totalNetWeight / result.totalCount)).toFixed(3);
 
   const productsByName = result.productResults.filter(pr => pr.count > 0);
 
-  const productSections = productsByName.map((pr) => {
+  // Build product sections with packing grid
+  const productSections = productsByName.map((pr, pidx) => {
+    const practCount = Math.floor(pr.count * PRACTICAL_FILL);
     const boxes = result.packedBoxes.filter(b => b.productId === pr.product.id);
-    const { xVals, yVals, grid, total } = buildProductGrid(boxes);
     const [bL, bW, bH] = pr.orientation;
+    const { rows, cols, grid } = buildGrid(boxes, bL, bW);
+
     const isRotated = bL !== pr.product.length || bW !== pr.product.width || bH !== pr.product.height;
-    const nCols = yVals.length;
-    const maxCols = Math.max(nCols, 8);
+    const dimNote = `${bL} × ${bW} × ${bH} cm${isRotated ? ' (Rotated)' : ''}`;
+    const grossTotal = (practCount * pr.product.grossWeight).toFixed(3);
+    const netTotal = (practCount * pr.product.netWeight).toFixed(3);
 
-    const colHeaders = Array.from({ length: maxCols }, (_, i) => `<th style="min-width:32px;">${i + 1}</th>`).join('');
+    const maxCols = Math.max(cols.length, 8);
+    const colHeaders = Array.from({ length: maxCols }, (_, i) =>
+      `<th style="min-width:28px;width:28px;text-align:center;">${i + 1}</th>`
+    ).join('');
 
-    const rowsHtml = xVals.map((_, xIdx) => {
-      const rowNum = xIdx + 1;
-      const rowData = grid[xIdx] ?? [];
+    const rowsHtml = rows.map((_, rIdx) => {
+      const rowData = grid[rIdx] ?? [];
       const rowTotal = rowData.reduce((s, v) => s + v, 0);
-
-      const cells = Array.from({ length: maxCols }, (_, yIdx) => {
-        const val = rowData[yIdx] ?? 0;
-        return `<td style="text-align:center;${val === 0 ? 'color:#bbb;' : ''}">${val}</td>`;
+      const cells = Array.from({ length: maxCols }, (_, cIdx) => {
+        const val = rowData[cIdx] ?? 0;
+        return `<td style="text-align:center;${val === 0 ? 'color:#ccc;' : 'font-weight:600;'}">${val || '—'}</td>`;
       }).join('');
-
-      return `<tr>
-        <td style="text-align:center;font-weight:700;background:#f5f5f2;">${rowNum}</td>
-        <td style="max-width:220px;word-break:break-word;">${pr.product.name}</td>
+      return `<tr style="${rIdx % 2 === 1 ? 'background:#f8f8f8;' : ''}">
+        <td style="text-align:center;font-weight:700;background:#f0f0f0;color:#555;">${rIdx + 1}</td>
         ${cells}
-        <td style="text-align:center;font-weight:700;background:#f0f0ec;">${rowTotal}</td>
+        <td style="text-align:center;font-weight:800;background:#f0f0f0;">${rowTotal}</td>
       </tr>`;
     }).join('');
 
-    const dimNote = `${bL} × ${bW} × ${bH} cm${isRotated ? ' (หมุน/Rotated)' : ''}`;
-    const grossTotal = (pr.count * pr.product.grossWeight).toFixed(3);
-    const netTotal = (pr.count * pr.product.netWeight).toFixed(3);
+    // Column totals row
+    const colTotals = Array.from({ length: maxCols }, (_, cIdx) =>
+      `<td style="text-align:center;font-weight:700;">${rows.reduce((s, _, ri) => s + (grid[ri]?.[cIdx] ?? 0), 0) || ''}</td>`
+    ).join('');
 
-    const handlingBadges: string[] = [];
-    if (pr.product.fragile) handlingBadges.push('<span style="background:#c63320;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;margin-right:4px;text-transform:uppercase;">FRAGILE</span>');
-    if (pr.product.stackable === false) handlingBadges.push('<span style="background:#d96a1c;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;margin-right:4px;text-transform:uppercase;">DO NOT STACK</span>');
-    if (pr.product.orientationLock === 'upright') handlingBadges.push('<span style="background:#1572b6;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;margin-right:4px;text-transform:uppercase;">THIS SIDE UP</span>');
-    if (pr.product.orientationLock === 'on-side') handlingBadges.push('<span style="background:#1572b6;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;margin-right:4px;text-transform:uppercase;">LAY FLAT</span>');
+    const COLORS = ['#c63320','#1572b6','#1b6b40','#d96a1c','#6b21a8','#0e7490'];
+    const color = COLORS[pidx % COLORS.length];
 
     return `
       <div style="margin-bottom:32px;page-break-inside:avoid;">
-        <div style="background:#1a1a1a;color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:0;">
-          <span style="font-weight:800;font-size:13px;">${pr.product.name}</span>
-          <span style="font-size:11px;opacity:.7;">${dimNote}</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:${color};color:#fff;margin-bottom:0;">
+          <div>
+            <span style="font-weight:800;font-size:14px;letter-spacing:-0.3px;">${pr.product.name}</span>
+            <span style="font-size:10px;opacity:0.75;margin-left:12px;">${dimNote}</span>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:22px;font-weight:900;line-height:1;">${practCount.toLocaleString()}</div>
+            <div style="font-size:9px;opacity:0.75;text-transform:uppercase;letter-spacing:.08em;">cartons</div>
+          </div>
         </div>
-        ${handlingBadges.length > 0 ? `<div style="padding:5px 12px;background:#fff3cd;border:1px solid #ffc107;border-top:none;">${handlingBadges.join('')}</div>` : ''}
-        <table style="width:100%;border-collapse:collapse;font-size:11px;border:1px solid #ccc;">
+        <table style="width:100%;border-collapse:collapse;font-size:10px;border:1px solid #ddd;">
           <thead>
-            <tr style="background:#f0ece4;">
-              <th style="width:42px;text-align:center;">แถว<br/><span style="font-weight:400;font-size:9px;">Row</span></th>
-              <th style="text-align:left;min-width:160px;">ชื่อผลิตภัณฑ์<br/><span style="font-weight:400;font-size:9px;">Product Items</span></th>
+            <tr style="background:#f5f5f5;">
+              <th style="width:32px;text-align:center;color:#888;font-weight:600;">Row</th>
               ${colHeaders}
-              <th style="min-width:44px;text-align:center;background:#e8e4dc;">รวม<br/><span style="font-weight:400;font-size:9px;">Total</span></th>
+              <th style="width:40px;text-align:center;background:#eaeaea;font-weight:700;">Total</th>
             </tr>
           </thead>
           <tbody>
             ${rowsHtml}
-            <tr style="background:#f5f2ec;font-weight:700;">
-              <td colspan="2" style="text-align:right;padding-right:8px;">รวมทั้งหมด / Grand Total</td>
-              ${Array.from({ length: maxCols }, (_, yIdx) => {
-                const colSum = xVals.reduce((s, _, xi) => s + (grid[xi]?.[yIdx] ?? 0), 0);
-                return `<td style="text-align:center;">${colSum || ''}</td>`;
-              }).join('')}
-              <td style="text-align:center;background:#e8e4dc;font-weight:900;">${total}</td>
+            <tr style="background:#efefef;font-weight:700;border-top:2px solid #ccc;">
+              <td style="text-align:center;color:#888;font-size:9px;">Total</td>
+              ${colTotals}
+              <td style="text-align:center;font-weight:900;background:#e0e0e0;">${practCount.toLocaleString()}</td>
             </tr>
           </tbody>
         </table>
-        <div style="margin-top:8px;padding:8px 12px;background:#f7f4ed;border:1px solid #ddd;font-size:11px;display:flex;gap:32px;flex-wrap:wrap;">
-          <span><strong>บรรจุภัณฑ์ / Packages:</strong> ${pr.count.toLocaleString()} cartons</span>
-          <span><strong>น้ำหนักรวม / Gross Weight:</strong> ${grossTotal} KGS</span>
-          <span><strong>น้ำหนักสุทธิ / Net Weight:</strong> ${netTotal} KGS</span>
+        <div style="display:flex;gap:24px;padding:8px 12px;background:#fafafa;border:1px solid #ddd;border-top:none;font-size:10px;color:#555;">
           <span><strong>Layers / Rows / Cols:</strong> ${pr.nZ} × ${pr.nX} × ${pr.nY}</span>
+          <span><strong>Gross:</strong> ${grossTotal} kg</span>
+          <span><strong>Net:</strong> ${netTotal} kg</span>
+          ${pr.product.grossWeight > 0 ? `<span><strong>Per box:</strong> ${pr.product.grossWeight} kg</span>` : ''}
         </div>
       </div>`;
   }).join('');
 
-  const summaryRows = productsByName.map(pr => {
-    const grossTotal = (pr.count * pr.product.grossWeight).toFixed(3);
-    const netTotal = (pr.count * pr.product.netWeight).toFixed(3);
+  // Summary table
+  const summaryRows = productsByName.map((pr, pidx) => {
+    const practCount = Math.floor(pr.count * PRACTICAL_FILL);
+    const gross = (practCount * pr.product.grossWeight).toFixed(3);
+    const net = (practCount * pr.product.netWeight).toFixed(3);
+    const COLORS = ['#c63320','#1572b6','#1b6b40','#d96a1c','#6b21a8','#0e7490'];
+    const color = COLORS[pidx % COLORS.length];
     return `<tr>
-      <td colspan="2" style="padding:6px 8px;">${pr.product.name}</td>
-      <td style="text-align:center;padding:6px 8px;">${pr.count.toLocaleString()}</td>
-      <td style="text-align:right;padding:6px 8px;">${grossTotal}</td>
-      <td style="text-align:right;padding:6px 8px;">${netTotal}</td>
+      <td style="padding:8px 12px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:10px;height:10px;background:${color};flex-shrink:0;"></div>
+          <span style="font-weight:600;">${pr.product.name}</span>
+        </div>
+      </td>
+      <td style="text-align:center;padding:8px 12px;font-weight:700;">${practCount.toLocaleString()}</td>
+      <td style="text-align:right;padding:8px 12px;">${gross} kg</td>
+      <td style="text-align:right;padding:8px 12px;">${net} kg</td>
     </tr>`;
   }).join('');
 
-  const containerDimNote = `${result.container.innerLength} × ${result.container.innerWidth} × ${result.container.innerHeight} CM`;
-  const volPct = (result.volumeUtilization * 100).toFixed(1);
-  const wtPct = (result.weightUtilization * 100).toFixed(1);
-  const unitLabel = unit.toUpperCase();
-
-  const loadingSequenceHtml = buildLoadingSequence(result);
-  const weightDistHtml = buildWeightDistribution(result);
-
   const html = `<!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Load Plan — ${result.container.shortName}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+<title>Load Plan — ${result.container.shortName} — ${formatDateEn(today)}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'Sarabun', 'Noto Sans Thai', Arial, sans-serif;
-    font-size: 12px;
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11px;
     color: #1a1a1a;
     background: #fff;
-    padding: 20px 28px;
+    padding: 24px 28px;
+    line-height: 1.4;
   }
-  h1 { font-size: 17px; font-weight: 800; text-align: center; margin-bottom: 4px; letter-spacing: -0.3px; }
-  h2 { font-size: 13px; font-weight: 600; text-align: center; color: #555; margin-bottom: 20px; }
-  table { border-collapse: collapse; }
-  td, th { border: 1px solid #bbb; padding: 4px 6px; font-size: 11px; vertical-align: top; }
-  th { font-weight: 700; background: #f0ece4; }
-  .header-grid { width: 100%; border: 1px solid #bbb; border-collapse: collapse; margin-bottom: 20px; }
-  .header-grid td { border: 1px solid #bbb; padding: 5px 8px; font-size: 11px; }
-  .header-grid .label { font-weight: 700; color: #444; white-space: nowrap; background: #faf8f4; width: 1%; }
-  .header-grid .dots { border-bottom: 1px dashed #999; color: #555; }
-  .section-title {
-    font-size: 16px;
-    font-weight: 800;
-    text-align: center;
-    margin: 12px 0 4px;
-    letter-spacing: 0.3px;
-  }
-  .section-subtitle {
-    font-size: 12px;
-    font-weight: 600;
-    text-align: center;
-    color: #666;
-    margin-bottom: 18px;
-  }
-  .summary-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 12px; }
-  .summary-table th { background: #1a1a1a; color: #fff; padding: 7px 8px; }
-  .summary-table td { padding: 6px 8px; border: 1px solid #ccc; }
-  .summary-table tr:nth-child(even) td { background: #f7f4ef; }
-  .totals-row td { font-weight: 800; background: #f0ece4 !important; border-top: 2px solid #555; }
-  .sig-row { display: flex; gap: 48px; justify-content: space-between; margin-top: 40px; }
-  .sig-block { flex: 1; text-align: center; }
-  .sig-line { border-top: 1px solid #555; margin-top: 40px; margin-bottom: 6px; }
-  .sig-title { font-size: 10px; color: #666; }
-  .note { font-size: 10px; color: #888; margin-top: 12px; font-style: italic; }
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border: 1px solid #1a1a1a;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    margin-left: 8px;
-    vertical-align: middle;
-  }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border: 1px solid #ddd; padding: 4px 6px; vertical-align: middle; }
+  th { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
   .no-print {
-    position: fixed;
-    top: 12px;
-    right: 16px;
-    display: flex;
-    gap: 8px;
-    z-index: 999;
+    position: fixed; top: 12px; right: 16px;
+    display: flex; gap: 8px; z-index: 999;
   }
-  .btn-print, .btn-close {
-    padding: 8px 18px;
-    font-size: 12px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    cursor: pointer;
-    border: 2px solid #1a1a1a;
-    background: #1a1a1a;
-    color: #fff;
-    box-shadow: 3px 3px 0 #666;
+  .btn {
+    padding: 9px 20px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    cursor: pointer; border: none; border-radius: 2px;
   }
-  .btn-close {
-    background: #fff;
-    color: #1a1a1a;
-  }
+  .btn-primary { background: #1a1a1a; color: #fff; }
+  .btn-secondary { background: #f0f0f0; color: #1a1a1a; }
   @media print {
-    body { padding: 10mm 12mm; font-size: 10px; }
+    body { padding: 8mm 10mm; }
     .no-print { display: none !important; }
-    h1 { font-size: 14px; }
-    .section-title { font-size: 14px; }
-    table, tr, td, th { page-break-inside: avoid; }
-    div[style*="page-break-inside:avoid"] { page-break-inside: avoid; }
-    @page { size: A4; margin: 10mm; }
+    @page { size: A4 landscape; margin: 8mm; }
+    div { page-break-inside: avoid; }
   }
 </style>
 </head>
 <body>
 
 <div class="no-print">
-  <button class="btn-print" onclick="window.print()">Save as PDF / Print</button>
-  <button class="btn-close" onclick="window.close()">Close</button>
+  <button class="btn btn-primary" onclick="window.print()">⬇ Save as PDF</button>
+  <button class="btn btn-secondary" onclick="window.close()">✕ Close</button>
 </div>
 
-<div class="section-title">รายละเอียดผลิตภัณฑ์ในตู้สินค้า</div>
-<div class="section-subtitle">Checklist of Product Items in Container</div>
-
-<table class="header-grid">
-  <tr>
-    <td class="label">บริษัท (Establishment)</td>
-    <td class="dots" colspan="3">.....................................................................</td>
-    <td class="label" style="white-space:nowrap;">TH/EST.</td>
-    <td class="dots" colspan="2">......................</td>
-    <td class="label" style="white-space:nowrap;">ตรวจสอบวันที่ (Date)</td>
-    <td class="dots">${thaiDate} / ${engDate}</td>
-  </tr>
-  <tr>
-    <td class="label">ระหว่างเวลา (Start time)</td>
-    <td class="dots">.........................</td>
-    <td class="label">ถึง (Finish time)</td>
-    <td class="dots">.........................</td>
-    <td class="label" colspan="2">ผลิตภัณฑ์จำนวนนี้ได้รับอนุญาตให้ส่งออก สพส.1 (BLSC 1/)</td>
-    <td class="dots" colspan="3">.....................................................................</td>
-  </tr>
-  <tr>
-    <td class="label">ทะเบียนรถ (Truck No.)</td>
-    <td class="dots">.........................</td>
-    <td class="label" style="white-space:nowrap;">หมายเลขตู้ (Container No.)</td>
-    <td class="dots">${result.container.name}</td>
-    <td class="label" style="white-space:nowrap;">ส่งออกประเทศ (Export country)</td>
-    <td class="dots" colspan="2">.........................</td>
-    <td class="label" style="white-space:nowrap;">Invoice No.</td>
-    <td class="dots">.........................</td>
-  </tr>
-  <tr>
-    <td class="label">อุณหภูมิสินค้า (Product temperature)</td>
-    <td class="dots">${isReefer ? '-18 °C or below' : '...........'}</td>
-    <td class="label">Seal No. / DLD Seal No.</td>
-    <td class="dots">.........................</td>
-    <td class="label">Seal Agent No.</td>
-    <td class="dots">.........................</td>
-    <td class="label">Seal Company No.</td>
-    <td class="dots" colspan="2">.........................</td>
-  </tr>
-  <tr>
-    <td class="label">เลขที่ใบคำขอ สพส.1</td>
-    <td class="dots" colspan="4">.....................................................................</td>
-    <td class="label" colspan="2">เลขที่ใบคำขอ Checklist of Product Items in Container</td>
-    <td class="dots" colspan="2">.....................................................................</td>
-  </tr>
-</table>
-
-<div style="margin-bottom:12px;padding:8px 12px;background:#f5f2ec;border:1px solid #ccc;display:flex;gap:20px;flex-wrap:wrap;align-items:center;font-size:11px;">
-  <span><strong>ตู้สินค้า / Container:</strong> ${result.container.name} ${isReefer ? '<span class="badge">REEFER</span>' : ''}</span>
-  <span><strong>ขนาด / Dimensions:</strong> ${containerDimNote}</span>
-  <span><strong>หน่วย / Unit:</strong> ${unitLabel}</span>
-  <span><strong>การบรรจุ / Load mode:</strong> ${result.loadingMode === 'handload' ? 'Hand Load' : 'Pallet Load'}</span>
-  <span><strong>Volume:</strong> ${volPct}%</span>
-  <span><strong>Payload:</strong> ${wtPct}%</span>
-  <span><strong>Total Cartons:</strong> ${totalCartons.toLocaleString()}</span>
+<!-- Header -->
+<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:3px solid #1a1a1a;">
+  <div>
+    <div style="font-size:22px;font-weight:900;letter-spacing:-0.5px;line-height:1;">LOAD PLAN</div>
+    <div style="font-size:12px;color:#666;margin-top:4px;">${result.container.name}${isReefer ? ' · REEFER' : ''} · ${result.container.innerLength} × ${result.container.innerWidth} × ${result.container.innerHeight} cm · ${formatDateEn(today)}</div>
+  </div>
+  <div style="text-align:right;">
+    <div style="font-size:36px;font-weight:900;letter-spacing:-1px;color:#1a1a1a;line-height:1;">${practicalCount.toLocaleString()}</div>
+    <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-top:2px;">Total Cartons</div>
+  </div>
 </div>
 
-${loadingSequenceHtml}
-
-${weightDistHtml}
-
-<div style="font-size:14px;font-weight:800;margin:0 0 8px;border-bottom:2px solid #1a1a1a;padding-bottom:6px;">
-  ตารางการบรรจุสินค้า (Container Packing Grid — Position by Row × Column)
+<!-- Stats bar -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
+  ${[
+    { label: 'Volume', value: volPct + '%', sub: `${(result.containerVolumeCm3 / 1_000_000).toFixed(1)} m³ capacity` },
+    { label: 'Payload', value: wtPct + '%', sub: `${result.container.maxPayload.toLocaleString()} kg max` },
+    { label: 'Gross Weight', value: totalGrossKg + ' kg', sub: (parseFloat(totalGrossKg)/1000).toFixed(3) + ' MT' },
+    { label: 'Net Weight', value: totalNetKg + ' kg', sub: (parseFloat(totalNetKg)/1000).toFixed(3) + ' MT' },
+  ].map(s => `
+    <div style="border:1px solid #ddd;padding:10px 14px;">
+      <div style="font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#888;font-weight:600;margin-bottom:4px;">${s.label}</div>
+      <div style="font-size:18px;font-weight:800;line-height:1;">${s.value}</div>
+      <div style="font-size:9px;color:#aaa;margin-top:3px;">${s.sub}</div>
+    </div>`).join('')}
 </div>
 
+<!-- Loading sequence note -->
+<div style="margin-bottom:20px;padding:10px 14px;background:#fafafa;border:1px solid #e0e0e0;border-left:3px solid #1a1a1a;font-size:10px;color:#555;">
+  <strong style="color:#1a1a1a;">Loading sequence:</strong> Load heaviest products first · From back of container towards door · Distribute weight evenly across floor width
+  ${isReefer ? ' · Maintain airflow gaps · Do not exceed MAX LOAD LINE' : ''}
+</div>
+
+<!-- Product grids -->
 ${productSections}
 
-<div style="page-break-before:auto;">
-  <div style="font-size:14px;font-weight:800;margin:24px 0 8px;border-bottom:2px solid #1a1a1a;padding-bottom:6px;">
-    สรุปจำนวนบรรจุภัณฑ์ (Summary of Total Package)
-  </div>
-  <table class="summary-table">
+<!-- Summary -->
+<div style="page-break-inside:avoid;margin-top:8px;">
+  <div style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #1a1a1a;">Summary</div>
+  <table style="font-size:11px;">
     <thead>
-      <tr>
-        <th colspan="2" style="text-align:left;">ชื่อผลิตภัณฑ์ / Product Items</th>
-        <th>บรรจุภัณฑ์<br/><span style="font-weight:400;">(Package)</span></th>
-        <th>น้ำหนักรวม (กก.)<br/><span style="font-weight:400;">Gross Wt. (kg.)</span></th>
-        <th>น้ำหนักสุทธิ (กก.)<br/><span style="font-weight:400;">Net Wt. (kg.)</span></th>
+      <tr style="background:#1a1a1a;color:#fff;">
+        <th style="text-align:left;padding:8px 12px;">Product</th>
+        <th style="text-align:center;padding:8px 12px;">Cartons</th>
+        <th style="text-align:right;padding:8px 12px;">Gross Weight</th>
+        <th style="text-align:right;padding:8px 12px;">Net Weight</th>
       </tr>
     </thead>
     <tbody>
       ${summaryRows}
-      <tr class="totals-row">
-        <td colspan="2" style="text-align:right;">รวมทั้งหมด / TOTAL QUANTITY</td>
-        <td style="text-align:center;">${totalCartons.toLocaleString()}</td>
-        <td style="text-align:right;">${totalGrossKg} KGS (${totalGrossMt} MTS)</td>
-        <td style="text-align:right;">${totalNetKg} KGS (${totalNetMt} MTS)</td>
+      <tr style="background:#1a1a1a;color:#fff;font-weight:800;">
+        <td style="padding:8px 12px;">TOTAL</td>
+        <td style="text-align:center;padding:8px 12px;font-size:14px;">${practicalCount.toLocaleString()}</td>
+        <td style="text-align:right;padding:8px 12px;">${totalGrossKg} kg</td>
+        <td style="text-align:right;padding:8px 12px;">${totalNetKg} kg</td>
       </tr>
     </tbody>
   </table>
 </div>
 
-<p class="note">
-  หมายเหตุ : ระบบคำนวณน้ำหนักบรรจุภัณฑ์จากค่าทศนิยมทั้งหมดโดยไม่ปัดขึ้นและไม่ตัดทิ้ง /
-  Note: Weight is calculated using full decimal precision without rounding.
-</p>
-
-<div class="sig-row">
-  <div class="sig-block">
-    <div class="sig-line"></div>
-    <div>ผู้ตรวจเช็ค</div>
-    <div class="sig-title">พนักงานประกันคุณภาพ / พนักงานผลิต</div>
-    <div class="sig-title">QA / Production Officer</div>
-  </div>
-  <div class="sig-block">
-    <div class="sig-line"></div>
-    <div>ผู้รับผิดชอบ</div>
-    <div class="sig-title">ผู้จัดการโรงงาน / ผู้จัดการแผนกประกันคุณภาพ</div>
-    <div class="sig-title">Factory Manager / QA Manager</div>
-  </div>
-  <div class="sig-block">
-    <div class="sig-line"></div>
-    <div>ผู้ควบคุม</div>
-    <div class="sig-title">เจ้าหน้าที่ภาครัฐประจำโรงงาน</div>
-    <div class="sig-title">Government Officer</div>
-  </div>
-</div>
-
-<div style="text-align:right;font-size:10px;color:#999;margin-top:20px;">
-  Rev. ${new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }).replace(' ', '-')} &nbsp;|&nbsp; Generated by Smart Container
+<!-- Footer note -->
+<div style="margin-top:16px;font-size:9px;color:#aaa;display:flex;justify-content:space-between;border-top:1px solid #eee;padding-top:10px;">
+  <span>Practical fill rate applied: 91.3% — accounts for airflow gaps, loading tolerances and structural stability.</span>
+  <span>Generated by iO Smart Container · ${formatDateEn(today)}</span>
 </div>
 
 </body>
 </html>`;
 
-  const printWin = window.open('', '_blank', 'width=1000,height=800');
+  const printWin = window.open('', '_blank', 'width=1100,height=850');
   if (!printWin) return;
   printWin.document.open();
   printWin.document.write(html);
   printWin.document.close();
-
-  printWin.onload = () => {
-    setTimeout(() => {
-      printWin.focus();
-      printWin.print();
-    }, 800);
-  };
+  printWin.onload = () => setTimeout(() => { printWin.focus(); printWin.print(); }, 600);
 }
