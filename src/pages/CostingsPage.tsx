@@ -756,10 +756,11 @@ export function CostingsPage() {
       </div>
 
       <button
+        id="costings-advisor-fab"
         onClick={() => setChatOpen(o => !o)}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-brut-hdr flex items-center justify-center shadow-lg border-2 border-brut-hdr-dark transition-transform duration-200 hover:scale-105 active:scale-95"
         style={{ boxShadow: '3px 3px 0px #0d0d0d' }}
-        aria-label={chatOpen ? 'Close AI assistant' : 'Open AI assistant'}
+        aria-label={chatOpen ? 'Close Costings Advisor' : 'Open Costings Advisor'}
       >
         {chatOpen ? <X size={22} className="text-white" /> : <MessageCircle size={22} className="text-white" />}
       </button>

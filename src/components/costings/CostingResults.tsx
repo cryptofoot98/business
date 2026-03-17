@@ -1,4 +1,5 @@
-import { TrendingUp, TrendingDown, Package, Ship, FileCheck, Truck, Shield, Sliders } from 'lucide-react';
+import { useState } from 'react';
+import { TrendingUp, TrendingDown, Package, Ship, FileCheck, Truck, Shield, Sliders, ChevronDown, ChevronUp } from 'lucide-react';
 import { CostingResults as Results } from '../../types/costing';
 
 interface Props {
@@ -124,6 +125,8 @@ function CostRow({ icon, label, value, sub }: CostRowProps) {
 }
 
 export function CostingResults({ results, targetSellingPrice, onTargetSellingPriceChange }: Props) {
+  const [detailOpen, setDetailOpen] = useState(false);
+
   const marginAccent = results.grossMarginPercent >= 30
     ? 'positive'
     : results.grossMarginPercent >= 15
@@ -167,37 +170,97 @@ export function CostingResults({ results, targetSellingPrice, onTargetSellingPri
         </div>
       </div>
 
-      <div className="p-4 border-b-2 border-slate-800">
-        <div className="space-y-1">
-          <CostRow icon={<Package size={12} />} label="Product & Packing" value={results.totalProductCostGBP} />
-          <CostRow icon={<Ship size={12} />} label="Freight & Surcharges" value={results.totalFreightGBP} />
-          <CostRow icon={<FileCheck size={12} />} label="Clearance & Duty" value={results.totalClearanceGBP} />
-          <CostRow icon={<Truck size={12} />} label="Domestic Transport" value={results.totalDomesticGBP} />
-          <CostRow icon={<Shield size={12} />} label="Insurance & Overheads" value={results.totalInsuranceOverheadGBP} />
-          {results.customFieldResults.length > 0 && (
-            <>
-              {results.customFieldResults.map(cf => (
-                <div key={cf.id} className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-500"><Sliders size={12} /></span>
-                    <div>
-                      <span className="text-sm text-slate-300 font-medium">{cf.name || 'Custom field'}</span>
-                      <span className={`block font-mono text-[10px] ${cf.effect === 'cost' ? 'text-red-400' : 'text-emerald-400'}`}>
-                        {cf.effect === 'cost' ? 'Extra cost' : 'Benefit / deduction'}
+      <button
+        onClick={() => setDetailOpen(o => !o)}
+        className="w-full flex items-center justify-between px-4 py-2.5 bg-slate-800 border-b-2 border-slate-700 hover:bg-slate-750 transition-colors"
+      >
+        <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400">Charges &amp; Gross Margin</span>
+        {detailOpen
+          ? <ChevronUp size={13} className="text-slate-400" strokeWidth={2.5} />
+          : <ChevronDown size={13} className="text-slate-400" strokeWidth={2.5} />
+        }
+      </button>
+
+      {detailOpen && (
+        <>
+          <div className="px-4 py-3 border-b-2 border-slate-800">
+            <div className="space-y-1">
+              <CostRow icon={<Package size={12} />} label="Product & Packing" value={results.totalProductCostGBP} />
+              <CostRow icon={<Ship size={12} />} label="Freight & Surcharges" value={results.totalFreightGBP} />
+              <CostRow icon={<FileCheck size={12} />} label="Clearance & Duty" value={results.totalClearanceGBP} />
+              <CostRow icon={<Truck size={12} />} label="Domestic Transport" value={results.totalDomesticGBP} />
+              <CostRow icon={<Shield size={12} />} label="Insurance & Overheads" value={results.totalInsuranceOverheadGBP} />
+              {results.customFieldResults.length > 0 && (
+                <>
+                  {results.customFieldResults.map(cf => (
+                    <div key={cf.id} className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-500"><Sliders size={12} /></span>
+                        <div>
+                          <span className="text-sm text-slate-300 font-medium">{cf.name || 'Custom field'}</span>
+                          <span className={`block font-mono text-[10px] ${cf.effect === 'cost' ? 'text-red-400' : 'text-emerald-400'}`}>
+                            {cf.effect === 'cost' ? 'Extra cost' : 'Benefit / deduction'}
+                          </span>
+                        </div>
+                      </div>
+                      <span className={`font-mono text-sm font-bold ${cf.effect === 'cost' ? 'text-red-400' : 'text-emerald-400'}`}>
+                        {cf.effect === 'cost' ? '+' : '-'}£{fmt(cf.amountGBP)}
                       </span>
                     </div>
-                  </div>
-                  <span className={`font-mono text-sm font-bold ${cf.effect === 'cost' ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {cf.effect === 'cost' ? '+' : '-'}£{fmt(cf.amountGBP)}
-                  </span>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-      </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
 
-      <div className="p-4 border-b-2 border-slate-800 space-y-3">
+          <div className="px-4 py-3 border-b-2 border-slate-800">
+            <div className="grid grid-cols-2 gap-4">
+              <Metric
+                label="Gross Margin"
+                value={fmtPct(results.grossMarginPercent)}
+                accent={marginAccent}
+              />
+              <Metric
+                label="Gross Profit"
+                value={`£${fmt(results.grossProfitGBP)}`}
+                sub={`£${fmt(results.grossProfitPerUnitGBP)}/unit`}
+                accent={profitAccent}
+              />
+              <Metric
+                label="Total Revenue"
+                value={`£${fmt(results.revenueGBP)}`}
+              />
+              <Metric
+                label="ROI"
+                value={fmtPct(results.roiPercent)}
+                sub="on total investment"
+                accent={results.roiPercent >= 0 ? 'positive' : 'negative'}
+              />
+            </div>
+          </div>
+
+          {results.grossMarginPercent > 0 && results.grossMarginPercent < 15 && (
+            <div className="mx-4 mb-3 flex items-center gap-2 px-3 py-2 bg-amber-950 border border-amber-700">
+              <TrendingDown size={13} className="text-amber-400 shrink-0" strokeWidth={2.5} />
+              <p className="text-xs text-amber-300">Margin below 15% — consider renegotiating product cost or freight terms.</p>
+            </div>
+          )}
+          {results.grossMarginPercent >= 30 && (
+            <div className="mx-4 mb-3 flex items-center gap-2 px-3 py-2 bg-emerald-950 border border-emerald-800">
+              <TrendingUp size={13} className="text-emerald-400 shrink-0" strokeWidth={2.5} />
+              <p className="text-xs text-emerald-300">Healthy margin above 30%. Good commercial position.</p>
+            </div>
+          )}
+          {results.grossProfitGBP < 0 && (
+            <div className="mx-4 mb-3 flex items-center gap-2 px-3 py-2 bg-red-950 border border-red-800">
+              <TrendingDown size={13} className="text-red-400 shrink-0" strokeWidth={2.5} />
+              <p className="text-xs text-red-300">Selling below cost. Increase selling price above £{fmt(results.breakEvenSellingPriceGBP)}/unit.</p>
+            </div>
+          )}
+        </>
+      )}
+
+      <div className="p-4 border-t-2 border-slate-800 space-y-3">
         <label className="block font-mono text-[10px] uppercase tracking-widest text-slate-400">
           Target Selling Price per Unit (£)
         </label>
@@ -219,54 +282,9 @@ export function CostingResults({ results, targetSellingPrice, onTargetSellingPri
         </div>
       </div>
 
-      <div className="p-4 border-b-2 border-slate-800">
-        <div className="grid grid-cols-2 gap-4">
-          <Metric
-            label="Gross Margin"
-            value={fmtPct(results.grossMarginPercent)}
-            accent={marginAccent}
-          />
-          <Metric
-            label="Gross Profit"
-            value={`£${fmt(results.grossProfitGBP)}`}
-            sub={`£${fmt(results.grossProfitPerUnitGBP)}/unit`}
-            accent={profitAccent}
-          />
-          <Metric
-            label="Total Revenue"
-            value={`£${fmt(results.revenueGBP)}`}
-          />
-          <Metric
-            label="ROI"
-            value={fmtPct(results.roiPercent)}
-            sub="on total investment"
-            accent={results.roiPercent >= 0 ? 'positive' : 'negative'}
-          />
-        </div>
-      </div>
-
-      <div className="p-4">
+      <div className="px-4 pb-4">
         <CostWaterfall results={results} />
       </div>
-
-      {results.grossMarginPercent > 0 && results.grossMarginPercent < 15 && (
-        <div className="mx-4 mb-4 flex items-center gap-2 px-3 py-2 bg-amber-950 border border-amber-700">
-          <TrendingDown size={13} className="text-amber-400 shrink-0" strokeWidth={2.5} />
-          <p className="text-xs text-amber-300">Margin below 15% — consider renegotiating product cost or freight terms.</p>
-        </div>
-      )}
-      {results.grossMarginPercent >= 30 && (
-        <div className="mx-4 mb-4 flex items-center gap-2 px-3 py-2 bg-emerald-950 border border-emerald-800">
-          <TrendingUp size={13} className="text-emerald-400 shrink-0" strokeWidth={2.5} />
-          <p className="text-xs text-emerald-300">Healthy margin above 30%. Good commercial position.</p>
-        </div>
-      )}
-      {results.grossProfitGBP < 0 && (
-        <div className="mx-4 mb-4 flex items-center gap-2 px-3 py-2 bg-red-950 border border-red-800">
-          <TrendingDown size={13} className="text-red-400 shrink-0" strokeWidth={2.5} />
-          <p className="text-xs text-red-300">Selling below cost. Increase selling price above £{fmt(results.breakEvenSellingPriceGBP)}/unit.</p>
-        </div>
-      )}
     </div>
   );
 }

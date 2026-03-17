@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader, Bot, User, Sliders, Plus, Trash2 } from 'lucide-react';
+import { Send, Loader, Bot, User, Sliders } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { CostingInputs, CostingResults, CustomField } from '../../types/costing';
 import { CostingChatMessage, CostingAIAction, callCostingAI } from '../../lib/costingChat';
@@ -10,15 +10,6 @@ interface Props {
   onApplyCustomFields: (fields: CustomField[]) => void;
   onClose: () => void;
 }
-
-const SUGGESTIONS = [
-  'Add Amazon FBA fees per unit',
-  'Add a 5% sourcing agency commission',
-  'Add a quality inspection fee',
-  'Model a duty drawback benefit',
-  'Why is my margin low?',
-  'What custom costs should I add?',
-];
 
 function ActionBadge({ action }: { action: CostingAIAction }) {
   if (action.type === 'suggest_only') return null;
@@ -46,10 +37,23 @@ export function CostingChatPanel({ inputs, results, onApplyCustomFields, onClose
   const [appliedActions, setAppliedActions] = useState<Record<number, CostingAIAction>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        const fab = document.getElementById('costings-advisor-fab');
+        if (fab && fab.contains(e.target as Node)) return;
+        onClose();
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [onClose]);
 
   function applyAction(action: CostingAIAction, msgIndex: number) {
     const existing = inputs.customFields ?? [];
@@ -90,7 +94,7 @@ export function CostingChatPanel({ inputs, results, onApplyCustomFields, onClose
         const msgIdx = nextMessages.length;
         applyAction(resp.action, msgIdx);
       }
-    } catch (err) {
+    } catch {
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: 'Sorry, something went wrong. Please try again.',
@@ -110,6 +114,7 @@ export function CostingChatPanel({ inputs, results, onApplyCustomFields, onClose
 
   return (
     <div
+      ref={panelRef}
       className="fixed bottom-20 right-5 z-40 w-[380px] max-w-[calc(100vw-2.5rem)] flex flex-col bg-slate-900 border-2 border-slate-700"
       style={{ boxShadow: '5px 5px 0 #0f172a', height: 'min(520px, calc(100vh - 120px))' }}
     >
@@ -126,26 +131,13 @@ export function CostingChatPanel({ inputs, results, onApplyCustomFields, onClose
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
         {messages.length === 0 && (
-          <div className="space-y-3">
-            <div className="flex items-start gap-2">
-              <div className="w-5 h-5 shrink-0 bg-sky-600 flex items-center justify-center">
-                <Bot size={11} className="text-white" strokeWidth={2.5} />
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Hi {firstName}! I can see your current costing. Ask me to add custom fields, analyse your margins, check duties, or suggest what costs you might be missing.
-              </p>
+          <div className="flex items-start gap-2">
+            <div className="w-5 h-5 shrink-0 bg-sky-600 flex items-center justify-center">
+              <Bot size={11} className="text-white" strokeWidth={2.5} />
             </div>
-            <div className="flex flex-wrap gap-1.5 pl-7">
-              {SUGGESTIONS.map(s => (
-                <button
-                  key={s}
-                  onClick={() => send(s)}
-                  className="px-2 py-1 border border-slate-600 text-[10px] text-slate-300 hover:border-sky-500 hover:text-sky-300 transition-colors font-mono"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Hi {firstName ? firstName : 'there'}. I can see your current costing. Ask me to add custom fields, analyse your margins, check duties, or suggest what costs you might be missing.
+            </p>
           </div>
         )}
 
