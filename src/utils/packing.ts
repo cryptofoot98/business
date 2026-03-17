@@ -167,6 +167,7 @@ function packBlockWithResidual(
   originZ: number,
   visualBudget: number,
 ): { count: number; positions: Omit<PackedBox, 'productId'>[]; mainOrientation: Orientation } {
+  // Strategy 1: simple block + residual (original)
   const main = packBlock(
     availableLength, availableWidth, availableHeight,
     orientations, maxStackLayers, effectiveMax,
@@ -187,9 +188,157 @@ function packBlockWithResidual(
     remainingVisual,
   );
 
+  const strategy1Count = main.count + residual.count;
+  const strategy1Positions = [...main.positions, ...residual.positions];
+
+  // Strategy 2: mixed orientation — try splitting height into two zones with different orientations
+  // e.g. upright columns + flat columns, or lower layers one orientation, upper layers another
+  let bestMixedCount = 0;
+  let bestMixedPositions: Omit<PackedBox, 'productId'>[] = [];
+  let bestMixedOrientation: Orientation = orientations[0] ?? [1, 1, 1];
+
+  for (const [bL1, bW1, bH1] of orientations) {
+    for (const [bL2, bW2, bH2] of orientations) {
+      if (bL1 === bL2 && bW1 === bW2 && bH1 === bH2) continue; // same orientation, skip
+
+      // Split height: lower zone uses orientation 1, upper zone uses orientation 2
+      const nZLow = Math.floor(availableHeight / bH1);
+      if (nZLow === 0) continue;
+
+      for (let lowLayers = 1; lowLayers < nZLow; lowLayers++) {
+        const lowHeight = lowLayers * bH1;
+        const highHeight = availableHeight - lowHeight;
+        if (highHeight < bH2) continue;
+
+        const nXLow = Math.floor(availableLength / bL1);
+        const nYLow = Math.floor(availableWidth / bW1);
+        const nZLowActual = lowLayers;
+        const countLow = Math.min(nXLow * nYLow * nZLowActual, effectiveMax);
+
+        const nXHigh = Math.floor(availableLength / bL2);
+        const nYHigh = Math.floor(availableWidth / bW2);
+        const nZHigh = Math.floor(highHeight / bH2);
+        const countHigh = Math.min(nXHigh * nYHigh * nZHigh, Math.max(0, effectiveMax - countLow));
+
+        const totalMixed = countLow + countHigh;
+
+        if (totalMixed > bestMixedCount) {
+          bestMixedCount = totalMixed;
+          bestMixedOrientation = countLow >= countHigh ? [bL1, bW1, bH1] : [bL2, bW2, bH2];
+
+          if (generatePositions) {
+            const posLow: Omit<PackedBox, 'productId'>[] = [];
+            const posHigh: Omit<PackedBox, 'productId'>[] = [];
+            const limitLow = Math.min(countLow, Math.floor(visualBudget / 2));
+            const limitHigh = Math.min(countHigh, visualBudget - limitLow);
+
+            const { positions: pl } = countAndPositions(
+              availableLength, availableWidth, lowHeight,
+              bL1, bW1, bH1, limitLow,
+              maxStackLayers === Infinity ? Infinity : maxStackLayers,
+              originX, originY, originZ,
+            );
+            posLow.push(...pl);
+
+            const { positions: ph } = countAndPositions(
+              availableLength, availableWidth, highHeight,
+              bL2, bW2, bH2, limitHigh,
+              maxStackLayers === Infinity ? Infinity : maxStackLayers,
+              originX, originY, originZ + lowHeight,
+            );
+            posHigh.push(...ph);
+
+            bestMixedPositions = [...posLow, ...posHigh];
+          }
+        }
+      }
+    }
+  }
+
+  // Strategy 3: mixed orientation — split along WIDTH into two column groups
+  let bestWidthSplitCount = 0;
+  let bestWidthSplitPositions: Omit<PackedBox, 'productId'>[] = [];
+  let bestWidthSplitOrientation: Orientation = orientations[0] ?? [1, 1, 1];
+
+  for (const [bL1, bW1, bH1] of orientations) {
+    for (const [bL2, bW2, bH2] of orientations) {
+      if (bL1 === bL2 && bW1 === bW2 && bH1 === bH2) continue;
+
+      // Try all possible width splits
+      const maxCols1 = Math.floor(availableWidth / bW1);
+      for (let cols1 = 1; cols1 < maxCols1; cols1++) {
+        const usedWidth1 = cols1 * bW1;
+        const remainWidth = availableWidth - usedWidth1;
+        if (remainWidth < bW2) continue;
+
+        const cols2 = Math.floor(remainWidth / bW2);
+        if (cols2 === 0) continue;
+
+        const nX1 = Math.floor(availableLength / bL1);
+        const nZ1 = Math.floor(availableHeight / bH1);
+        const count1 = Math.min(nX1 * cols1 * nZ1, effectiveMax);
+
+        const nX2 = Math.floor(availableLength / bL2);
+        const nZ2 = Math.floor(availableHeight / bH2);
+        const count2 = Math.min(nX2 * cols2 * nZ2, Math.max(0, effectiveMax - count1));
+
+        const totalSplit = count1 + count2;
+
+        if (totalSplit > bestWidthSplitCount) {
+          bestWidthSplitCount = totalSplit;
+          bestWidthSplitOrientation = count1 >= count2 ? [bL1, bW1, bH1] : [bL2, bW2, bH2];
+
+          if (generatePositions) {
+            const pos1: Omit<PackedBox, 'productId'>[] = [];
+            const pos2: Omit<PackedBox, 'productId'>[] = [];
+            const limit1 = Math.min(count1, Math.floor(visualBudget / 2));
+            const limit2 = Math.min(count2, visualBudget - limit1);
+
+            const { positions: p1 } = countAndPositions(
+              availableLength, usedWidth1, availableHeight,
+              bL1, bW1, bH1, limit1,
+              maxStackLayers === Infinity ? Infinity : maxStackLayers,
+              originX, originY, originZ,
+            );
+            pos1.push(...p1);
+
+            const { positions: p2 } = countAndPositions(
+              availableLength, remainWidth, availableHeight,
+              bL2, bW2, bH2, limit2,
+              maxStackLayers === Infinity ? Infinity : maxStackLayers,
+              originX, originY + usedWidth1, originZ,
+            );
+            pos2.push(...p2);
+
+            bestWidthSplitPositions = [...pos1, ...pos2];
+          }
+        }
+      }
+    }
+  }
+
+  // Pick the best strategy
+  const best = Math.max(strategy1Count, bestMixedCount, bestWidthSplitCount);
+
+  if (best === bestWidthSplitCount && bestWidthSplitCount > strategy1Count) {
+    return {
+      count: bestWidthSplitCount,
+      positions: bestWidthSplitPositions,
+      mainOrientation: bestWidthSplitOrientation,
+    };
+  }
+
+  if (best === bestMixedCount && bestMixedCount > strategy1Count) {
+    return {
+      count: bestMixedCount,
+      positions: bestMixedPositions,
+      mainOrientation: bestMixedOrientation,
+    };
+  }
+
   return {
-    count: main.count + residual.count,
-    positions: [...main.positions, ...residual.positions],
+    count: strategy1Count,
+    positions: strategy1Positions,
     mainOrientation: main.orientation,
   };
 }
@@ -438,7 +587,9 @@ export function calculatePacking(
   const floorOriginZ = floorClear;
 
   const bodyLength = container.innerLength - evaporatorDepth;
-  const evaHeight = container.innerHeight - floorClear - topClear;
+  // Top clearance is a visual warning line for air circulation — boxes CAN be stacked up to it
+  // but we leave a small safety margin (half the top clearance) to respect airflow
+  const evaHeight = container.innerHeight - floorClear - Math.round(topClear * 0.5);
 
   if (activeProducts.length === 0) {
     return {

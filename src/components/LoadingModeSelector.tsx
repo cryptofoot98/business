@@ -98,7 +98,7 @@ export function LoadingModeSelector({ mode, palletConfig, onModeChange, onPallet
             <div className="border-2 border-brut-black bg-brut-paper p-4 space-y-3">
               <p className="brut-section-label">Custom pallet dimensions (cm)</p>
               {[
-                { key: 'length' as const, label: 'Length' },
+                { key: 'length' as const, label: 'Depth' },
                 { key: 'width' as const, label: 'Width' },
                 { key: 'deckHeight' as const, label: 'Deck Height' },
                 { key: 'maxStackHeight' as const, label: 'Max Stack Height' },

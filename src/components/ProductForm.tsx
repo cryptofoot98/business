@@ -257,7 +257,7 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
 
             <div className="p-3 space-y-3">
               <div className="grid grid-cols-3 gap-2">
-                <NumericField label="L" value={p.length} onChange={v => onUpdate(p.id, 'length', v)} unit={unit} />
+                <NumericField label="D" value={p.length} onChange={v => onUpdate(p.id, 'length', v)} unit={unit} />
                 <NumericField label="W" value={p.width} onChange={v => onUpdate(p.id, 'width', v)} unit={unit} />
                 <NumericField label="H" value={p.height} onChange={v => onUpdate(p.id, 'height', v)} unit={unit} />
               </div>
