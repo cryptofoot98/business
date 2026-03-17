@@ -257,6 +257,9 @@ function MainApp() {
         products,
         unit,
       });
+    } catch (err) {
+      console.error('Save failed:', err);
+      alert(`Save failed: ${err instanceof Error ? err.message : JSON.stringify(err)}`);
     } finally {
       setIsSaving(false);
     }
