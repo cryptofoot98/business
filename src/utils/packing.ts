@@ -586,10 +586,11 @@ export function calculatePacking(
   const { floor: floorClear, top: topClear, evaporatorDepth } = getReeferClearances(container);
   const floorOriginZ = floorClear;
 
-  const bodyLength = container.innerLength - evaporatorDepth;
-  // Top clearance is a HARD limit — no boxes above the red MAX LOAD LINE
-  // Air must circulate above this line in reefer containers
-  const evaHeight = container.innerHeight - floorClear - topClear;
+  // Use full container length — evaporator zone is shown visually but boxes pack into it
+  const bodyLength = container.innerLength;
+  // Use full usable height — only floor clearance is a hard limit
+  // Top clearance (red line) is shown visually but factory packs to full height
+  const evaHeight = container.innerHeight - floorClear;
 
   if (activeProducts.length === 0) {
     return {
