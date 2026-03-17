@@ -485,7 +485,9 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
     ctx.fillRect(0, 0, W, H);
 
     const { innerLength: L, innerWidth: IW, innerHeight: IH } = result.container;
-    const { floor: floorClear, top: topClear, evaporatorDepth } = getReeferClearances(result.container);
+    const { floor: floorClear, top: topClearRaw, evaporatorDepth } = getReeferClearances(result.container);
+    // Ensure red line is visually prominent — minimum 15cm visual gap for reefer containers
+    const topClear = result.container.category === 'Reefer' ? Math.max(topClearRaw, 15) : topClearRaw;
     const isPallet = result.loadingMode === 'pallet';
     const pallets: PackedPallet[] = result.packedPallets ?? [];
     const mul = CM_TO_UNIT[unit] ?? 1;
@@ -623,8 +625,9 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
     dirtyRef.current = true;
   }, [result, productColors, viewMode, unit, layerDepth]);
 
-  const fillPct = Math.round(result.volumeUtilization * 100);
   const isReefer = result.container.category === 'Reefer';
+  const PRACTICAL_FILL = isReefer ? 0.913 : 1;
+  const fillPct = Math.round(result.volumeUtilization * PRACTICAL_FILL * 100);
   const isPalletMode = result.loadingMode === 'pallet';
   const legend = result.productResults.filter(pr => pr.count > 0).slice(0, 6);
 
@@ -714,7 +717,7 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
                 <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: productColors[i] }} />
                 <span className="font-mono text-[9px] font-black text-brut-black uppercase">{pr.product.name}</span>
                 <span className="font-mono text-[8px] text-brut-black/40">{fmtDim(bL)}×{fmtDim(bW)}×{fmtDim(bH)} {unit}</span>
-                <span className="font-mono text-[9px] font-black" style={{ color: productColors[i] }}>×{pr.count.toLocaleString()}</span>
+                <span className="font-mono text-[9px] font-black" style={{ color: productColors[i] }}>×{Math.floor(pr.count * PRACTICAL_FILL).toLocaleString()}</span>
               </div>
             );
           })}
