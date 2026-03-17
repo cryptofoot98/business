@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Plus, Trash2, Upload, Download, ChevronDown, ChevronUp, AlertTriangle, Layers, Bookmark, Package } from 'lucide-react';
+import { Plus, Trash2, Upload, Download, ChevronDown, ChevronUp, AlertTriangle, Layers, Bookmark, Package, X } from 'lucide-react';
 import { Product, OrientationLock } from '../types';
 import { PRODUCT_COLORS, PRODUCT_LABELS, MAX_PRODUCTS } from '../utils/colors';
 import { parseCSV, downloadCSVTemplate, CSVImportResult } from '../utils/csvImport';
@@ -142,6 +142,7 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
   const [savedModalOpen, setSavedModalOpen] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [saveErrorId, setSaveErrorId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const toggleConstraints = (id: string) => {
@@ -177,10 +178,17 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
   const handleSaveProduct = async (p: Product) => {
     if (!userId) return;
     setSavingId(p.id);
-    await saveProduct(userId, p);
-    setSavedIds(prev => new Set([...prev, p.id]));
-    setSavingId(null);
-    setTimeout(() => setSavedIds(prev => { const n = new Set(prev); n.delete(p.id); return n; }), 2000);
+    setSaveErrorId(null);
+    try {
+      await saveProduct(userId, p);
+      setSavedIds(prev => new Set([...prev, p.id]));
+      setTimeout(() => setSavedIds(prev => { const n = new Set(prev); n.delete(p.id); return n; }), 2000);
+    } catch {
+      setSaveErrorId(p.id);
+      setTimeout(() => setSaveErrorId(null), 3000);
+    } finally {
+      setSavingId(null);
+    }
   };
 
   return (
@@ -238,10 +246,13 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
                   <button
                     onClick={() => handleSaveProduct(p)}
                     disabled={savingId === p.id}
-                    title="Save product to library"
-                    className={`p-0.5 transition-colors ${savedIds.has(p.id) ? 'text-white' : 'text-white/50 hover:text-white'} disabled:opacity-40`}
+                    title={saveErrorId === p.id ? 'Save failed' : 'Save product to library'}
+                    className={`p-0.5 transition-colors ${saveErrorId === p.id ? 'text-brut-red' : savedIds.has(p.id) ? 'text-white' : 'text-white/50 hover:text-white'} disabled:opacity-40`}
                   >
-                    <Bookmark size={13} strokeWidth={2.5} fill={savedIds.has(p.id) ? 'currentColor' : 'none'} />
+                    {saveErrorId === p.id
+                      ? <X size={13} strokeWidth={2.5} />
+                      : <Bookmark size={13} strokeWidth={2.5} fill={savedIds.has(p.id) ? 'currentColor' : 'none'} />
+                    }
                   </button>
                 )}
                 {products.length > 1 && (

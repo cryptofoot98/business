@@ -19,7 +19,7 @@ export interface SavedProduct {
 }
 
 export async function saveProduct(userId: string, product: Product): Promise<void> {
-  await supabase.from('saved_products').insert({
+  const { error } = await supabase.from('saved_products').insert({
     user_id: userId,
     name: product.name,
     length: product.length,
@@ -33,6 +33,7 @@ export async function saveProduct(userId: string, product: Product): Promise<voi
     orientation_lock: product.orientationLock ?? 'none',
     priority: product.priority ?? 5,
   });
+  if (error) throw error;
 }
 
 export async function fetchSavedProducts(userId: string): Promise<SavedProduct[]> {
