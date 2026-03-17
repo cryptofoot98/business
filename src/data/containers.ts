@@ -103,7 +103,7 @@ export const CONTAINERS: ContainerType[] = [
     volume: 28.2,
     teu: 1,
     reeferFloorCm: 8,
-    reeferTopCm: 25,
+    reeferTopCm: 8,
     reeferEvaporatorDepthCm: 50,
   },
   {
@@ -123,7 +123,7 @@ export const CONTAINERS: ContainerType[] = [
     volume: 57.3,
     teu: 2,
     reeferFloorCm: 8,
-    reeferTopCm: 25,
+    reeferTopCm: 8,
     reeferEvaporatorDepthCm: 50,
   },
   {
@@ -143,7 +143,7 @@ export const CONTAINERS: ContainerType[] = [
     volume: 66.8,
     teu: 2,
     reeferFloorCm: 8,
-    reeferTopCm: 25,
+    reeferTopCm: 8,
     reeferEvaporatorDepthCm: 50,
   },
   {
