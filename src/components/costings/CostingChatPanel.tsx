@@ -38,7 +38,8 @@ function ActionBadge({ action }: { action: CostingAIAction }) {
 }
 
 export function CostingChatPanel({ inputs, results, onApplyCustomFields, onClose }: Props) {
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
+  const firstName = profile?.full_name?.split(' ')[0] ?? '';
   const [messages, setMessages] = useState<CostingChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -131,7 +132,7 @@ export function CostingChatPanel({ inputs, results, onApplyCustomFields, onClose
                 <Bot size={11} className="text-white" strokeWidth={2.5} />
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Hi! I can add custom cost fields or benefits to your costing, analyse your margins, and suggest what you might be missing. What would you like to do?
+                Hi {firstName}!
               </p>
             </div>
             <div className="flex flex-wrap gap-1.5 pl-7">

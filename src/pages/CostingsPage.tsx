@@ -743,15 +743,11 @@ export function CostingsPage() {
 
       <button
         onClick={() => setChatOpen(o => !o)}
-        className={`fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-3 border-2 font-black text-xs uppercase tracking-widest transition-all shadow-lg ${
-          chatOpen
-            ? 'border-slate-500 bg-slate-800 text-slate-300 hover:border-slate-400'
-            : 'border-sky-500 bg-sky-600 text-white hover:bg-sky-500'
-        }`}
-        style={{ boxShadow: chatOpen ? '3px 3px 0 #0f172a' : '3px 3px 0 #0c4a6e' }}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-brut-hdr flex items-center justify-center shadow-lg border-2 border-brut-hdr-dark transition-transform duration-200 hover:scale-105 active:scale-95"
+        style={{ boxShadow: '3px 3px 0px #0d0d0d' }}
+        aria-label={chatOpen ? 'Close AI assistant' : 'Open AI assistant'}
       >
-        {chatOpen ? <X size={14} strokeWidth={2.5} /> : <MessageCircle size={14} strokeWidth={2.5} />}
-        {chatOpen ? 'Close' : 'AI Assistant'}
+        {chatOpen ? <X size={22} className="text-white" /> : <MessageCircle size={22} className="text-white" />}
       </button>
 
       {chatOpen && (
