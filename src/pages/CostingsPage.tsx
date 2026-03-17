@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Save, Trash2, FolderOpen, ChevronDown, ChevronUp, RotateCcw, MessageCircle, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { CostingInputs, TradeRoute, ContainerSize, Incoterm, PurchaseCurrency, CustomField } from '../types/costing';
@@ -176,8 +176,13 @@ export function CostingsPage() {
   const [loadingList, setLoadingList] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [chatOpen, setChatOpen] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const results = useMemo(() => computeCosting(inputs), [inputs]);
+
+  useEffect(() => {
+    if (user) loadSavedList();
+  }, [user]);
   const tradeRoute = TRADE_ROUTES.find(r => r.id === inputs.tradeRoute)!;
   const isChina = inputs.tradeRoute.startsWith('china');
 
@@ -203,7 +208,8 @@ export function CostingsPage() {
     try {
       const list = await fetchCostingCalculations(user.id);
       setSavedList(list);
-    } catch {
+    } catch (err) {
+      console.error('Failed to load saved costings:', err);
     } finally {
       setLoadingList(false);
     }
@@ -212,6 +218,7 @@ export function CostingsPage() {
   async function handleSave() {
     if (!user || !saveName.trim()) return;
     setSaving(true);
+    setSaveError(null);
     try {
       const saved = await saveCostingCalculation(
         user.id,
@@ -233,7 +240,10 @@ export function CostingsPage() {
           return [saved, ...prev];
         });
       }
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setSaveError(msg);
+      console.error('Failed to save costing:', err);
     } finally {
       setSaving(false);
     }
@@ -253,7 +263,8 @@ export function CostingsPage() {
       if (currentId === id) {
         setCurrentId(null);
       }
-    } catch {
+    } catch (err) {
+      console.error('Failed to delete costing:', err);
     }
   }
 
@@ -309,6 +320,9 @@ export function CostingsPage() {
             {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
+        {saveError && (
+          <p className="w-full font-mono text-[10px] text-red-400 mt-1">{saveError}</p>
+        )}
       </div>
 
       {showSaved && (
