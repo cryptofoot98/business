@@ -135,7 +135,7 @@ export const CONTAINERS: ContainerType[] = [
     vehicleClass: 'container',
     innerLength: 1163,
     innerWidth: 246,
-    innerHeight: 244,
+    innerHeight: 254,
     outerLength: 1219,
     outerWidth: 244,
     outerHeight: 290,
@@ -143,7 +143,7 @@ export const CONTAINERS: ContainerType[] = [
     volume: 66.8,
     teu: 2,
     reeferFloorCm: 8,
-    reeferTopCm: 8,
+    reeferTopCm: 0,
     reeferEvaporatorDepthCm: 50,
   },
   {
