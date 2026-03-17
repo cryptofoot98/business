@@ -588,9 +588,8 @@ export function calculatePacking(
 
   // Use full container length — evaporator zone is shown visually but boxes pack into it
   const bodyLength = container.innerLength;
-  // Use full usable height — only floor clearance is a hard limit
-  // Top clearance (red line) is shown visually but factory packs to full height
-  const evaHeight = container.innerHeight - floorClear;
+  // Usable height = full height minus floor clearance and minimal top air gap
+  const evaHeight = container.innerHeight - floorClear - topClear;
 
   if (activeProducts.length === 0) {
     return {
