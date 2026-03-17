@@ -171,7 +171,7 @@ export async function callAIChat(
   session: string,
   context?: AIChatContext,
 ): Promise<{ message: string; action: AIChatAction | null }> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_DATABASE_URL) as string;
   const res = await fetch(`${supabaseUrl}/functions/v1/ai-chat`, {
     method: 'POST',
     headers: {

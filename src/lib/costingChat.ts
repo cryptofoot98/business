@@ -23,7 +23,7 @@ export async function callCostingAI(
   results: CostingResults,
   sessionToken: string
 ): Promise<CostingAIResponse> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_DATABASE_URL);
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
   const context = {
