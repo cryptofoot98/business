@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { ContainerSelector } from './components/ContainerSelector';
 import { ProductForm } from './components/ProductForm';
@@ -131,6 +131,8 @@ function MainApp() {
   const [chatOpen, setChatOpen] = useState(false);
   const [multiContainerIndex, setMultiContainerIndex] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
     savePrefs({
@@ -144,6 +146,36 @@ function MainApp() {
   useEffect(() => {
     saveProducts(products);
   }, [products]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const startX = touchStartX.current;
+    const startY = touchStartY.current;
+    if (startX === null || startY === null) return;
+
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const dx = endX - startX;
+    const dy = endY - startY;
+
+    touchStartX.current = null;
+    touchStartY.current = null;
+
+    // Only trigger if horizontal swipe is dominant and long enough
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+
+    if (dx > 0 && startX < 40) {
+      // Swipe right from left edge — open sidebar
+      setSidebarOpen(true);
+    } else if (dx < 0) {
+      // Swipe left anywhere — close sidebar
+      setSidebarOpen(false);
+    }
+  }, []);
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there';
 
@@ -311,7 +343,11 @@ function MainApp() {
   const [activePage, setActivePage] = useState<'calculator' | 'costings'>('calculator');
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-brut-bg text-brut-black">
+    <div
+      className="flex flex-col h-screen overflow-hidden bg-brut-bg text-brut-black"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <Header
         unit={unit}
         onUnitChange={setUnit}
