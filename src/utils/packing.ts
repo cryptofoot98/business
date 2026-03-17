@@ -2,7 +2,7 @@ import { ContainerType, LoadingMode, MultiContainerResult, PackedBox, PackedPall
 
 type Orientation = [number, number, number];
 
-const MAX_VISUAL_BOXES = 1200;
+const MAX_VISUAL_BOXES = 4000;
 const MAX_CONTAINERS = 50;
 
 function getOrientations(l: number, w: number, h: number): Orientation[] {
@@ -607,17 +607,33 @@ export function calculatePacking(
   const allPackedBoxes: PackedBox[] = [];
   const productResults: ProductResult[] = [];
 
+  // Calculate max boxes allowed by payload weight
+  const totalBoxWeight = sortedProducts.reduce((s, p) => s + (p.grossWeight > 0 ? p.grossWeight : 0), 0);
+  const avgBoxWeight = sortedProducts.length > 0 && totalBoxWeight > 0
+    ? totalBoxWeight / sortedProducts.length
+    : 0;
+  const payloadLimit = container.maxPayload;
+  const maxBoxesByWeight = avgBoxWeight > 0
+    ? Math.floor(payloadLimit / (totalBoxWeight / sortedProducts.length))
+    : Infinity;
+
   if (sortedProducts.length === 1) {
     const p = sortedProducts[0];
     const orientations = getOrientationsForProduct(p);
     const maxStackLayers = p.stackable === false || p.fragile === true ? 1 : Infinity;
     const quantityLimit = p.quantity && p.quantity > 0 ? p.quantity : Infinity;
 
+    // Apply payload weight limit per product
+    const weightLimit = p.grossWeight > 0
+      ? Math.floor(container.maxPayload / p.grossWeight)
+      : Infinity;
+    const effectiveLimit = Math.min(quantityLimit, weightLimit);
+
     let visualBudget = MAX_VISUAL_BOXES;
 
     const bodyResult = packBlockWithResidual(
       bodyLength, container.innerWidth, evaHeight,
-      orientations, maxStackLayers, quantityLimit,
+      orientations, maxStackLayers, effectiveLimit,
       true, evaporatorDepth, 0, floorOriginZ,
       visualBudget,
     );
@@ -626,7 +642,7 @@ export function calculatePacking(
 
     const evaResult = packBlockWithResidual(
       evaporatorDepth, container.innerWidth, evaHeight,
-      orientations, maxStackLayers, Math.max(0, quantityLimit - bodyResult.count),
+      orientations, maxStackLayers, Math.max(0, effectiveLimit - bodyResult.count),
       visualBudget > 0, 0, 0, floorOriginZ,
       Math.max(0, visualBudget),
     );
