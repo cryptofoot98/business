@@ -256,42 +256,44 @@ function packBlockWithResidual(
   }
 
   // Strategy 3: mixed orientation — split along WIDTH into two column groups
+  // This handles cases like "2 columns upright + 6 columns flat" as the factory did
   let bestWidthSplitCount = 0;
   let bestWidthSplitPositions: Omit<PackedBox, 'productId'>[] = [];
   let bestWidthSplitOrientation: Orientation = orientations[0] ?? [1, 1, 1];
 
-  for (const [bL1, bW1, bH1] of orientations) {
-    for (const [bL2, bW2, bH2] of orientations) {
-      if (bL1 === bL2 && bW1 === bW2 && bH1 === bH2) continue;
+  for (let oi1 = 0; oi1 < orientations.length; oi1++) {
+    const [bL1, bW1, bH1] = orientations[oi1];
+    const nX1 = Math.floor(availableLength / bL1);
+    const nZ1 = Math.floor(availableHeight / bH1);
+    if (nX1 === 0 || nZ1 === 0) continue;
 
-      // Try all possible width splits
+    for (let oi2 = 0; oi2 < orientations.length; oi2++) {
+      if (oi1 === oi2) continue;
+      const [bL2, bW2, bH2] = orientations[oi2];
+      const nX2 = Math.floor(availableLength / bL2);
+      const nZ2 = Math.floor(availableHeight / bH2);
+      if (nX2 === 0 || nZ2 === 0) continue;
+
+      // Try all possible numbers of columns for orientation 1
       const maxCols1 = Math.floor(availableWidth / bW1);
-      for (let cols1 = 1; cols1 < maxCols1; cols1++) {
+      for (let cols1 = 1; cols1 <= maxCols1; cols1++) {
         const usedWidth1 = cols1 * bW1;
         const remainWidth = availableWidth - usedWidth1;
-        if (remainWidth < bW2) continue;
+        if (remainWidth <= 0) break;
 
         const cols2 = Math.floor(remainWidth / bW2);
         if (cols2 === 0) continue;
 
-        const nX1 = Math.floor(availableLength / bL1);
-        const nZ1 = Math.floor(availableHeight / bH1);
-        const count1 = Math.min(nX1 * cols1 * nZ1, effectiveMax);
-
-        const nX2 = Math.floor(availableLength / bL2);
-        const nZ2 = Math.floor(availableHeight / bH2);
-        const count2 = Math.min(nX2 * cols2 * nZ2, Math.max(0, effectiveMax - count1));
-
-        const totalSplit = count1 + count2;
+        const count1 = nX1 * cols1 * nZ1;
+        const count2 = nX2 * cols2 * nZ2;
+        const totalSplit = Math.min(count1 + count2, effectiveMax);
 
         if (totalSplit > bestWidthSplitCount) {
           bestWidthSplitCount = totalSplit;
           bestWidthSplitOrientation = count1 >= count2 ? [bL1, bW1, bH1] : [bL2, bW2, bH2];
 
           if (generatePositions) {
-            const pos1: Omit<PackedBox, 'productId'>[] = [];
-            const pos2: Omit<PackedBox, 'productId'>[] = [];
-            const limit1 = Math.min(count1, Math.floor(visualBudget / 2));
+            const limit1 = Math.min(count1, Math.floor(visualBudget * 0.5));
             const limit2 = Math.min(count2, visualBudget - limit1);
 
             const { positions: p1 } = countAndPositions(
@@ -300,7 +302,6 @@ function packBlockWithResidual(
               maxStackLayers === Infinity ? Infinity : maxStackLayers,
               originX, originY, originZ,
             );
-            pos1.push(...p1);
 
             const { positions: p2 } = countAndPositions(
               availableLength, remainWidth, availableHeight,
@@ -308,9 +309,8 @@ function packBlockWithResidual(
               maxStackLayers === Infinity ? Infinity : maxStackLayers,
               originX, originY + usedWidth1, originZ,
             );
-            pos2.push(...p2);
 
-            bestWidthSplitPositions = [...pos1, ...pos2];
+            bestWidthSplitPositions = [...p1, ...p2];
           }
         }
       }
