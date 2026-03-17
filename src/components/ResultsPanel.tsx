@@ -301,7 +301,7 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
                   )}
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-black text-white leading-none">{pr.count.toLocaleString()}</span>
+                  <span className="text-2xl font-black text-white leading-none">{Math.floor(pr.count * PRACTICAL_FILL).toLocaleString()}</span>
                   {hasQty && (
                     <span className="font-mono text-[10px] text-white/70">/{pr.product.quantity}</span>
                   )}

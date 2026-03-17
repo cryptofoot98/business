@@ -564,7 +564,8 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
         const pr = result.productResults[i];
         if (pr.count === 0) continue;
         const [r, g, b] = colorMap.current[pr.product.id] ?? [198, 51, 32];
-        const label = `${pr.product.name}: ${pr.count.toLocaleString()} units`;
+        const practicalCnt = result.container.category === 'Reefer' ? Math.floor(pr.count * 0.913) : pr.count;
+        const label = `${pr.product.name}: ${practicalCnt.toLocaleString()} units`;
 
         ctx.font = 'bold 10px "Courier New", monospace';
         const tw = ctx.measureText(label).width;
