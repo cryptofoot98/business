@@ -586,8 +586,7 @@ export function calculatePacking(
   const { floor: floorClear, top: topClear, evaporatorDepth } = getReeferClearances(container);
   const floorOriginZ = floorClear;
 
-  // Use full container length — evaporator zone is shown visually but boxes pack into it
-  const bodyLength = container.innerLength;
+  const bodyLength = container.innerLength - evaporatorDepth;
   // Usable height = full height minus floor clearance and minimal top air gap
   const evaHeight = container.innerHeight - floorClear - topClear;
 
