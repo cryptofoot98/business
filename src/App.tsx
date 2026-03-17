@@ -56,6 +56,7 @@ function LoadingScreen() {
 }
 
 const PREFS_KEY = 'sc_prefs';
+const PRODUCTS_KEY = 'sc_products';
 
 interface StoredPrefs {
   containerId?: string;
@@ -80,6 +81,24 @@ function savePrefs(prefs: StoredPrefs) {
   }
 }
 
+function loadSavedProducts(): Product[] | null {
+  try {
+    const raw = localStorage.getItem(PRODUCTS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function saveProducts(products: Product[]) {
+  try {
+    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+  } catch {
+    // ignore storage errors
+  }
+}
+
 function MainApp() {
   const { user, session, profile } = useAuth();
 
@@ -88,7 +107,20 @@ function MainApp() {
   const [selectedContainer, setSelectedContainer] = useState<ContainerType>(
     () => CONTAINERS.find(c => c.id === prefs.containerId) ?? CONTAINERS[1],
   );
-  const [products, setProducts] = useState<Product[]>([makeProduct(0)]);
+  const [products, setProducts] = useState<Product[]>(() => {
+    const saved = loadSavedProducts();
+    if (saved && saved.length > 0) {
+      return saved.map((p, idx) => ({
+        stackable: true,
+        fragile: false,
+        orientationLock: 'none' as const,
+        priority: 5,
+        ...p,
+        color: PRODUCT_COLORS[idx % PRODUCT_COLORS.length],
+      }));
+    }
+    return [makeProduct(0)];
+  });
   const [unit, setUnit] = useState<UnitSystem>(prefs.unit ?? 'cm');
   const [loadingMode, setLoadingMode] = useState<LoadingMode>(prefs.loadingMode ?? 'handload');
   const [palletConfig, setPalletConfig] = useState<PalletConfig>(
@@ -108,6 +140,10 @@ function MainApp() {
       palletId: palletConfig.id,
     });
   }, [selectedContainer.id, unit, loadingMode, palletConfig.id]);
+
+  useEffect(() => {
+    saveProducts(products);
+  }, [products]);
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there';
 
@@ -295,23 +331,23 @@ function MainApp() {
       {activePage === 'calculator' && <div className="flex flex-1 overflow-hidden relative">
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 z-20 md:hidden"
+            className="fixed inset-0 bg-black/50 z-20 lg:hidden"
             style={{ top: 56 }}
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         <aside className={`
-          fixed md:relative
-          left-0 md:left-auto
-          top-14 bottom-0 md:top-auto md:bottom-auto
-          z-30 md:z-auto
+          fixed lg:relative
+          left-0 lg:left-auto
+          top-14 bottom-0 lg:top-auto lg:bottom-auto
+          z-30 lg:z-auto
           w-80 shrink-0
           border-r-3 border-brut-hdr-dark
           flex flex-col overflow-hidden
           bg-brut-sidebar dark-chrome
           transition-transform duration-300 ease-in-out
-          md:translate-x-0
+          lg:translate-x-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
           <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-brut">
