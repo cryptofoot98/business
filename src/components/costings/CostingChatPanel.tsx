@@ -115,8 +115,8 @@ export function CostingChatPanel({ inputs, results, onApplyCustomFields, onClose
     >
       <div className="shrink-0 px-4 py-3 bg-slate-800 border-b-2 border-slate-700 flex items-center justify-between">
         <div>
-          <h4 className="font-black text-xs uppercase tracking-widest text-white">Costing AI</h4>
-          <p className="font-mono text-[9px] text-slate-400 mt-0.5">Ask about costs, margins, or custom fields</p>
+          <h4 className="font-black text-xs uppercase tracking-widest text-white">Costings Advisor</h4>
+          <p className="font-mono text-[9px] text-slate-400 mt-0.5">Costs · Margins · Duties · Custom fields</p>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -132,7 +132,7 @@ export function CostingChatPanel({ inputs, results, onApplyCustomFields, onClose
                 <Bot size={11} className="text-white" strokeWidth={2.5} />
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Hi {firstName}!
+                Hi {firstName}! I can see your current costing. Ask me to add custom fields, analyse your margins, check duties, or suggest what costs you might be missing.
               </p>
             </div>
             <div className="flex flex-wrap gap-1.5 pl-7">
