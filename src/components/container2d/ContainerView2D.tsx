@@ -267,18 +267,26 @@ function drawBoxesFront(
   boxes: { x: number; y: number; z: number; l: number; w: number; h: number; productId: string }[],
   colorMap: Record<string, [number, number, number]>,
   depthLimit: number,
+  topClear = 0,
 ) {
   const filtered = boxes.filter(b => b.y < depthLimit);
   const sorted = [...filtered].sort((a, b) => a.x - b.x);
+  const maxZ = containerH - topClear; // hard clip at red line
 
   for (const box of sorted) {
     const depthT = Math.min(1, box.x / Math.max(containerL, 1));
     const alpha = 0.22 + 0.68 * depthT;
 
     const bx = cx + box.y * scale + GAP / 2;
-    const bh = box.h * scale - GAP;
     const bw = box.w * scale - GAP;
-    const by = cy + (containerH - box.z - box.h) * scale + GAP / 2;
+
+    // Clip box top at the MAX LOAD LINE
+    const clippedTop = Math.min(box.z + box.h, maxZ);
+    const clippedH = clippedTop - box.z;
+    if (clippedH <= 0) continue;
+
+    const bh = clippedH * scale - GAP;
+    const by = cy + (containerH - box.z - clippedH) * scale + GAP / 2;
 
     if (bw < 1 || bh < 1) continue;
 
@@ -300,9 +308,11 @@ function drawBoxesSide(
   boxes: { x: number; y: number; z: number; l: number; w: number; h: number; productId: string }[],
   colorMap: Record<string, [number, number, number]>,
   depthLimit: number,
+  topClear = 0,
 ) {
   const filtered = boxes.filter(b => b.y < depthLimit);
   const sorted = [...filtered].sort((a, b) => a.y - b.y);
+  const maxZ = containerH - topClear; // hard clip at red line
 
   for (const box of sorted) {
     const depthT = Math.min(1, box.y / Math.max(containerW, 1));
@@ -310,8 +320,14 @@ function drawBoxesSide(
 
     const bx = cx + box.x * scale + GAP / 2;
     const bw = box.l * scale - GAP;
-    const bh = box.h * scale - GAP;
-    const by = cy + (containerH - box.z - box.h) * scale + GAP / 2;
+
+    // Clip box top at the MAX LOAD LINE
+    const clippedTop = Math.min(box.z + box.h, maxZ);
+    const clippedH = clippedTop - box.z;
+    if (clippedH <= 0) continue;
+
+    const bh = clippedH * scale - GAP;
+    const by = cy + (containerH - box.z - clippedH) * scale + GAP / 2;
 
     if (bw < 1 || bh < 1) continue;
 
@@ -492,7 +508,7 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
       drawReeferZones(ctx, cx, cy, cw, ch, scale, floorClear, topClear, evaporatorDepth, false, true);
       if (isPallet && pallets.length > 0) drawPalletsFront(ctx, cx, cy, cw, ch, scale, IH, 14.4, pallets);
       const depthLimit = (layerDepth / 100) * IW;
-      drawBoxesFront(ctx, cx, cy, scale, L, IH, result.packedBoxes, colorMap.current, depthLimit);
+      drawBoxesFront(ctx, cx, cy, scale, L, IH, result.packedBoxes, colorMap.current, depthLimit, topClear);
       if (hasCog) drawCenterOfGravity(ctx, cx, cy, scale, IW, IH, cogX > 0 ? IW / 2 : IW / 2, cogY, 'x', 'z');
       drawReeferTopLineOverlay(ctx, cx, cy, cw, scale, topClear);
       drawDoors(ctx, cx, cy, cw, ch);
@@ -512,7 +528,7 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
       drawContainer(ctx, cx, cy, cw, ch);
       drawReeferZones(ctx, cx, cy, cw, ch, scale, floorClear, topClear, evaporatorDepth, true);
       const depthLimit = (layerDepth / 100) * IW;
-      drawBoxesSide(ctx, cx, cy, scale, IW, IH, result.packedBoxes, colorMap.current, depthLimit);
+      drawBoxesSide(ctx, cx, cy, scale, IW, IH, result.packedBoxes, colorMap.current, depthLimit, topClear);
       if (hasCog) drawCenterOfGravity(ctx, cx, cy, scale, L, IH, cogX, cogY, 'length', 'height');
       drawDoors(ctx, cx, cy, cw, ch);
       drawDimLabel(ctx, cx, cy + ch + 32, cx + cw, cy + ch + 32, fmt(L), 'bottom');

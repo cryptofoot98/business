@@ -587,9 +587,9 @@ export function calculatePacking(
   const floorOriginZ = floorClear;
 
   const bodyLength = container.innerLength - evaporatorDepth;
-  // Top clearance is shown as a visual warning line only — does not reduce stacking height
-  // Boxes can physically be stacked up to this line; airflow is maintained by the T-floor channel
-  const evaHeight = container.innerHeight - floorClear;
+  // Top clearance is a HARD limit — no boxes above the red MAX LOAD LINE
+  // Air must circulate above this line in reefer containers
+  const evaHeight = container.innerHeight - floorClear - topClear;
 
   if (activeProducts.length === 0) {
     return {
