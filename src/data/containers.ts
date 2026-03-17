@@ -134,7 +134,7 @@ export const CONTAINERS: ContainerType[] = [
     category: 'Reefer',
     vehicleClass: 'container',
     innerLength: 1163,
-    innerWidth: 235,
+    innerWidth: 246,
     innerHeight: 244,
     outerLength: 1219,
     outerWidth: 244,
