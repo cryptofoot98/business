@@ -12,6 +12,7 @@ import { ChatPanel } from './components/chat/ChatPanel';
 import { AuthPage } from './pages/AuthPage';
 import { LandingPage } from './pages/LandingPage';
 import { CostingsPage } from './pages/CostingsPage';
+import { PoultryModelPage } from './pages/PoultryModelPage';
 import { useAuth } from './contexts/AuthContext';
 import { ContainerType, LoadingMode, PalletConfig, Product, STANDARD_PALLETS, UnitSystem } from './types';
 import { CONTAINERS } from './data/containers';
@@ -343,7 +344,7 @@ function MainApp() {
 
   const activeProductColors = products.map(p => p.color);
 
-  const [activePage, setActivePage] = useState<'calculator' | 'costings'>('calculator');
+  const [activePage, setActivePage] = useState<'calculator' | 'costings' | 'poultry'>('calculator');
 
   return (
     <div
@@ -364,6 +365,12 @@ function MainApp() {
       {activePage === 'costings' && (
         <div className="flex-1 overflow-hidden">
           <CostingsPage />
+        </div>
+      )}
+
+      {activePage === 'poultry' && (
+        <div className="flex-1 overflow-hidden">
+          <PoultryModelPage />
         </div>
       )}
 

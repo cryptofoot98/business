@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { LogOut, Bookmark, Menu, X, SlidersHorizontal, Calculator, Container } from 'lucide-react';
+import { LogOut, Bookmark, Menu, X, SlidersHorizontal, Calculator, Container, ChefHat } from 'lucide-react';
 import { UnitSystem } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
-type AppPage = 'calculator' | 'costings';
+type AppPage = 'calculator' | 'costings' | 'poultry';
 
 interface Props {
   unit: UnitSystem;
@@ -75,6 +75,18 @@ export function Header({ unit, onUnitChange, onOpenSaves, sidebarOpen, onToggleS
           >
             <Calculator size={12} strokeWidth={2.5} />
             <span>Costings</span>
+          </button>
+          <button
+            onClick={() => onNavigate('poultry')}
+            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-black uppercase tracking-wider border-l-2 border-white/20 transition-colors ${
+              activePage === 'poultry'
+                ? 'bg-white text-brut-hdr'
+                : 'bg-transparent text-white/50 hover:text-white'
+            }`}
+            style={activePage !== 'poultry' ? { background: 'rgba(255,255,255,0.06)' } : {}}
+          >
+            <ChefHat size={12} strokeWidth={2.5} />
+            <span>Poultry</span>
           </button>
         </div>
       </div>
@@ -163,6 +175,16 @@ export function Header({ unit, onUnitChange, onOpenSaves, sidebarOpen, onToggleS
                 >
                   <Calculator size={11} strokeWidth={2.5} />
                   Costings
+                </button>
+                <button
+                  onClick={() => { onNavigate('poultry'); setMobileMenuOpen(false); }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-black uppercase tracking-wider border-l-2 border-white/30 transition-colors ${
+                    activePage === 'poultry' ? 'bg-white text-brut-hdr' : 'bg-transparent text-white/50 hover:text-white'
+                  }`}
+                  style={activePage !== 'poultry' ? { background: 'rgba(255,255,255,0.06)' } : {}}
+                >
+                  <ChefHat size={11} strokeWidth={2.5} />
+                  Poultry
                 </button>
               </div>
             </div>
