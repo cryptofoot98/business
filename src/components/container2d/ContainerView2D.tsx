@@ -485,9 +485,7 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
     ctx.fillRect(0, 0, W, H);
 
     const { innerLength: L, innerWidth: IW, innerHeight: IH } = result.container;
-    const { floor: floorClear, top: topClearRaw, evaporatorDepth } = getReeferClearances(result.container);
-    // Ensure red line is visually prominent — minimum 15cm visual gap for reefer containers
-    const topClear = result.container.category === 'Reefer' ? Math.max(topClearRaw, 15) : topClearRaw;
+    const { floor: floorClear, top: topClear, evaporatorDepth } = getReeferClearances(result.container);
     const isPallet = result.loadingMode === 'pallet';
     const pallets: PackedPallet[] = result.packedPallets ?? [];
     const mul = CM_TO_UNIT[unit] ?? 1;

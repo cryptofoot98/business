@@ -602,19 +602,17 @@ export function calculatePacking(
     return buildPalletResult(container, activeProducts, palletConfig, floorClear);
   }
 
-  const sortedProducts = [...activeProducts].sort((a, b) => (b.priority ?? 5) - (a.priority ?? 5));
+  // Sort by gross weight DESCENDING — heaviest loaded first (back of container)
+  // lighter products loaded last (near door) for stability and easy access
+  const sortedProducts = [...activeProducts].sort((a, b) => {
+    const weightDiff = (b.grossWeight ?? 0) - (a.grossWeight ?? 0);
+    if (weightDiff !== 0) return weightDiff;
+    return (b.priority ?? 5) - (a.priority ?? 5);
+  });
   const allPackedBoxes: PackedBox[] = [];
   const productResults: ProductResult[] = [];
 
-  // Calculate max boxes allowed by payload weight
-  const totalBoxWeight = sortedProducts.reduce((s, p) => s + (p.grossWeight > 0 ? p.grossWeight : 0), 0);
-  const avgBoxWeight = sortedProducts.length > 0 && totalBoxWeight > 0
-    ? totalBoxWeight / sortedProducts.length
-    : 0;
   const payloadLimit = container.maxPayload;
-  const maxBoxesByWeight = avgBoxWeight > 0
-    ? Math.floor(payloadLimit / (totalBoxWeight / sortedProducts.length))
-    : Infinity;
 
   if (sortedProducts.length === 1) {
     const p = sortedProducts[0];
