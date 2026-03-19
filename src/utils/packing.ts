@@ -602,12 +602,12 @@ export function calculatePacking(
     return buildPalletResult(container, activeProducts, palletConfig, floorClear);
   }
 
-  // Sort by gross weight DESCENDING — heaviest loaded first (back of container)
-  // lighter products loaded last (near door) for stability and easy access
+  // Sort by gross weight ASCENDING — lightest loaded first (back of container)
+  // heaviest loaded last (near door) for cold chain/reefer best practice
   const sortedProducts = [...activeProducts].sort((a, b) => {
-    const weightDiff = (b.grossWeight ?? 0) - (a.grossWeight ?? 0);
+    const weightDiff = (a.grossWeight ?? 0) - (b.grossWeight ?? 0);
     if (weightDiff !== 0) return weightDiff;
-    return (b.priority ?? 5) - (a.priority ?? 5);
+    return (a.priority ?? 5) - (b.priority ?? 5);
   });
   const allPackedBoxes: PackedBox[] = [];
   const productResults: ProductResult[] = [];

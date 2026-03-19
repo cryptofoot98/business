@@ -224,8 +224,8 @@ export function printLoadPlan(result: PackingResult, unit: string): void {
 
 <!-- Loading sequence note -->
 <div style="margin-bottom:20px;padding:10px 14px;background:#fafafa;border:1px solid #e0e0e0;border-left:3px solid #1a1a1a;font-size:10px;color:#555;">
-  <strong style="color:#1a1a1a;">Loading sequence:</strong> Load heaviest products first · From back of container towards door · Distribute weight evenly across floor width
-  ${isReefer ? ' · Maintain airflow gaps · Do not exceed MAX LOAD LINE' : ''}
+  <strong style="color:#1a1a1a;">Loading sequence:</strong> Load lightest products first (rear of container) · Heaviest products loaded last (near door) · Distribute weight evenly across floor width · Load from rear towards door
+  ${isReefer ? ' · Maintain airflow gaps above MAX LOAD LINE · Ensure T-floor air channels are unobstructed' : ''}
 </div>
 
 <!-- Product grids -->
