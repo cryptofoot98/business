@@ -4,7 +4,6 @@ import { PRODUCT_LABELS } from '../utils/colors';
 import { RotateCcw, Printer, Download, FileText, Lightbulb, Info } from 'lucide-react';
 import { getPracticalCount } from '../utils/loadPlanPDF';
 
-const PRACTICAL_FILL = 0.913;
 import { exportResultsCSV, printLoadReport } from '../utils/exportUtils';
 import { printLoadPlan } from '../utils/loadPlanPDF';
 
@@ -93,10 +92,8 @@ function UtilBar({ value, color }: { value: number; color: string }) {
 
 export function ResultsPanel({ result, productColors, unit }: Props) {
   const [showVolTooltip, setShowVolTooltip] = useState(false);
-  const { container, productResults, volumeUtilization, weightUtilization, totalGrossWeight, totalNetWeight } = result;
-  const isReefer = container.category === 'Reefer';
-  const practicalCount = getPracticalCount(result);
-  const totalCount = practicalCount;
+  const { container, productResults, totalCount, volumeUtilization, weightUtilization, totalGrossWeight, totalNetWeight } = result;
+  void getPracticalCount; // kept for PDF use
 
   if (productResults.length === 0) {
     return (
@@ -194,19 +191,19 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
                 </button>
                 {showVolTooltip && (
                   <div className="absolute bottom-6 left-0 z-50 w-64 p-3 bg-brut-black text-white text-[10px] leading-relaxed border-2 border-brut-black shadow-lg">
-                    <strong>Why can't utilization reach 100%?</strong><br/>
-                    A practical fill rate of 91.3% is applied to account for:<br/>
-                    • Airflow gaps required in reefer containers<br/>
-                    • Loading tolerances and worker access<br/>
-                    • Structural stability between stacks<br/>
-                    • Small voids at container edges<br/>
-                    This reflects what is physically achievable in real loading conditions.
+                    <strong>Theoretical maximum</strong><br/>
+                    This shows the theoretical maximum based on box dimensions and container size.<br/><br/>
+                    Real loading may vary by ±5-10% depending on:<br/>
+                    • Carrier vessel inner dimensions<br/>
+                    • Airflow gaps in reefer containers<br/>
+                    • Loading technique and worker access<br/>
+                    • Box compression under weight
                   </div>
                 )}
               </div>
               <span className="font-mono text-[10px] font-bold text-brut-black/40">{(result.containerVolumeCm3 / 1_000_000).toFixed(2)} m³ capacity</span>
             </div>
-            <UtilBar value={isReefer ? volumeUtilization * 0.913 : volumeUtilization} color={volColor} />
+            <UtilBar value={volumeUtilization} color={volColor} />
           </div>
           <div>
             <div className="flex justify-between items-baseline mb-2">
@@ -303,7 +300,7 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
                   )}
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-black text-white leading-none">{Math.floor(pr.count * PRACTICAL_FILL).toLocaleString()}</span>
+                  <span className="text-2xl font-black text-white leading-none">{pr.count.toLocaleString()}</span>
                   {hasQty && (
                     <span className="font-mono text-[10px] text-white/70">/{pr.product.quantity}</span>
                   )}

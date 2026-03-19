@@ -562,8 +562,7 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
         const pr = result.productResults[i];
         if (pr.count === 0) continue;
         const [r, g, b] = colorMap.current[pr.product.id] ?? [198, 51, 32];
-        const practicalCnt = result.container.category === 'Reefer' ? Math.floor(pr.count * 0.913) : pr.count;
-        const label = `${pr.product.name}: ${practicalCnt.toLocaleString()} units`;
+        const label = `${pr.product.name}: ${pr.count.toLocaleString()} units`;
 
         ctx.font = 'bold 10px "Courier New", monospace';
         const tw = ctx.measureText(label).width;
@@ -625,8 +624,7 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
   }, [result, productColors, viewMode, unit, layerDepth]);
 
   const isReefer = result.container.category === 'Reefer';
-  const PRACTICAL_FILL = isReefer ? 0.913 : 1;
-  const fillPct = Math.round(result.volumeUtilization * PRACTICAL_FILL * 100);
+  const fillPct = Math.round(result.volumeUtilization * 100);
   const isPalletMode = result.loadingMode === 'pallet';
   const legend = result.productResults.filter(pr => pr.count > 0).slice(0, 6);
 
@@ -716,7 +714,7 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
                 <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: productColors[i] }} />
                 <span className="font-mono text-[9px] font-black text-brut-black uppercase">{pr.product.name}</span>
                 <span className="font-mono text-[8px] text-brut-black/40">{fmtDim(bL)}×{fmtDim(bW)}×{fmtDim(bH)} {unit}</span>
-                <span className="font-mono text-[9px] font-black" style={{ color: productColors[i] }}>×{Math.floor(pr.count * PRACTICAL_FILL).toLocaleString()}</span>
+                <span className="font-mono text-[9px] font-black" style={{ color: productColors[i] }}>×{pr.count.toLocaleString()}</span>
               </div>
             );
           })}

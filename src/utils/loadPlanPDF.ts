@@ -1,11 +1,6 @@
 import { PackingResult, PackedBox } from '../types';
 
-const PRACTICAL_FILL = 0.913; // 91.3% practical fill rate for reefer containers
-
 export function getPracticalCount(result: PackingResult): number {
-  if (result.container.category === 'Reefer') {
-    return Math.floor(result.totalCount * PRACTICAL_FILL);
-  }
   return result.totalCount;
 }
 
