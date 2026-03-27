@@ -167,7 +167,8 @@ function packBlockWithResidual(
   originZ: number,
   visualBudget: number,
 ): { count: number; positions: Omit<PackedBox, 'productId'>[]; mainOrientation: Orientation } {
-  // Strategy 1: simple block + residual (original)
+
+  // Strategy 1: simple block + length residual
   const main = packBlock(
     availableLength, availableWidth, availableHeight,
     orientations, maxStackLayers, effectiveMax,
@@ -191,17 +192,15 @@ function packBlockWithResidual(
   const strategy1Count = main.count + residual.count;
   const strategy1Positions = [...main.positions, ...residual.positions];
 
-  // Strategy 2: mixed orientation — try splitting height into two zones with different orientations
-  // e.g. upright columns + flat columns, or lower layers one orientation, upper layers another
-  let bestMixedCount = 0;
-  let bestMixedPositions: Omit<PackedBox, 'productId'>[] = [];
-  let bestMixedOrientation: Orientation = orientations[0] ?? [1, 1, 1];
+  // Strategy 2: height split — lower layers use one orientation, upper layers another
+  let bestHeightSplitCount = 0;
+  let bestHeightSplitPositions: Omit<PackedBox, 'productId'>[] = [];
+  let bestHeightSplitOrientation: Orientation = orientations[0] ?? [1, 1, 1];
 
   for (const [bL1, bW1, bH1] of orientations) {
     for (const [bL2, bW2, bH2] of orientations) {
-      if (bL1 === bL2 && bW1 === bW2 && bH1 === bH2) continue; // same orientation, skip
+      if (bL1 === bL2 && bW1 === bW2 && bH1 === bH2) continue;
 
-      // Split height: lower zone uses orientation 1, upper zone uses orientation 2
       const nZLow = Math.floor(availableHeight / bH1);
       if (nZLow === 0) continue;
 
@@ -212,8 +211,7 @@ function packBlockWithResidual(
 
         const nXLow = Math.floor(availableLength / bL1);
         const nYLow = Math.floor(availableWidth / bW1);
-        const nZLowActual = lowLayers;
-        const countLow = Math.min(nXLow * nYLow * nZLowActual, effectiveMax);
+        const countLow = Math.min(nXLow * nYLow * lowLayers, effectiveMax);
 
         const nXHigh = Math.floor(availableLength / bL2);
         const nYHigh = Math.floor(availableWidth / bW2);
@@ -222,13 +220,11 @@ function packBlockWithResidual(
 
         const totalMixed = countLow + countHigh;
 
-        if (totalMixed > bestMixedCount) {
-          bestMixedCount = totalMixed;
-          bestMixedOrientation = countLow >= countHigh ? [bL1, bW1, bH1] : [bL2, bW2, bH2];
+        if (totalMixed > bestHeightSplitCount) {
+          bestHeightSplitCount = totalMixed;
+          bestHeightSplitOrientation = countLow >= countHigh ? [bL1, bW1, bH1] : [bL2, bW2, bH2];
 
           if (generatePositions) {
-            const posLow: Omit<PackedBox, 'productId'>[] = [];
-            const posHigh: Omit<PackedBox, 'productId'>[] = [];
             const limitLow = Math.min(countLow, Math.floor(visualBudget / 2));
             const limitHigh = Math.min(countHigh, visualBudget - limitLow);
 
@@ -238,7 +234,6 @@ function packBlockWithResidual(
               maxStackLayers === Infinity ? Infinity : maxStackLayers,
               originX, originY, originZ,
             );
-            posLow.push(...pl);
 
             const { positions: ph } = countAndPositions(
               availableLength, availableWidth, highHeight,
@@ -246,17 +241,15 @@ function packBlockWithResidual(
               maxStackLayers === Infinity ? Infinity : maxStackLayers,
               originX, originY, originZ + lowHeight,
             );
-            posHigh.push(...ph);
 
-            bestMixedPositions = [...posLow, ...posHigh];
+            bestHeightSplitPositions = [...pl, ...ph];
           }
         }
       }
     }
   }
 
-  // Strategy 3: mixed orientation — split along WIDTH into two column groups
-  // This handles cases like "2 columns upright + 6 columns flat" as the factory did
+  // Strategy 3: width split — left columns use one orientation, right columns another
   let bestWidthSplitCount = 0;
   let bestWidthSplitPositions: Omit<PackedBox, 'productId'>[] = [];
   let bestWidthSplitOrientation: Orientation = orientations[0] ?? [1, 1, 1];
@@ -264,17 +257,16 @@ function packBlockWithResidual(
   for (let oi1 = 0; oi1 < orientations.length; oi1++) {
     const [bL1, bW1, bH1] = orientations[oi1];
     const nX1 = Math.floor(availableLength / bL1);
-    const nZ1 = Math.floor(availableHeight / bH1);
+    const nZ1 = maxStackLayers === Infinity ? Math.floor(availableHeight / bH1) : Math.min(Math.floor(availableHeight / bH1), maxStackLayers);
     if (nX1 === 0 || nZ1 === 0) continue;
 
     for (let oi2 = 0; oi2 < orientations.length; oi2++) {
       if (oi1 === oi2) continue;
       const [bL2, bW2, bH2] = orientations[oi2];
       const nX2 = Math.floor(availableLength / bL2);
-      const nZ2 = Math.floor(availableHeight / bH2);
+      const nZ2 = maxStackLayers === Infinity ? Math.floor(availableHeight / bH2) : Math.min(Math.floor(availableHeight / bH2), maxStackLayers);
       if (nX2 === 0 || nZ2 === 0) continue;
 
-      // Try all possible numbers of columns for orientation 1
       const maxCols1 = Math.floor(availableWidth / bW1);
       for (let cols1 = 1; cols1 <= maxCols1; cols1++) {
         const usedWidth1 = cols1 * bW1;
@@ -317,30 +309,82 @@ function packBlockWithResidual(
     }
   }
 
+  // Strategy 4: length split — front rows use one orientation, back rows another
+  let bestLengthSplitCount = 0;
+  let bestLengthSplitPositions: Omit<PackedBox, 'productId'>[] = [];
+  let bestLengthSplitOrientation: Orientation = orientations[0] ?? [1, 1, 1];
+
+  for (let oi1 = 0; oi1 < orientations.length; oi1++) {
+    const [bL1, bW1, bH1] = orientations[oi1];
+    const nY1 = Math.floor(availableWidth / bW1);
+    const nZ1 = maxStackLayers === Infinity ? Math.floor(availableHeight / bH1) : Math.min(Math.floor(availableHeight / bH1), maxStackLayers);
+    if (nY1 === 0 || nZ1 === 0) continue;
+
+    for (let oi2 = 0; oi2 < orientations.length; oi2++) {
+      if (oi1 === oi2) continue;
+      const [bL2, bW2, bH2] = orientations[oi2];
+      const nY2 = Math.floor(availableWidth / bW2);
+      const nZ2 = maxStackLayers === Infinity ? Math.floor(availableHeight / bH2) : Math.min(Math.floor(availableHeight / bH2), maxStackLayers);
+      if (nY2 === 0 || nZ2 === 0) continue;
+
+      const maxRows1 = Math.floor(availableLength / bL1);
+      const maxIterRows = Math.min(maxRows1, 80);
+
+      for (let rows1 = 1; rows1 <= maxIterRows; rows1++) {
+        const usedLength1 = rows1 * bL1;
+        const remainLength = availableLength - usedLength1;
+        if (remainLength < bL2) break;
+
+        const rows2 = Math.floor(remainLength / bL2);
+        const count1 = rows1 * nY1 * nZ1;
+        const count2 = rows2 * nY2 * nZ2;
+        const totalSplit = Math.min(count1 + count2, effectiveMax);
+
+        if (totalSplit > bestLengthSplitCount) {
+          bestLengthSplitCount = totalSplit;
+          bestLengthSplitOrientation = count1 >= count2 ? [bL1, bW1, bH1] : [bL2, bW2, bH2];
+
+          if (generatePositions) {
+            const limit1 = Math.min(count1, Math.floor(visualBudget * 0.5));
+            const limit2 = Math.min(count2, visualBudget - limit1);
+
+            const { positions: p1 } = countAndPositions(
+              usedLength1, availableWidth, availableHeight,
+              bL1, bW1, bH1, limit1,
+              maxStackLayers === Infinity ? Infinity : maxStackLayers,
+              originX, originY, originZ,
+            );
+
+            const { positions: p2 } = countAndPositions(
+              remainLength, availableWidth, availableHeight,
+              bL2, bW2, bH2, limit2,
+              maxStackLayers === Infinity ? Infinity : maxStackLayers,
+              originX + usedLength1, originY, originZ,
+            );
+
+            bestLengthSplitPositions = [...p1, ...p2];
+          }
+        }
+      }
+    }
+  }
+
   // Pick the best strategy
-  const best = Math.max(strategy1Count, bestMixedCount, bestWidthSplitCount);
+  const best = Math.max(strategy1Count, bestHeightSplitCount, bestWidthSplitCount, bestLengthSplitCount);
 
-  if (best === bestWidthSplitCount && bestWidthSplitCount > strategy1Count) {
-    return {
-      count: bestWidthSplitCount,
-      positions: bestWidthSplitPositions,
-      mainOrientation: bestWidthSplitOrientation,
-    };
+  if (best === bestLengthSplitCount && bestLengthSplitCount >= bestWidthSplitCount && bestLengthSplitCount > strategy1Count && bestLengthSplitCount >= bestHeightSplitCount) {
+    return { count: bestLengthSplitCount, positions: bestLengthSplitPositions, mainOrientation: bestLengthSplitOrientation };
   }
 
-  if (best === bestMixedCount && bestMixedCount > strategy1Count) {
-    return {
-      count: bestMixedCount,
-      positions: bestMixedPositions,
-      mainOrientation: bestMixedOrientation,
-    };
+  if (best === bestWidthSplitCount && bestWidthSplitCount > strategy1Count && bestWidthSplitCount >= bestHeightSplitCount) {
+    return { count: bestWidthSplitCount, positions: bestWidthSplitPositions, mainOrientation: bestWidthSplitOrientation };
   }
 
-  return {
-    count: strategy1Count,
-    positions: strategy1Positions,
-    mainOrientation: main.orientation,
-  };
+  if (best === bestHeightSplitCount && bestHeightSplitCount > strategy1Count) {
+    return { count: bestHeightSplitCount, positions: bestHeightSplitPositions, mainOrientation: bestHeightSplitOrientation };
+  }
+
+  return { count: strategy1Count, positions: strategy1Positions, mainOrientation: main.orientation };
 }
 
 function packSingleProduct(
@@ -574,6 +618,152 @@ function buildPalletResult(
   };
 }
 
+function permutations<T>(arr: T[]): T[][] {
+  if (arr.length <= 1) return [arr];
+  const result: T[][] = [];
+  for (let i = 0; i < arr.length; i++) {
+    const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
+    for (const perm of permutations(rest)) {
+      result.push([arr[i], ...perm]);
+    }
+  }
+  return result;
+}
+
+interface MultiProductZoneResult {
+  totalCount: number;
+  productResults: ProductResult[];
+  packedBoxes: PackedBox[];
+}
+
+function packMultiProductZones(
+  sortedProducts: Product[],
+  containerLength: number,
+  containerWidth: number,
+  evaHeight: number,
+  floorOriginZ: number,
+  evaporatorDepth: number,
+  payloadLimit: number,
+  visualBudgetTotal: number,
+): MultiProductZoneResult {
+  let remainingLength = containerLength;
+  let currentOriginX = evaporatorDepth;
+  let visualBudget = visualBudgetTotal;
+  let remainingPayload = payloadLimit;
+
+  const productResults: ProductResult[] = [];
+  const allPackedBoxes: PackedBox[] = [];
+  let totalCount = 0;
+
+  for (let i = 0; i < sortedProducts.length; i++) {
+    const p = sortedProducts[i];
+    const isLast = i === sortedProducts.length - 1;
+
+    // Volume-proportional zone allocation:
+    // compute the box density (volume per unit container length) for best orientation
+    const orientations = getOrientationsForProduct(p);
+    const maxStackLayers = p.stackable === false || p.fragile === true ? 1 : Infinity;
+
+    let bestDensity = 0;
+    for (const [bL, bW, bH] of orientations) {
+      const nY = Math.floor(containerWidth / bW);
+      const nZRaw = Math.floor(evaHeight / bH);
+      const nZ = maxStackLayers === Infinity ? nZRaw : Math.min(nZRaw, maxStackLayers);
+      const boxVolume = p.length * p.width * p.height;
+      const density = nY * nZ * boxVolume / bL;
+      if (density > bestDensity) bestDensity = density;
+    }
+
+    let allocatedLength: number;
+    if (isLast) {
+      allocatedLength = remainingLength;
+    } else {
+      // compute proportional share based on density ratio
+      const remaining = sortedProducts.slice(i);
+      let totalDensity = 0;
+      for (const rp of remaining) {
+        const rpOrientations = getOrientationsForProduct(rp);
+        const rpMaxStack = rp.stackable === false || rp.fragile === true ? 1 : Infinity;
+        let rpBestDensity = 0;
+        for (const [bL, bW, bH] of rpOrientations) {
+          const nY = Math.floor(containerWidth / bW);
+          const nZRaw = Math.floor(evaHeight / bH);
+          const nZ = rpMaxStack === Infinity ? nZRaw : Math.min(nZRaw, rpMaxStack);
+          const density = nY * nZ * (rp.length * rp.width * rp.height) / bL;
+          if (density > rpBestDensity) rpBestDensity = density;
+        }
+        totalDensity += rpBestDensity;
+      }
+
+      const proportion = totalDensity > 0 ? bestDensity / totalDensity : 1 / remaining.length;
+      const rawLength = Math.round(remainingLength * proportion);
+
+      // Snap to best box length for this product (nearest box-length multiple, min 1 row)
+      let snapLength = rawLength;
+      let bestSnapCount = 0;
+      for (const [bL] of orientations) {
+        const rows = Math.max(1, Math.round(rawLength / bL));
+        const snapped = rows * bL;
+        const nY = Math.floor(containerWidth / (orientations.find(o => o[0] === bL)?.[1] ?? bL));
+        const nZ = Math.floor(evaHeight / (orientations.find(o => o[0] === bL)?.[2] ?? bL));
+        const cnt = rows * nY * nZ;
+        if (cnt > bestSnapCount && snapped <= remainingLength - (sortedProducts.length - i - 1)) {
+          bestSnapCount = cnt;
+          snapLength = snapped;
+        }
+      }
+
+      allocatedLength = Math.max(1, Math.min(snapLength, remainingLength - (sortedProducts.length - i - 1)));
+    }
+
+    const quantityLimit = p.quantity && p.quantity > 0 ? p.quantity : Infinity;
+    const weightLimit = p.grossWeight > 0 ? Math.floor(remainingPayload / p.grossWeight) : Infinity;
+    const effectiveLimit = Math.min(quantityLimit, weightLimit);
+
+    const zoneResult = packBlockWithResidual(
+      allocatedLength,
+      containerWidth,
+      evaHeight,
+      orientations,
+      maxStackLayers,
+      effectiveLimit,
+      true,
+      currentOriginX,
+      0,
+      floorOriginZ,
+      Math.floor(visualBudget / Math.max(1, sortedProducts.length - i)),
+    );
+
+    const [bL, bW, bH] = zoneResult.mainOrientation;
+    const rowsUsed = Math.floor(allocatedLength / bL);
+
+    productResults.push({
+      product: p,
+      count: zoneResult.count,
+      orientation: zoneResult.mainOrientation,
+      nX: rowsUsed,
+      nY: Math.floor(containerWidth / bW),
+      nZ: Math.floor(evaHeight / bH),
+      volumeUsed: zoneResult.count * (p.length * p.width * p.height),
+    });
+
+    const useVisual = Math.min(zoneResult.positions.length, visualBudget);
+    for (let j = 0; j < useVisual; j++) {
+      allPackedBoxes.push({ ...zoneResult.positions[j], productId: p.id });
+    }
+    visualBudget -= useVisual;
+    totalCount += zoneResult.count;
+
+    remainingPayload -= zoneResult.count * p.grossWeight;
+    currentOriginX += allocatedLength;
+    remainingLength -= allocatedLength;
+
+    if (remainingLength <= 0 || remainingPayload <= 0) break;
+  }
+
+  return { totalCount, productResults, packedBoxes: allPackedBoxes };
+}
+
 export function calculatePacking(
   container: ContainerType,
   products: Product[],
@@ -587,7 +777,6 @@ export function calculatePacking(
   const floorOriginZ = floorClear;
 
   const bodyLength = container.innerLength - evaporatorDepth;
-  // Usable height = full height minus floor clearance and minimal top air gap
   const evaHeight = container.innerHeight - floorClear - topClear;
 
   if (activeProducts.length === 0) {
@@ -602,28 +791,22 @@ export function calculatePacking(
     return buildPalletResult(container, activeProducts, palletConfig, floorClear);
   }
 
-  // Sort by gross weight ASCENDING — lightest loaded first (back of container)
-  // heaviest loaded last (near door) for cold chain/reefer best practice
+  // Sort by gross weight ascending for loading order
   const sortedProducts = [...activeProducts].sort((a, b) => {
     const weightDiff = (a.grossWeight ?? 0) - (b.grossWeight ?? 0);
     if (weightDiff !== 0) return weightDiff;
     return (a.priority ?? 5) - (b.priority ?? 5);
   });
+
   const allPackedBoxes: PackedBox[] = [];
   const productResults: ProductResult[] = [];
-
-  const payloadLimit = container.maxPayload;
 
   if (sortedProducts.length === 1) {
     const p = sortedProducts[0];
     const orientations = getOrientationsForProduct(p);
     const maxStackLayers = p.stackable === false || p.fragile === true ? 1 : Infinity;
     const quantityLimit = p.quantity && p.quantity > 0 ? p.quantity : Infinity;
-
-    // Apply payload weight limit per product
-    const weightLimit = p.grossWeight > 0
-      ? Math.floor(container.maxPayload / p.grossWeight)
-      : Infinity;
+    const weightLimit = p.grossWeight > 0 ? Math.floor(container.maxPayload / p.grossWeight) : Infinity;
     const effectiveLimit = Math.min(quantityLimit, weightLimit);
 
     let visualBudget = MAX_VISUAL_BOXES;
@@ -662,78 +845,35 @@ export function calculatePacking(
     }
 
   } else {
-    // Multi-product packing:
-    // - Sort by gross weight descending (heaviest loaded first, from back of container)
-    // - Each product gets an equal 1/N zone of the container length
-    // - Within each zone, use the best orientation + mixed-width-split strategy
-    // - Weight limit enforced across all products combined
+    // Multi-product: try all permutations (capped at 5 products = 120 perms) and pick best
+    const perms = sortedProducts.length <= 5
+      ? permutations(sortedProducts)
+      : [sortedProducts];
 
-    let remainingLength = container.innerLength;
-    let currentOriginX = 0;
-    let visualBudget = MAX_VISUAL_BOXES;
-    let remainingPayload = container.maxPayload;
+    let bestTotal = -1;
+    let bestZoneResult: MultiProductZoneResult | null = null;
 
-    for (let i = 0; i < sortedProducts.length; i++) {
-      const p = sortedProducts[i];
-      const isLast = i === sortedProducts.length - 1;
-
-      // Each product gets an equal share of remaining length (1/N per product)
-      const allocatedLength = isLast
-        ? remainingLength
-        : Math.floor(remainingLength / (sortedProducts.length - i));
-
-      // Snap to product's own box length dimension for clean rows
-      const orientations = getOrientationsForProduct(p);
-      const maxStackLayers = p.stackable === false || p.fragile === true ? 1 : Infinity;
-      const quantityLimit = p.quantity && p.quantity > 0 ? p.quantity : Infinity;
-
-      // Weight limit for this product's zone
-      const weightLimit = p.grossWeight > 0
-        ? Math.floor(remainingPayload / p.grossWeight)
-        : Infinity;
-      const effectiveLimit = Math.min(quantityLimit, weightLimit);
-
-      // Use the full mixed-orientation strategy for this zone
-      const zoneResult = packBlockWithResidual(
-        allocatedLength,
+    for (const perm of perms) {
+      const zoneResult = packMultiProductZones(
+        perm,
+        bodyLength,
         container.innerWidth,
         evaHeight,
-        orientations,
-        maxStackLayers,
-        effectiveLimit,
-        true,
-        currentOriginX,
-        0,
         floorOriginZ,
-        Math.floor(visualBudget / Math.max(1, sortedProducts.length - i)),
+        evaporatorDepth,
+        container.maxPayload,
+        MAX_VISUAL_BOXES,
       );
 
-      const [bL, bW, bH] = zoneResult.mainOrientation;
-      const rowsUsed = Math.floor(allocatedLength / bL);
-      const actualLengthUsed = rowsUsed * bL;
-
-      productResults.push({
-        product: p,
-        count: zoneResult.count,
-        orientation: zoneResult.mainOrientation,
-        nX: rowsUsed,
-        nY: Math.floor(container.innerWidth / bW),
-        nZ: Math.floor(evaHeight / bH),
-        volumeUsed: zoneResult.count * (p.length * p.width * p.height),
-      });
-
-      const useVisual = Math.min(zoneResult.positions.length, visualBudget);
-      for (let j = 0; j < useVisual; j++) {
-        allPackedBoxes.push({ ...zoneResult.positions[j], productId: p.id });
+      if (zoneResult.totalCount > bestTotal) {
+        bestTotal = zoneResult.totalCount;
+        bestZoneResult = zoneResult;
       }
-      visualBudget -= useVisual;
+    }
 
-      // Update remaining payload and length
-      remainingPayload -= zoneResult.count * p.grossWeight;
-      currentOriginX += allocatedLength;
-      remainingLength -= allocatedLength;
-
-      if (remainingLength <= 0 || remainingPayload <= 0) break;
+    if (bestZoneResult) {
+      productResults.push(...bestZoneResult.productResults);
+      allPackedBoxes.push(...bestZoneResult.packedBoxes);
     }
   }
 
