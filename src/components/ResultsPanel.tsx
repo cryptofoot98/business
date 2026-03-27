@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { PackingResult } from '../types';
+import { PackingResult, PackingZoneData } from '../types';
 import { PRODUCT_LABELS } from '../utils/colors';
-import { RotateCcw, Printer, Download, FileText, Lightbulb, Info } from 'lucide-react';
+import { RotateCcw, Printer, Download, FileText, Lightbulb, Info, Layers } from 'lucide-react';
 import { getPracticalCount } from '../utils/loadPlanPDF';
 
 import { exportResultsCSV, printLoadReport } from '../utils/exportUtils';
@@ -71,6 +71,14 @@ function computeOptimizationTip(result: PackingResult): string | null {
   });
 
   return tips[0];
+}
+
+function describeOrientation(zone: PackingZoneData, origL: number, origW: number, origH: number): string {
+  const [bL, bW, bH] = zone.orientation;
+  if (bH === origH) return 'Upright (natural)';
+  if (bH === origL) return `On end — D (${origL} cm) vertical`;
+  if (bH === origW) return `On side — W (${origW} cm) vertical`;
+  return `Rotated — ${bH} cm vertical`;
 }
 
 function UtilBar({ value, color }: { value: number; color: string }) {
@@ -191,17 +199,16 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
                 </button>
                 {showVolTooltip && (
                   <div className="absolute bottom-6 left-0 z-50 w-64 p-3 bg-brut-black text-white text-[10px] leading-relaxed border-2 border-brut-black shadow-lg">
-                    <strong>Theoretical maximum</strong><br/>
-                    This shows the theoretical maximum based on box dimensions and container size.<br/><br/>
+                    <strong>% of usable cargo space</strong><br/>
+                    Calculated against the loadable volume (inner length × width × usable height, excluding reefer clearances and evaporator space).<br/><br/>
                     Real loading may vary by ±5-10% depending on:<br/>
                     • Carrier vessel inner dimensions<br/>
-                    • Airflow gaps in reefer containers<br/>
                     • Loading technique and worker access<br/>
                     • Box compression under weight
                   </div>
                 )}
               </div>
-              <span className="font-mono text-[10px] font-bold text-brut-black/40">{(result.containerVolumeCm3 / 1_000_000).toFixed(2)} m³ capacity</span>
+              <span className="font-mono text-[10px] font-bold text-brut-black/40">{(result.containerVolumeCm3 / 1_000_000).toFixed(2)} m³ usable</span>
             </div>
             <UtilBar value={volumeUtilization} color={volColor} />
           </div>
@@ -344,6 +351,62 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
                     </span>
                   )}
                 </div>
+
+                {pr.zones && pr.zones.length > 1 && (
+                  <div className="mt-3 border-t border-brut-black/10 pt-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Layers size={11} className="text-brut-black/50" />
+                      <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brut-black/50">
+                        Loading Zones
+                        {pr.zoneSplitAxis && (
+                          <span className="ml-1.5 font-normal normal-case">
+                            — split by {pr.zoneSplitAxis}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {pr.zones.map((zone, zi) => {
+                        const [zL, zW, zH] = zone.orientation;
+                        const desc = describeOrientation(zone, pr.product.length, pr.product.width, pr.product.height);
+                        const isZoneRotated = zH !== pr.product.height;
+                        return (
+                          <div key={zi} className="border border-brut-black/15 bg-brut-bg px-3 py-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-2.5 h-2.5 border border-brut-black/20"
+                                  style={{ backgroundColor: isZoneRotated ? `${color}99` : color }}
+                                />
+                                <span className="font-mono text-[10px] font-black uppercase tracking-wider text-brut-black/60">
+                                  Zone {zi + 1}
+                                </span>
+                              </div>
+                              <span className="font-mono text-sm font-black text-brut-black">
+                                {zone.count.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="font-mono text-[10px] text-brut-black/50 leading-relaxed">
+                              <div>{zone.nX} rows × {zone.nY} cols × {zone.nZ} layers</div>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span>{zL} × {zW} × {zH} cm</span>
+                                {isZoneRotated && (
+                                  <span className="flex items-center gap-1 text-brut-orange">
+                                    <RotateCcw size={9} />
+                                    {desc}
+                                  </span>
+                                )}
+                                {!isZoneRotated && (
+                                  <span className="text-brut-black/35">{desc}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           );

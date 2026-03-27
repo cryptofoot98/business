@@ -78,6 +78,14 @@ export interface PackedPallet {
   stackH: number;
 }
 
+export interface PackingZoneData {
+  count: number;
+  orientation: [number, number, number];
+  nX: number;
+  nY: number;
+  nZ: number;
+}
+
 export interface ProductResult {
   product: Product;
   count: number;
@@ -88,6 +96,8 @@ export interface ProductResult {
   volumeUsed: number;
   boxesPerPallet?: number;
   palletCount?: number;
+  zones?: PackingZoneData[];
+  zoneSplitAxis?: 'height' | 'width' | 'length';
 }
 
 export interface PackingResult {

@@ -144,7 +144,7 @@ export const CONTAINERS: ContainerType[] = [
     teu: 2,
     reeferFloorCm: 0,
     reeferTopCm: 15,
-    reeferEvaporatorDepthCm: 0,
+    reeferEvaporatorDepthCm: 18,
   },
   {
     id: '20ft-ot',
