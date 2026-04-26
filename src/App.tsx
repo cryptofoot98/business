@@ -46,10 +46,10 @@ const UNIT_MULTIPLIERS: Record<UnitSystem, number> = {
 
 function LoadingScreen() {
   return (
-    <div className="h-screen bg-brut-hdr flex items-center justify-center">
+    <div className="h-screen flex items-center justify-center" style={{ background: '#060E1A' }}>
       <div className="flex items-center gap-3 text-white">
-        <Loader size={20} className="animate-spin text-white/60" />
-        <span className="font-mono text-xs font-bold uppercase tracking-widest">Loading…</span>
+        <Loader size={18} className="animate-spin" style={{ color: '#3DB240' }} />
+        <span className="text-sm font-medium text-white/60">Loading…</span>
       </div>
     </div>
   );
@@ -348,6 +348,7 @@ function MainApp() {
   return (
     <div
       className="flex flex-col h-screen overflow-hidden bg-brut-bg text-brut-black"
+      style={{ background: '#EEF4F8' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -382,13 +383,14 @@ function MainApp() {
           top-14 bottom-0 lg:top-auto lg:bottom-auto
           z-30 lg:z-auto
           w-80 shrink-0
-          border-r-3 border-brut-hdr-dark
           flex flex-col overflow-hidden
-          bg-brut-sidebar dark-chrome
+          dark-chrome
           transition-transform duration-300 ease-in-out
           lg:translate-x-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}>
+        `}
+          style={{ background: '#0A1628', borderRight: '1px solid rgba(255,255,255,0.07)' }}
+        >
           <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-brut">
             <div>
               <p className="brut-section-label mb-4">Loading Method</p>
@@ -428,9 +430,18 @@ function MainApp() {
           </div>
         </aside>
 
-        <main className="flex-1 flex flex-col overflow-hidden bg-brut-bg">
-          <div className="flex-1 min-h-0 p-2 sm:p-4">
-            <div className="w-full h-full border-3 border-brut-black bg-white" style={{ boxShadow: '6px 6px 0px #0d0d0d' }}>
+        <main className="flex-1 flex flex-col overflow-hidden" style={{ background: '#EEF4F8' }}>
+          <div className="flex-1 min-h-0 p-2 sm:p-3">
+            <div
+              className="w-full h-full rounded-xl overflow-hidden"
+              style={{
+                background: 'rgba(255,255,255,0.80)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.60)',
+                boxShadow: '0 4px 24px rgba(10,22,40,0.08)',
+              }}
+            >
               <ContainerView2D
                 result={packingResult}
                 productColors={activeProductColors}
@@ -439,7 +450,10 @@ function MainApp() {
             </div>
           </div>
 
-          <div className="shrink-0 border-t-3 border-brut-black overflow-y-auto max-h-48 sm:max-h-64 md:max-h-80 lg:max-h-96 p-3 sm:p-5 bg-brut-paper scrollbar-brut">
+          <div
+            className="shrink-0 overflow-y-auto max-h-48 sm:max-h-64 md:max-h-80 lg:max-h-96 p-3 sm:p-5 scrollbar-brut"
+            style={{ background: '#FFFFFF', borderTop: '1px solid rgba(27,48,128,0.08)' }}
+          >
             {multiContainerResult && (
               <div className="mb-5">
                 <MultiContainerPlanner
