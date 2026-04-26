@@ -347,8 +347,8 @@ function MainApp() {
 
   return (
     <div
-      className="flex flex-col h-screen overflow-hidden bg-brut-bg text-brut-black"
-      style={{ background: '#EEF4F8' }}
+      className="flex flex-col h-screen overflow-hidden"
+      style={{ background: '#060E1A' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -430,16 +430,14 @@ function MainApp() {
           </div>
         </aside>
 
-        <main className="flex-1 flex flex-col overflow-hidden" style={{ background: '#EEF4F8' }}>
+        <main className="flex-1 flex flex-col overflow-hidden dark-chrome" style={{ background: '#060E1A' }}>
           <div className="flex-1 min-h-0 p-2 sm:p-3">
             <div
               className="w-full h-full rounded-xl overflow-hidden"
               style={{
-                background: 'rgba(255,255,255,0.80)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.60)',
-                boxShadow: '0 4px 24px rgba(10,22,40,0.08)',
+                background: '#0A1628',
+                border: '1px solid rgba(255,255,255,0.08)',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
               }}
             >
               <ContainerView2D
@@ -452,7 +450,7 @@ function MainApp() {
 
           <div
             className="shrink-0 overflow-y-auto max-h-48 sm:max-h-64 md:max-h-80 lg:max-h-96 p-3 sm:p-5 scrollbar-brut"
-            style={{ background: '#FFFFFF', borderTop: '1px solid rgba(27,48,128,0.08)' }}
+            style={{ background: 'rgba(10,22,40,0.80)', borderTop: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
           >
             {multiContainerResult && (
               <div className="mb-5">

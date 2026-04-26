@@ -14,9 +14,9 @@ function formatWeight(kg: number): string {
 
 export function MultiContainerPlanner({ result, selectedIndex, onSelectContainer }: Props) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>Multi-Container Plan</p>
+        <p className="brut-section-label">Multi-Container Plan</p>
         <div className="flex items-center gap-5">
           {[
             { value: result.containersNeeded, label: 'containers' },
@@ -24,8 +24,8 @@ export function MultiContainerPlanner({ result, selectedIndex, onSelectContainer
             { value: formatWeight(result.totalGrossWeight), label: 'total weight' },
           ].map(({ value, label }) => (
             <div key={label} className="text-center">
-              <div className="font-mono text-base font-bold leading-none" style={{ color: '#1B3080' }}>{value}</div>
-              <div className="font-mono text-[9px] uppercase tracking-wide mt-0.5" style={{ color: '#94A3B8' }}>{label}</div>
+              <div className="font-mono text-base font-bold leading-none text-white">{value}</div>
+              <div className="font-mono text-[9px] uppercase tracking-wide mt-0.5 text-white/35">{label}</div>
             </div>
           ))}
         </div>
@@ -41,18 +41,18 @@ export function MultiContainerPlanner({ result, selectedIndex, onSelectContainer
               onClick={() => onSelectContainer(idx)}
               className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-left transition-all"
               style={isSelected
-                ? { background: 'rgba(61,178,64,0.12)', border: '1px solid rgba(61,178,64,0.30)', boxShadow: '0 4px 16px rgba(61,178,64,0.15)' }
-                : { background: 'rgba(255,255,255,0.80)', border: '1px solid rgba(27,48,128,0.10)', boxShadow: '0 2px 8px rgba(10,22,40,0.06)' }
+                ? { background: 'rgba(61,178,64,0.15)', border: '1px solid rgba(61,178,64,0.30)', boxShadow: 'inset 3px 0 0 #3DB240' }
+                : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }
               }
-              onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.background = 'white'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(10,22,40,0.10)'; } }}
-              onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.background = 'rgba(255,255,255,0.80)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(10,22,40,0.06)'; } }}
+              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; }}
+              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
             >
-              <Package size={13} style={{ color: isSelected ? '#3DB240' : '#94A3B8' }} />
+              <Package size={13} style={{ color: isSelected ? '#3DB240' : 'rgba(255,255,255,0.35)' }} />
               <div>
-                <div className="text-xs font-semibold leading-none" style={{ color: isSelected ? '#2D9632' : '#1B3080' }}>
+                <div className={`text-xs font-semibold leading-none ${isSelected ? 'text-white' : 'text-white/65'}`}>
                   #{idx + 1}
                 </div>
-                <div className="font-mono text-[10px] mt-0.5" style={{ color: '#94A3B8' }}>
+                <div className="font-mono text-[10px] mt-0.5 text-white/35">
                   {r.totalCount} units · {volPct}%
                 </div>
               </div>
