@@ -85,41 +85,28 @@ function UtilBar({ value, color }: { value: number; color: string }) {
   const pct = Math.min(value * 100, 100);
   return (
     <div className="flex items-center gap-3">
-      <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+      <div className="flex-1 h-3 bg-brut-bg border-2 border-brut-black overflow-hidden">
         <div
-          className="h-full rounded-full transition-all duration-700 ease-out"
+          className="h-full transition-all duration-700 ease-out"
           style={{ width: `${pct}%`, backgroundColor: color }}
         />
       </div>
-      <span className="font-mono text-sm font-semibold w-14 text-right" style={{ color }}>
+      <span className="font-mono text-sm font-black w-14 text-right" style={{ color }}>
         {pct.toFixed(1)}%
       </span>
     </div>
   );
 }
 
-const CARD: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.09)',
-  borderRadius: 12,
-};
-
-const BTN_GHOST: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.07)',
-  border: '1px solid rgba(255,255,255,0.10)',
-  color: 'rgba(255,255,255,0.50)',
-  borderRadius: 8,
-};
-
 export function ResultsPanel({ result, productColors, unit }: Props) {
   const [showVolTooltip, setShowVolTooltip] = useState(false);
   const { container, productResults, totalCount, volumeUtilization, weightUtilization, totalGrossWeight, totalNetWeight } = result;
-  void getPracticalCount;
+  void getPracticalCount; // kept for PDF use
 
   if (productResults.length === 0) {
     return (
       <div className="flex items-center justify-center py-8">
-        <p className="text-xs uppercase tracking-widest font-semibold" style={{ color: 'rgba(255,255,255,0.25)' }}>
+        <p className="font-mono text-xs uppercase tracking-widest text-brut-black/30 font-bold">
           Enter product dimensions to see results
         </p>
       </div>
@@ -127,9 +114,9 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
   }
 
   const volPct = volumeUtilization * 100;
-  const volColor = volPct > 90 ? '#EF4444' : volPct > 70 ? '#F59E0B' : '#3DB240';
+  const volColor = volPct > 90 ? '#c63320' : volPct > 70 ? '#d96a1c' : '#1572b6';
   const wtPct = weightUtilization * 100;
-  const wtColor = wtPct > 90 ? '#EF4444' : wtPct > 70 ? '#F59E0B' : '#3DB240';
+  const wtColor = wtPct > 90 ? '#c63320' : wtPct > 70 ? '#d96a1c' : '#1572b6';
 
   const optimizationTip = computeOptimizationTip(result);
 
@@ -146,34 +133,28 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <p className="brut-section-label">Results</p>
-        <div className="flex items-center gap-1.5">
-          {[
-            { label: 'CSV', icon: <Download size={10} />, onClick: () => exportResultsCSV(result, unit) },
-            { label: 'Print', icon: <Printer size={10} />, onClick: () => printLoadReport(result, unit) },
-          ].map(({ label, icon, onClick }) => (
-            <button
-              key={label}
-              onClick={onClick}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all rounded-lg"
-              style={BTN_GHOST}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'white'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.50)'; }}
-            >
-              {icon}
-              {label}
-            </button>
-          ))}
+        <p className="text-xs font-black uppercase tracking-tight text-brut-black">Results</p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => exportResultsCSV(result, unit)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 border-2 border-brut-black bg-white hover:bg-brut-bg text-[10px] font-black uppercase tracking-wider shadow-brut-sm hover:shadow-brut transition-all"
+          >
+            <Download size={10} />
+            CSV
+          </button>
+          <button
+            onClick={() => printLoadReport(result, unit)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 border-2 border-brut-black bg-white hover:bg-brut-bg text-[10px] font-black uppercase tracking-wider shadow-brut-sm hover:shadow-brut transition-all"
+          >
+            <Printer size={10} />
+            Print
+          </button>
           {result.packedBoxes.length > 0 && (
             <button
               onClick={() => printLoadPlan(result, unit)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all rounded-lg"
-              style={{ background: 'rgba(61,178,64,0.12)', border: '1px solid rgba(61,178,64,0.25)', color: '#5DC258', borderRadius: 8 }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(61,178,64,0.20)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(61,178,64,0.12)'; }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 border-2 border-brut-red bg-white hover:bg-brut-red hover:text-white text-brut-red text-[10px] font-black uppercase tracking-wider shadow-brut-sm hover:shadow-none transition-all"
             >
               <FileText size={10} />
               Load Plan
@@ -182,118 +163,124 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
         </div>
       </div>
 
-      {/* Top stat cards */}
-      <div className="grid grid-cols-3 gap-2.5">
-        <div className="p-4 rounded-xl" style={{ ...CARD, borderColor: 'rgba(61,178,64,0.20)', boxShadow: '0 4px 16px rgba(61,178,64,0.08)' }}>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="brut-card p-4" style={{ boxShadow: '4px 4px 0px #c63320' }}>
           <p className="brut-section-label mb-2">Units that fit</p>
-          <div className="text-3xl font-bold leading-none tracking-tight text-white">{totalCount.toLocaleString()}</div>
-          <div className="font-mono text-[10px] uppercase mt-1.5 text-white/30">total cartons</div>
+          <div className="text-4xl font-black text-brut-black leading-none tracking-tighter">{totalCount.toLocaleString()}</div>
+          <div className="font-mono text-[10px] uppercase text-brut-black/35 mt-1.5 font-bold tracking-wider">total cartons</div>
         </div>
-        <div className="p-4 rounded-xl" style={CARD}>
+
+        <div className="brut-card p-4">
           <p className="brut-section-label mb-2">Net weight</p>
-          <div className="text-xl font-bold leading-none tracking-tight text-white">{formatWeight(totalNetWeight)}</div>
-          <div className="font-mono text-[10px] uppercase mt-1.5 text-white/30">product only</div>
+          <div className="text-3xl font-black text-brut-black leading-none tracking-tighter">{formatWeight(totalNetWeight)}</div>
+          <div className="font-mono text-[10px] uppercase text-brut-black/35 mt-1.5 font-bold tracking-wider">product only</div>
         </div>
-        <div className="p-4 rounded-xl" style={CARD}>
+
+        <div className="brut-card p-4">
           <p className="brut-section-label mb-2">Gross weight</p>
-          <div className="text-xl font-bold leading-none tracking-tight text-white">{formatWeight(totalGrossWeight)}</div>
-          <div className="font-mono text-[10px] uppercase mt-1.5 text-white/30">incl. packaging</div>
+          <div className="text-3xl font-black text-brut-black leading-none tracking-tighter">{formatWeight(totalGrossWeight)}</div>
+          <div className="font-mono text-[10px] uppercase text-brut-black/35 mt-1.5 font-bold tracking-wider">incl. packaging</div>
         </div>
       </div>
 
-      {/* Utilization */}
-      <div className="p-4 rounded-xl space-y-4" style={CARD}>
-        <p className="brut-section-label">Utilization</p>
-        <div className="space-y-4">
+      <div className="brut-card p-4 space-y-4">
+        <p className="text-xs font-black uppercase tracking-tight text-brut-black">Utilization</p>
+        <div className="space-y-3">
           <div>
             <div className="flex justify-between items-baseline mb-2">
               <div className="flex items-center gap-1.5 relative">
                 <span className="brut-section-label">Volume</span>
                 <button
-                  style={{ color: 'rgba(255,255,255,0.25)' }}
+                  className="text-brut-black/30 hover:text-brut-black transition-colors"
                   onMouseEnter={() => setShowVolTooltip(true)}
                   onMouseLeave={() => setShowVolTooltip(false)}
                 >
                   <Info size={11} />
                 </button>
                 {showVolTooltip && (
-                  <div
-                    className="absolute bottom-6 left-0 z-50 w-64 p-3 rounded-xl text-[10px] leading-relaxed"
-                    style={{ background: '#0A1628', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.70)', boxShadow: '0 8px 32px rgba(0,0,0,0.40)' }}
-                  >
-                    <strong className="text-white">% of usable cargo space</strong><br/>
-                    Calculated against loadable volume (inner length × width × usable height).<br/><br/>
-                    Real loading may vary ±5-10% depending on carrier dimensions, technique, and box compression.
+                  <div className="absolute bottom-6 left-0 z-50 w-64 p-3 bg-brut-black text-white text-[10px] leading-relaxed border-2 border-brut-black shadow-lg">
+                    <strong>% of usable cargo space</strong><br/>
+                    Calculated against the loadable volume (inner length × width × usable height, excluding reefer clearances and evaporator space).<br/><br/>
+                    Real loading may vary by ±5-10% depending on:<br/>
+                    • Carrier vessel inner dimensions<br/>
+                    • Loading technique and worker access<br/>
+                    • Box compression under weight
                   </div>
                 )}
               </div>
-              <span className="font-mono text-[10px] text-white/30">{(result.containerVolumeCm3 / 1_000_000).toFixed(2)} m³ usable</span>
+              <span className="font-mono text-[10px] font-bold text-brut-black/40">{(result.containerVolumeCm3 / 1_000_000).toFixed(2)} m³ usable</span>
             </div>
             <UtilBar value={volumeUtilization} color={volColor} />
           </div>
           <div>
             <div className="flex justify-between items-baseline mb-2">
               <span className="brut-section-label">Payload</span>
-              <span className="font-mono text-[10px] text-white/30">{container.maxPayload.toLocaleString()} kg max</span>
+              <span className="font-mono text-[10px] font-bold text-brut-black/40">{container.maxPayload.toLocaleString()} kg max</span>
             </div>
             <UtilBar value={weightUtilization} color={wtColor} />
           </div>
         </div>
       </div>
 
-      {/* Optimization tip */}
       {optimizationTip && (
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(245,158,11,0.20)' }}>
-          <div
-            className="flex items-center gap-2 px-4 py-2.5"
-            style={{ background: 'rgba(245,158,11,0.10)', borderBottom: '1px solid rgba(245,158,11,0.14)' }}
-          >
-            <Lightbulb size={12} style={{ color: '#F59E0B' }} className="shrink-0" />
-            <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#F59E0B' }}>Optimization Tip</span>
+        <div className="border-2 border-brut-black bg-white overflow-hidden" style={{ boxShadow: '3px 3px 0px #d96a1c' }}>
+          <div className="flex items-center gap-2 px-4 py-2 border-b-2 border-brut-black" style={{ backgroundColor: '#d96a1c' }}>
+            <Lightbulb size={12} className="text-white shrink-0" />
+            <span className="font-mono text-[10px] font-black uppercase tracking-widest text-white">Optimization Tip</span>
           </div>
-          <div className="px-4 py-3 text-xs font-medium leading-relaxed" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.55)' }}>
+          <div className="px-4 py-3 text-xs font-medium text-brut-black leading-relaxed">
             {optimizationTip}
           </div>
         </div>
       )}
 
-      {/* Axle loads */}
       {ax && cogX > 0 && (
-        <div className="p-4 rounded-xl space-y-3" style={CARD}>
-          <p className="brut-section-label">Weight Distribution</p>
+        <div className="brut-card p-4 space-y-3">
+          <p className="text-xs font-black uppercase tracking-tight text-brut-black">Weight Distribution</p>
           <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: 'Front axle', load: frontAxleLoad, max: ax.maxFrontAxleKg },
-              { label: 'Rear axle', load: rearAxleLoad, max: ax.maxRearAxleKg },
-            ].map(({ label, load, max }) => {
-              const overload = load > max;
-              return (
-                <div key={label}>
-                  <div className="brut-section-label mb-1.5">{label}</div>
-                  <div className="font-mono text-lg font-bold text-white">{formatWeight(load)}</div>
-                  <div className="mt-1.5 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${Math.min((load / max) * 100, 100)}%`, backgroundColor: overload ? '#EF4444' : '#3DB240' }}
-                    />
-                  </div>
-                  <div className="font-mono text-[9px] mt-0.5 text-white/30">
-                    max {max.toLocaleString()} kg
-                    {overload && <span className="ml-2 font-semibold text-red-400">OVERLOAD</span>}
-                  </div>
-                </div>
-              );
-            })}
+            <div>
+              <div className="brut-section-label mb-1.5">Front axle</div>
+              <div className="font-mono text-lg font-black text-brut-black">{formatWeight(frontAxleLoad)}</div>
+              <div className="mt-1.5 h-2 bg-brut-bg border border-brut-black/20 overflow-hidden">
+                <div
+                  className="h-full transition-all"
+                  style={{
+                    width: `${Math.min((frontAxleLoad / ax.maxFrontAxleKg) * 100, 100)}%`,
+                    backgroundColor: frontAxleLoad > ax.maxFrontAxleKg ? '#c63320' : '#1572b6',
+                  }}
+                />
+              </div>
+              <div className="font-mono text-[9px] text-brut-black/35 mt-0.5">
+                max {ax.maxFrontAxleKg.toLocaleString()} kg
+                {frontAxleLoad > ax.maxFrontAxleKg && <span className="text-brut-red ml-2">OVERLOAD</span>}
+              </div>
+            </div>
+            <div>
+              <div className="brut-section-label mb-1.5">Rear axle</div>
+              <div className="font-mono text-lg font-black text-brut-black">{formatWeight(rearAxleLoad)}</div>
+              <div className="mt-1.5 h-2 bg-brut-bg border border-brut-black/20 overflow-hidden">
+                <div
+                  className="h-full transition-all"
+                  style={{
+                    width: `${Math.min((rearAxleLoad / ax.maxRearAxleKg) * 100, 100)}%`,
+                    backgroundColor: rearAxleLoad > ax.maxRearAxleKg ? '#c63320' : '#1572b6',
+                  }}
+                />
+              </div>
+              <div className="font-mono text-[9px] text-brut-black/35 mt-0.5">
+                max {ax.maxRearAxleKg.toLocaleString()} kg
+                {rearAxleLoad > ax.maxRearAxleKg && <span className="text-brut-red ml-2">OVERLOAD</span>}
+              </div>
+            </div>
           </div>
-          <div className="font-mono text-[10px] text-white/30">
+          <div className="font-mono text-[10px] text-brut-black/40">
             CoG at {Math.round(cogX)} cm from front ({Math.round((cogX / container.innerLength) * 100)}% of length)
           </div>
         </div>
       )}
 
-      {/* Per product */}
       <div className="space-y-2.5">
-        <p className="brut-section-label">Per product</p>
+        <p className="text-xs font-black uppercase tracking-tight text-brut-black">Per product</p>
         {productResults.map((pr, idx) => {
           const [bL, bW, bH] = pr.orientation;
           const isRotated = bL !== pr.product.length || bW !== pr.product.width || bH !== pr.product.height;
@@ -303,48 +290,42 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
           return (
             <div
               key={pr.product.id}
-              className="rounded-xl overflow-hidden"
-              style={{ border: `1px solid ${color}30`, background: 'rgba(255,255,255,0.04)' }}
+              className="border-2 border-brut-black bg-white overflow-hidden"
+              style={{ boxShadow: `3px 3px 0px ${color}` }}
             >
-              {/* Header */}
               <div
-                className="flex items-center justify-between px-4 py-3"
-                style={{ background: `${color}22`, borderBottom: `1px solid ${color}25` }}
+                className="flex items-center justify-between px-4 py-2.5 border-b-2 border-brut-black"
+                style={{ backgroundColor: color }}
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
-                  <span className="text-sm font-semibold text-white leading-none">{pr.product.name ?? PRODUCT_LABELS[idx]}</span>
+                  <span className="text-sm font-black uppercase tracking-tight text-white">{pr.product.name ?? PRODUCT_LABELS[idx]}</span>
                   {pr.product.fragile && (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase" style={{ background: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.60)' }}>Fragile</span>
+                    <span className="px-1.5 py-0.5 text-[9px] font-black uppercase bg-white/20 text-white">Fragile</span>
                   )}
                   {pr.product.stackable === false && (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase" style={{ background: 'rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.60)' }}>No stack</span>
+                    <span className="px-1.5 py-0.5 text-[9px] font-black uppercase bg-white/20 text-white">No stack</span>
                   )}
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold text-white leading-none" style={{ color }}>{pr.count.toLocaleString()}</span>
-                  {hasQty && <span className="font-mono text-[10px] text-white/40">/{pr.product.quantity}</span>}
-                  <span className="font-mono text-[10px] text-white/40 uppercase">units</span>
+                  <span className="text-2xl font-black text-white leading-none">{pr.count.toLocaleString()}</span>
+                  {hasQty && (
+                    <span className="font-mono text-[10px] text-white/70">/{pr.product.quantity}</span>
+                  )}
+                  <span className="font-mono text-[10px] text-white/70 uppercase font-bold">units</span>
                 </div>
               </div>
 
-              {/* Body */}
               <div className="px-4 py-3">
                 {pr.boxesPerPallet !== undefined && pr.palletCount !== undefined && (
                   <div className="grid grid-cols-2 gap-2 mb-3">
-                    {[
-                      { label: 'pallets', val: pr.palletCount },
-                      { label: 'per pallet', val: pr.boxesPerPallet },
-                    ].map(({ label, val }) => (
-                      <div
-                        key={label}
-                        className="p-2.5 rounded-lg text-center"
-                        style={{ background: `${color}12`, border: `1px solid ${color}20` }}
-                      >
-                        <div className="brut-section-label mb-0.5">{label}</div>
-                        <div className="font-mono text-lg font-bold text-white">{val}</div>
-                      </div>
-                    ))}
+                    <div className="border-2 border-brut-black bg-brut-amber/10 p-2 text-center">
+                      <div className="brut-section-label">pallets</div>
+                      <div className="font-mono text-lg font-black text-brut-black mt-0.5">{pr.palletCount}</div>
+                    </div>
+                    <div className="border-2 border-brut-black bg-brut-amber/10 p-2 text-center">
+                      <div className="brut-section-label">per pallet</div>
+                      <div className="font-mono text-lg font-black text-brut-black mt-0.5">{pr.boxesPerPallet}</div>
+                    </div>
                   </div>
                 )}
 
@@ -354,21 +335,17 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
                     { label: pr.boxesPerPallet !== undefined ? 'per col' : 'cols', val: pr.nY },
                     { label: 'layers', val: pr.nZ },
                   ].map(({ label, val }) => (
-                    <div
-                      key={label}
-                      className="p-2.5 rounded-lg text-center"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
-                    >
-                      <div className="brut-section-label mb-0.5">{label}</div>
-                      <div className="font-mono text-lg font-bold text-white">{val}</div>
+                    <div key={label} className="border-2 border-brut-black bg-brut-bg p-2 text-center">
+                      <div className="brut-section-label">{label}</div>
+                      <div className="font-mono text-lg font-black text-brut-black mt-0.5">{val}</div>
                     </div>
                   ))}
                 </div>
 
-                <div className="flex items-center gap-2 font-mono text-xs text-white/35">
+                <div className="flex items-center gap-2 font-mono text-xs font-bold text-brut-black/40 uppercase">
                   <span>{bL} × {bW} × {bH} cm</span>
                   {isRotated && (
-                    <span className="flex items-center gap-1 text-amber-400">
+                    <span className="flex items-center gap-1 text-brut-orange">
                       <RotateCcw size={10} />
                       rotated
                     </span>
@@ -376,13 +353,15 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
                 </div>
 
                 {pr.zones && pr.zones.length > 1 && (
-                  <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="mt-3 border-t border-brut-black/10 pt-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <Layers size={11} className="text-white/35" />
-                      <span className="brut-section-label">
+                      <Layers size={11} className="text-brut-black/50" />
+                      <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brut-black/50">
                         Loading Zones
                         {pr.zoneSplitAxis && (
-                          <span className="ml-1.5 font-normal normal-case text-white/30"> — split by {pr.zoneSplitAxis}</span>
+                          <span className="ml-1.5 font-normal normal-case">
+                            — split by {pr.zoneSplitAxis}
+                          </span>
                         )}
                       </span>
                     </div>
@@ -392,32 +371,34 @@ export function ResultsPanel({ result, productColors, unit }: Props) {
                         const desc = describeOrientation(zone, pr.product.length, pr.product.width, pr.product.height);
                         const isZoneRotated = zH !== pr.product.height;
                         return (
-                          <div
-                            key={zi}
-                            className="px-3 py-2 rounded-lg"
-                            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
-                          >
+                          <div key={zi} className="border border-brut-black/15 bg-brut-bg px-3 py-2">
                             <div className="flex items-center justify-between mb-1">
                               <div className="flex items-center gap-2">
                                 <div
-                                  className="w-2.5 h-2.5 rounded-sm"
-                                  style={{ backgroundColor: isZoneRotated ? `${color}70` : color }}
+                                  className="w-2.5 h-2.5 border border-brut-black/20"
+                                  style={{ backgroundColor: isZoneRotated ? `${color}99` : color }}
                                 />
-                                <span className="brut-section-label">Zone {zi + 1}</span>
+                                <span className="font-mono text-[10px] font-black uppercase tracking-wider text-brut-black/60">
+                                  Zone {zi + 1}
+                                </span>
                               </div>
-                              <span className="font-mono text-sm font-bold text-white">{zone.count.toLocaleString()}</span>
+                              <span className="font-mono text-sm font-black text-brut-black">
+                                {zone.count.toLocaleString()}
+                              </span>
                             </div>
-                            <div className="font-mono text-[10px] text-white/35 leading-relaxed">
+                            <div className="font-mono text-[10px] text-brut-black/50 leading-relaxed">
                               <div>{zone.nX} rows × {zone.nY} cols × {zone.nZ} layers</div>
                               <div className="flex items-center gap-1.5 mt-0.5">
                                 <span>{zL} × {zW} × {zH} cm</span>
                                 {isZoneRotated && (
-                                  <span className="flex items-center gap-1 text-amber-400">
+                                  <span className="flex items-center gap-1 text-brut-orange">
                                     <RotateCcw size={9} />
                                     {desc}
                                   </span>
                                 )}
-                                {!isZoneRotated && <span>{desc}</span>}
+                                {!isZoneRotated && (
+                                  <span className="text-brut-black/35">{desc}</span>
+                                )}
                               </div>
                             </div>
                           </div>

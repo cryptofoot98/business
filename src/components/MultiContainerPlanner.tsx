@@ -14,20 +14,22 @@ function formatWeight(kg: number): string {
 
 export function MultiContainerPlanner({ result, selectedIndex, onSelectContainer }: Props) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="brut-section-label">Multi-Container Plan</p>
-        <div className="flex items-center gap-5">
-          {[
-            { value: result.containersNeeded, label: 'containers' },
-            { value: result.totalUnits.toLocaleString(), label: 'total units' },
-            { value: formatWeight(result.totalGrossWeight), label: 'total weight' },
-          ].map(({ value, label }) => (
-            <div key={label} className="text-center">
-              <div className="font-mono text-base font-bold leading-none text-white">{value}</div>
-              <div className="font-mono text-[9px] uppercase tracking-wide mt-0.5 text-white/35">{label}</div>
-            </div>
-          ))}
+        <p className="text-xs font-black uppercase tracking-tight text-brut-black">Multi-Container Plan</p>
+        <div className="flex items-center gap-4">
+          <div className="text-center">
+            <div className="font-mono text-lg font-black text-brut-black leading-none">{result.containersNeeded}</div>
+            <div className="font-mono text-[9px] uppercase text-brut-black/40 font-bold mt-0.5">containers</div>
+          </div>
+          <div className="text-center">
+            <div className="font-mono text-lg font-black text-brut-black leading-none">{result.totalUnits.toLocaleString()}</div>
+            <div className="font-mono text-[9px] uppercase text-brut-black/40 font-bold mt-0.5">total units</div>
+          </div>
+          <div className="text-center">
+            <div className="font-mono text-lg font-black text-brut-black leading-none">{formatWeight(result.totalGrossWeight)}</div>
+            <div className="font-mono text-[9px] uppercase text-brut-black/40 font-bold mt-0.5">total weight</div>
+          </div>
         </div>
       </div>
 
@@ -39,24 +41,22 @@ export function MultiContainerPlanner({ result, selectedIndex, onSelectContainer
             <button
               key={idx}
               onClick={() => onSelectContainer(idx)}
-              className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-left transition-all"
-              style={isSelected
-                ? { background: 'rgba(61,178,64,0.15)', border: '1px solid rgba(61,178,64,0.30)', boxShadow: 'inset 3px 0 0 #3DB240' }
-                : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }
-              }
-              onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; }}
-              onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+              className={`flex items-center gap-2.5 px-3.5 py-2.5 border-2 border-brut-black text-left transition-all ${
+                isSelected
+                  ? 'bg-brut-black text-white'
+                  : 'bg-white text-brut-black hover:bg-brut-bg shadow-brut-sm hover:shadow-brut'
+              }`}
             >
-              <Package size={13} style={{ color: isSelected ? '#3DB240' : 'rgba(255,255,255,0.35)' }} />
+              <Package size={13} className={isSelected ? 'text-white' : 'text-brut-black/50'} />
               <div>
-                <div className={`text-xs font-semibold leading-none ${isSelected ? 'text-white' : 'text-white/65'}`}>
+                <div className={`text-xs font-black uppercase tracking-tight leading-none ${isSelected ? 'text-white' : 'text-brut-black'}`}>
                   #{idx + 1}
                 </div>
-                <div className="font-mono text-[10px] mt-0.5 text-white/35">
+                <div className={`font-mono text-[10px] mt-0.5 font-bold ${isSelected ? 'text-white/60' : 'text-brut-black/40'}`}>
                   {r.totalCount} units · {volPct}%
                 </div>
               </div>
-              {isSelected && <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#3DB240' }} />}
+              {isSelected && <div className="w-1.5 h-1.5 bg-brut-red shrink-0" />}
             </button>
           );
         })}

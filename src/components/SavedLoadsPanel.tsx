@@ -86,29 +86,23 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
       <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
 
       <div
-        className="fixed right-0 top-0 h-full w-full max-w-sm z-50 flex flex-col overflow-hidden"
-        style={{
-          background: '#0A1628',
-          borderLeft: '1px solid rgba(255,255,255,0.09)',
-          boxShadow: '-16px 0 48px rgba(0,0,0,0.40)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-        }}
+        className="fixed right-0 top-0 h-full w-full max-w-sm z-50 flex flex-col bg-brut-sidebar overflow-hidden"
+        style={{ borderLeft: '3px solid #0d0d0d', boxShadow: '-6px 0 0 #0d0d0d' }}
       >
-        <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ background: 'rgba(6,14,26,0.80)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="flex items-center justify-between px-5 py-4 shrink-0 bg-brut-hdr" style={{ borderBottom: '2px solid rgba(255,255,255,0.10)' }}>
           <div>
-            <h2 className="font-semibold text-base text-white leading-none">Saved Loads</h2>
-            <p className="font-mono text-[9px] uppercase tracking-widest text-white/35 mt-1">
+            <h2 className="font-black text-base uppercase tracking-tight text-white leading-none">Saved Loads</h2>
+            <p className="font-mono text-[9px] uppercase tracking-widest text-white/40 mt-0.5 font-bold">
               {loads.length} load{loads.length !== 1 ? 's' : ''} saved
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-white/40 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.07)' }}>
-            <X size={16} strokeWidth={2} />
+          <button onClick={onClose} className="p-1.5 text-white/50 hover:text-white transition-colors">
+            <X size={18} strokeWidth={2.5} />
           </button>
         </div>
 
-        <div className="p-4 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-          <p className="brut-section-label mb-2.5">Save current configuration</p>
+        <div className="p-4 shrink-0" style={{ borderBottom: '2px solid rgba(255,255,255,0.10)' }}>
+          <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-white/38 mb-2.5">Save current configuration</p>
           <div className="flex gap-2">
             <input
               ref={saveInputRef}
@@ -118,24 +112,23 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
               onKeyDown={e => e.key === 'Enter' && handleSave()}
               placeholder="e.g. Xmas Shipment 2025"
               maxLength={80}
-              className="flex-1 px-3 py-2.5 text-sm font-medium text-white placeholder-white/20 focus:outline-none rounded-lg transition-all"
-              style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}
-              onFocus={e => { e.currentTarget.style.borderColor = '#3DB240'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(61,178,64,0.18)'; }}
-              onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.boxShadow = 'none'; }}
+              className="flex-1 px-3 py-2.5 text-sm font-bold text-white placeholder-white/25 focus:outline-none"
+              style={{
+                background: 'rgba(255,255,255,0.07)',
+                border: '2px solid rgba(255,255,255,0.18)',
+              }}
             />
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-3.5 py-2.5 text-white text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 shrink-0 transition-all rounded-lg"
-              style={{ background: '#3DB240', border: '1px solid #3DB240' }}
-              onMouseEnter={e => { if (!isSaving) e.currentTarget.style.background = '#2D9632'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = '#3DB240'; }}
+              className="px-3.5 py-2.5 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shrink-0 transition-colors"
+              style={{ background: '#1572b6', border: '2px solid #0e5590' }}
             >
               {isSaving ? <Loader size={13} className="animate-spin" /> : <BookmarkPlus size={13} />}
               Save
             </button>
           </div>
-          {saveError && <p className="text-[10px] font-semibold mt-1.5" style={{ color: '#EF4444' }}>{saveError}</p>}
+          {saveError && <p className="font-mono text-[10px] font-bold text-brut-red mt-1.5">{saveError}</p>}
         </div>
 
         <div className="flex-1 overflow-y-auto scrollbar-brut dark-chrome">
@@ -158,8 +151,8 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                 return (
                   <div
                     key={load.id}
-                    className="overflow-hidden rounded-xl"
-                    style={{ border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.05)' }}
+                    className="overflow-hidden"
+                    style={{ border: '2px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)' }}
                   >
                     <div className="px-3.5 pt-3 pb-2.5">
                       {isEditing ? (
@@ -171,10 +164,10 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                             onKeyDown={e => { if (e.key === 'Enter') handleRename(load.id); if (e.key === 'Escape') setEditingId(null); }}
                             autoFocus
                             maxLength={80}
-                            className="flex-1 px-2 py-1.5 text-sm font-medium text-white focus:outline-none rounded-lg"
-                            style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(61,178,64,0.45)', boxShadow: '0 0 0 3px rgba(61,178,64,0.15)' }}
+                            className="flex-1 px-2 py-1 text-sm font-bold text-white focus:outline-none"
+                            style={{ background: 'rgba(255,255,255,0.10)', border: '2px solid #1572b6' }}
                           />
-                          <button onClick={() => handleRename(load.id)} className="p-1 hover:text-white transition-colors" style={{ color: '#3DB240' }}>
+                          <button onClick={() => handleRename(load.id)} className="p-1 text-brut-green hover:text-white">
                             <Check size={14} />
                           </button>
                           <button onClick={() => setEditingId(null)} className="p-1 hover:text-white" style={{ color: 'rgba(255,255,255,0.35)' }}>
@@ -195,9 +188,7 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                             <button
                               onClick={() => handleDelete(load.id)}
                               disabled={isDeleting}
-                              className="p-1 transition-colors"
-                              onMouseEnter={e => e.currentTarget.style.color = '#EF4444'}
-                              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.25)'}
+                              className="p-1 hover:text-brut-red transition-colors"
                               style={{ color: 'rgba(255,255,255,0.25)' }}
                             >
                               {isDeleting ? <Loader size={11} className="animate-spin" /> : <Trash2 size={11} />}
@@ -209,7 +200,7 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                       <div className="flex items-center gap-2 flex-wrap">
                         <span
                           className="inline-flex items-center px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase"
-                          style={{ background: 'rgba(61,178,64,0.15)', border: '1px solid rgba(61,178,64,0.30)', color: '#5DC258' }}
+                          style={{ background: 'rgba(27,107,64,0.50)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.75)' }}
                         >
                           {getContainerLabel(load.container_id)}
                         </span>
@@ -234,17 +225,17 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                       onClick={() => { onLoadSelect(load); onClose(); }}
                       className="w-full py-2 text-[10px] font-black uppercase tracking-wider text-center transition-all"
                       style={{
-                        color: 'rgba(255,255,255,0.40)',
-                        background: 'rgba(255,255,255,0.03)',
-                        borderTop: '1px solid rgba(255,255,255,0.08)',
+                        color: 'rgba(255,255,255,0.50)',
+                        background: 'rgba(255,255,255,0.04)',
+                        borderTop: '2px solid rgba(255,255,255,0.10)',
                       }}
                       onMouseEnter={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(61,178,64,0.15)';
-                        (e.currentTarget as HTMLButtonElement).style.color = '#5DC258';
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(27,107,64,0.40)';
+                        (e.currentTarget as HTMLButtonElement).style.color = '#fff';
                       }}
                       onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.03)';
-                        (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.40)';
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)';
+                        (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.50)';
                       }}
                     >
                       Load this configuration

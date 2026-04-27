@@ -18,12 +18,9 @@ type ViewMode = 'front' | 'side' | 'top';
 
 const PAD = 28;
 const PAD_BOTTOM = 44;
-const BG = '#0A1628';
-const CONTAINER_BG = '#0E1F38';
-const WALL = 'rgba(255,255,255,0.80)';
-const RIB = 'rgba(255,255,255,0.05)';
-const DIM_LINE = 'rgba(255,255,255,0.20)';
-const DIM_TEXT = 'rgba(255,255,255,0.50)';
+const BG = '#ede8df';
+const CONTAINER_BG = '#f7f4ef';
+const BLACK = '#0d0d0d';
 const WALL_STROKE = 4;
 const GAP = 1.5;
 
@@ -63,7 +60,7 @@ function drawContainer(ctx: CanvasRenderingContext2D, cx: number, cy: number, cw
   ctx.fillRect(cx, cy, cw, ch);
 
   const ribCount = Math.max(6, Math.floor(cw / 50));
-  ctx.strokeStyle = RIB;
+  ctx.strokeStyle = 'rgba(13,13,13,0.06)';
   ctx.lineWidth = 1;
   for (let i = 1; i < ribCount; i++) {
     const rx = cx + (cw / ribCount) * i;
@@ -73,13 +70,13 @@ function drawContainer(ctx: CanvasRenderingContext2D, cx: number, cy: number, cw
     ctx.stroke();
   }
 
-  ctx.strokeStyle = WALL;
+  ctx.strokeStyle = BLACK;
   ctx.lineWidth = WALL_STROKE;
   ctx.lineJoin = 'miter';
   ctx.strokeRect(cx - WALL_STROKE / 2, cy - WALL_STROKE / 2, cw + WALL_STROKE, ch + WALL_STROKE);
 
   const cs = 8;
-  ctx.fillStyle = WALL;
+  ctx.fillStyle = BLACK;
   const corners = [
     [cx - WALL_STROKE, cy - WALL_STROKE],
     [cx + cw - cs + WALL_STROKE, cy - WALL_STROKE],
@@ -93,7 +90,7 @@ function drawDoors(ctx: CanvasRenderingContext2D, cx: number, cy: number, cw: nu
   const doorX = cx + cw + WALL_STROKE / 2 + 2;
   const midY = cy + ch / 2;
 
-  ctx.strokeStyle = WALL;
+  ctx.strokeStyle = BLACK;
   ctx.lineWidth = 2;
   ctx.setLineDash([5, 4]);
 
@@ -110,14 +107,14 @@ function drawDoors(ctx: CanvasRenderingContext2D, cx: number, cy: number, cw: nu
   ctx.stroke();
 
   ctx.setLineDash([]);
-  ctx.strokeStyle = WALL;
+  ctx.strokeStyle = BLACK;
   ctx.lineWidth = 1.5;
   [0.15, 0.50, 0.85].forEach(t => {
     ctx.beginPath();
     ctx.arc(doorX + 3, cy + ch * t, 3, 0, Math.PI * 2);
     ctx.stroke();
   });
-  ctx.fillStyle = WALL;
+  ctx.fillStyle = BLACK;
   ctx.beginPath();
   ctx.arc(doorX + 11, midY, 3, 0, Math.PI * 2);
   ctx.fill();
@@ -134,10 +131,10 @@ function drawReeferZones(
   if (floorClear > 0) {
     const fh = floorClear * scale;
     const fy = cy + ch - fh;
-    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.fillStyle = 'rgba(13,13,13,0.06)';
     ctx.fillRect(cx, fy, cw, fh);
-    drawHatch(ctx, cx, fy, cw, fh, 'rgba(255,255,255,0.08)', 7);
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    drawHatch(ctx, cx, fy, cw, fh, 'rgba(13,13,13,0.10)', 7);
+    ctx.fillStyle = BLACK;
     ctx.font = 'bold 9px "Courier New", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -147,17 +144,17 @@ function drawReeferZones(
 
   if (topClear > 0 && showFrontTopFill) {
     const th = topClear * scale;
-    ctx.fillStyle = 'rgba(198,51,32,0.08)';
+    ctx.fillStyle = 'rgba(198,51,32,0.06)';
     ctx.fillRect(cx, cy, cw, th);
-    drawHatch(ctx, cx, cy, cw, th, 'rgba(198,51,32,0.12)', 7);
+    drawHatch(ctx, cx, cy, cw, th, 'rgba(198,51,32,0.10)', 7);
   }
 
   if (topClear > 0 && showEvaporatorZone && evaporatorDepth > 0) {
     const evaW = evaporatorDepth * scale;
     const th = topClear * scale;
-    ctx.fillStyle = 'rgba(198,51,32,0.09)';
+    ctx.fillStyle = 'rgba(198,51,32,0.07)';
     ctx.fillRect(cx, cy, evaW, th);
-    drawHatch(ctx, cx, cy, evaW, th, 'rgba(198,51,32,0.14)', 7);
+    drawHatch(ctx, cx, cy, evaW, th, 'rgba(198,51,32,0.12)', 7);
     const lineY = cy + th;
     ctx.strokeStyle = '#c63320';
     ctx.lineWidth = 2;
@@ -167,7 +164,7 @@ function drawReeferZones(
     ctx.lineTo(cx + evaW, lineY);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.strokeStyle = 'rgba(198,51,32,0.45)';
+    ctx.strokeStyle = 'rgba(198,51,32,0.35)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(cx + evaW, cy);
@@ -180,7 +177,7 @@ function drawReeferZones(
     ctx.fillText('MAX LOAD', cx + 4, lineY - 2);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(198,51,32,0.55)';
+    ctx.fillStyle = 'rgba(198,51,32,0.45)';
     ctx.font = 'bold 8px "Courier New", monospace';
     ctx.fillText('REEFER UNIT', cx + evaW / 2, cy + th + (ch - th) / 2);
     ctx.textAlign = 'left';
@@ -227,7 +224,7 @@ function drawCenterOfGravity(
   const py = cy + (containerB - cogB) * scale;
 
   ctx.save();
-  ctx.strokeStyle = '#EF4444';
+  ctx.strokeStyle = '#c63320';
   ctx.lineWidth = 1.5;
   ctx.setLineDash([4, 3]);
 
@@ -242,7 +239,7 @@ function drawCenterOfGravity(
   ctx.stroke();
 
   ctx.setLineDash([]);
-  ctx.fillStyle = '#EF4444';
+  ctx.fillStyle = '#c63320';
   ctx.beginPath();
   ctx.arc(px, py, 5, 0, Math.PI * 2);
   ctx.fill();
@@ -254,7 +251,7 @@ function drawCenterOfGravity(
   ctx.stroke();
 
   ctx.font = 'bold 9px "Courier New", monospace';
-  ctx.fillStyle = '#EF4444';
+  ctx.fillStyle = '#c63320';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
   ctx.fillText('CoG', px + 7, py - 3);
@@ -274,15 +271,16 @@ function drawBoxesFront(
 ) {
   const filtered = boxes.filter(b => b.y < depthLimit);
   const sorted = [...filtered].sort((a, b) => a.x - b.x);
-  const maxZ = containerH - topClear;
+  const maxZ = containerH - topClear; // hard clip at red line
 
   for (const box of sorted) {
     const depthT = Math.min(1, box.x / Math.max(containerL, 1));
-    const alpha = 0.30 + 0.60 * depthT;
+    const alpha = 0.22 + 0.68 * depthT;
 
     const bx = cx + box.y * scale + GAP / 2;
     const bw = box.w * scale - GAP;
 
+    // Clip box top at the MAX LOAD LINE
     const clippedTop = Math.min(box.z + box.h, maxZ);
     const clippedH = clippedTop - box.z;
     if (clippedH <= 0) continue;
@@ -292,7 +290,7 @@ function drawBoxesFront(
 
     if (bw < 1 || bh < 1) continue;
 
-    const [r, g, b] = colorMap[box.productId] ?? [61, 178, 64];
+    const [r, g, b] = colorMap[box.productId] ?? [198, 51, 32];
     ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
     ctx.fillRect(bx, by, bw, bh);
     const [dr, dg, db] = darken(r, g, b, 0.3);
@@ -314,15 +312,16 @@ function drawBoxesSide(
 ) {
   const filtered = boxes.filter(b => b.y < depthLimit);
   const sorted = [...filtered].sort((a, b) => a.y - b.y);
-  const maxZ = containerH - topClear;
+  const maxZ = containerH - topClear; // hard clip at red line
 
   for (const box of sorted) {
     const depthT = Math.min(1, box.y / Math.max(containerW, 1));
-    const alpha = 0.30 + 0.60 * depthT;
+    const alpha = 0.22 + 0.68 * depthT;
 
     const bx = cx + box.x * scale + GAP / 2;
     const bw = box.l * scale - GAP;
 
+    // Clip box top at the MAX LOAD LINE
     const clippedTop = Math.min(box.z + box.h, maxZ);
     const clippedH = clippedTop - box.z;
     if (clippedH <= 0) continue;
@@ -332,7 +331,7 @@ function drawBoxesSide(
 
     if (bw < 1 || bh < 1) continue;
 
-    const [r, g, b] = colorMap[box.productId] ?? [61, 178, 64];
+    const [r, g, b] = colorMap[box.productId] ?? [198, 51, 32];
     ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
     ctx.fillRect(bx, by, bw, bh);
     const [dr, dg, db] = darken(r, g, b, 0.3);
@@ -352,9 +351,9 @@ function drawPalletsTop(
     const py = cy + pal.y * scale;
     const pw = pal.palletL * scale;
     const ph = pal.palletW * scale;
-    ctx.fillStyle = 'rgba(205,160,70,0.12)';
+    ctx.fillStyle = 'rgba(205,160,70,0.15)';
     ctx.fillRect(px, py, pw, ph);
-    ctx.strokeStyle = 'rgba(205,160,70,0.45)';
+    ctx.strokeStyle = 'rgba(160,100,20,0.55)';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([4, 3]);
     ctx.strokeRect(px + 1, py + 1, pw - 2, ph - 2);
@@ -373,9 +372,9 @@ function drawPalletsFront(
     const pw = pal.palletW * scale - 1;
     const deckPx = deckH * scale;
     const palY = cy + (containerH - deckH) * scale;
-    ctx.fillStyle = 'rgba(160,100,20,0.18)';
+    ctx.fillStyle = 'rgba(160,100,20,0.20)';
     ctx.fillRect(px, palY, pw, deckPx);
-    ctx.strokeStyle = 'rgba(205,160,70,0.45)';
+    ctx.strokeStyle = 'rgba(160,100,20,0.50)';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(px, palY, pw, deckPx);
     const blockW = Math.max(4, pw / 5);
@@ -400,7 +399,7 @@ function drawBoxesTop(
 
   for (const box of sorted) {
     const heightT = Math.min(1, (box.z + box.h / 2) / Math.max(containerH, 1));
-    const alpha = 0.30 + 0.60 * heightT;
+    const alpha = 0.22 + 0.68 * heightT;
 
     const bx = cx + box.x * scale + GAP / 2;
     const by = cy + box.y * scale + GAP / 2;
@@ -409,7 +408,7 @@ function drawBoxesTop(
 
     if (bw < 1 || bh < 1) continue;
 
-    const [r, g, b] = colorMap[box.productId] ?? [61, 178, 64];
+    const [r, g, b] = colorMap[box.productId] ?? [198, 51, 32];
     ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
     ctx.fillRect(bx, by, bw, bh);
     const [dr, dg, db] = darken(r, g, b, 0.3);
@@ -424,7 +423,7 @@ function drawDimLabel(
   x1: number, y1: number, x2: number, y2: number,
   label: string, side: 'bottom' | 'left',
 ) {
-  ctx.strokeStyle = DIM_LINE;
+  ctx.strokeStyle = 'rgba(13,13,13,0.30)';
   ctx.lineWidth = 1;
   ctx.setLineDash([3, 3]);
   ctx.beginPath();
@@ -436,7 +435,7 @@ function drawDimLabel(
   const mx = (x1 + x2) / 2;
   const my = (y1 + y2) / 2;
   ctx.font = 'bold 9px "Courier New", monospace';
-  ctx.fillStyle = DIM_TEXT;
+  ctx.fillStyle = 'rgba(13,13,13,0.55)';
   ctx.textBaseline = 'middle';
   if (side === 'bottom') {
     ctx.textAlign = 'center';
@@ -470,7 +469,7 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
   const colorMap = useRef<Record<string, [number, number, number]>>({});
   colorMap.current = {};
   result.productResults.forEach((pr, i) => {
-    colorMap.current[pr.product.id] = hexToRgb(productColors[i] ?? '#3DB240');
+    colorMap.current[pr.product.id] = hexToRgb(productColors[i] ?? '#c63320');
   });
 
   const render = useCallback(() => {
@@ -554,7 +553,6 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
       drawDimLabel(ctx, cx - 32, cy + ch, cx - 32, cy, fmt(IW), 'left');
     }
 
-    // Canvas legend (top of canvas, behind HTML overlay)
     if (result.productResults.length > 0 && result.packedBoxes.length > 0) {
       let xOff = PAD;
       const labelY = H - PAD_BOTTOM + 16;
@@ -563,7 +561,7 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
       for (let i = 0; i < Math.min(result.productResults.length, MAX_LEGEND); i++) {
         const pr = result.productResults[i];
         if (pr.count === 0) continue;
-        const [r, g, b] = colorMap.current[pr.product.id] ?? [61, 178, 64];
+        const [r, g, b] = colorMap.current[pr.product.id] ?? [198, 51, 32];
         const label = `${pr.product.name}: ${pr.count.toLocaleString()} units`;
 
         ctx.font = 'bold 10px "Courier New", monospace';
@@ -571,10 +569,10 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
 
         if (xOff + tw + 30 > W - PAD) break;
 
-        ctx.fillStyle = `rgba(${r},${g},${b},0.85)`;
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
         ctx.fillRect(xOff, labelY - 10, tw + 18, 22);
-        ctx.strokeStyle = 'rgba(255,255,255,0.20)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = BLACK;
+        ctx.lineWidth = 1.5;
         ctx.strokeRect(xOff, labelY - 10, tw + 18, 22);
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'left';
@@ -585,7 +583,7 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
 
       if (result.productResults.length > MAX_LEGEND) {
         ctx.font = 'bold 10px "Courier New", monospace';
-        ctx.fillStyle = DIM_TEXT;
+        ctx.fillStyle = 'rgba(13,13,13,0.4)';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         ctx.fillText(`+${result.productResults.length - MAX_LEGEND} more`, xOff, labelY + 1);
@@ -628,104 +626,79 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
   const isReefer = result.container.category === 'Reefer';
   const fillPct = Math.round(result.volumeUtilization * 100);
   const isPalletMode = result.loadingMode === 'pallet';
-  const legend = result.productResults.filter(pr => pr.count > 0).slice(0, 5);
+  const legend = result.productResults.filter(pr => pr.count > 0).slice(0, 6);
 
   return (
-    <div className="w-full h-full relative" style={{ background: BG }}>
+    <div className="w-full h-full relative bg-brut-bg">
       <canvas ref={canvasRef} className="w-full h-full block" />
 
-      {/* View mode buttons */}
       <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex items-center gap-1 sm:gap-1.5 flex-wrap max-w-[calc(100%-80px)]">
-        {(['front', 'side', 'top'] as ViewMode[]).map(mode => {
-          const isActive = viewMode === mode;
-          return (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider transition-all whitespace-nowrap rounded-lg"
-              style={isActive
-                ? { background: 'rgba(61,178,64,0.18)', border: '1px solid rgba(61,178,64,0.35)', color: '#5DC258' }
-                : { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.50)' }
-              }
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.80)'; }}
-              onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = 'rgba(255,255,255,0.50)'; }}
-            >
-              <span className="hidden sm:inline">{VIEW_LABELS[mode]}</span>
-              <span className="sm:hidden">{VIEW_LABELS_SHORT[mode]}</span>
-            </button>
-          );
-        })}
+        {(['front', 'side', 'top'] as ViewMode[]).map(mode => (
+          <button
+            key={mode}
+            onClick={() => setViewMode(mode)}
+            className={`px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-wider border-2 border-brut-black transition-all whitespace-nowrap ${
+              viewMode === mode
+                ? 'bg-brut-black text-white shadow-brut-red'
+                : 'bg-white text-brut-black hover:bg-brut-bg shadow-brut-sm'
+            }`}
+          >
+            <span className="hidden sm:inline">{VIEW_LABELS[mode]}</span>
+            <span className="sm:hidden">{VIEW_LABELS_SHORT[mode]}</span>
+          </button>
+        ))}
       </div>
 
-      {/* Top right badges */}
       <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex items-center gap-1 sm:gap-2">
         {isPalletMode && (
-          <div
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
-            style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)' }}
-          >
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#F59E0B' }} />
-            <span className="font-mono text-[9px] font-semibold uppercase tracking-widest" style={{ color: '#F59E0B' }}>Pallet mode</span>
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 border-2 border-brut-amber bg-white" style={{ boxShadow: '2px 2px 0px #df9a10' }}>
+            <div className="w-2 h-2 bg-brut-amber" />
+            <span className="font-mono text-[9px] font-black uppercase tracking-widest text-brut-amber">Pallet mode</span>
           </div>
         )}
         {isPalletMode && (
-          <div
-            className="sm:hidden flex items-center gap-1 px-2 py-1 rounded-lg"
-            style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)' }}
-          >
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#F59E0B' }} />
-            <span className="font-mono text-[8px] font-semibold uppercase" style={{ color: '#F59E0B' }}>Pallet</span>
+          <div className="sm:hidden flex items-center gap-1 px-2 py-1 border-2 border-brut-amber bg-white" style={{ boxShadow: '2px 2px 0px #df9a10' }}>
+            <div className="w-1.5 h-1.5 bg-brut-amber" />
+            <span className="font-mono text-[8px] font-black uppercase text-brut-amber">Pallet</span>
           </div>
         )}
         {isReefer && (
-          <div
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
-            style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}
-          >
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#EF4444' }} />
-            <span className="font-mono text-[9px] font-semibold uppercase tracking-widest" style={{ color: '#EF4444' }}>Reefer</span>
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 border-2 border-brut-red bg-white" style={{ boxShadow: '2px 2px 0px #c63320' }}>
+            <div className="w-2 h-2 bg-brut-red" />
+            <span className="font-mono text-[9px] font-black uppercase tracking-widest text-brut-red">Reefer</span>
           </div>
         )}
         {isReefer && (
-          <div
-            className="sm:hidden flex items-center gap-1 px-2 py-1 rounded-lg"
-            style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}
-          >
-            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#EF4444' }} />
-            <span className="font-mono text-[8px] font-semibold uppercase" style={{ color: '#EF4444' }}>Reef</span>
+          <div className="sm:hidden flex items-center gap-1 px-2 py-1 border-2 border-brut-red bg-white" style={{ boxShadow: '2px 2px 0px #c63320' }}>
+            <div className="w-1.5 h-1.5 bg-brut-red" />
+            <span className="font-mono text-[8px] font-black uppercase text-brut-red">Reef</span>
           </div>
         )}
         <div
-          className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg"
-          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
+          className="px-2 sm:px-3 py-1 sm:py-2 border-2 border-brut-black bg-white"
+          style={{ boxShadow: fillPct > 85 ? '3px 3px 0px #d96a1c' : '3px 3px 0px #0e5590' }}
         >
-          <span className="hidden sm:inline font-mono text-[10px] font-semibold text-white/35 uppercase mr-2">{result.container.shortName}</span>
-          <span
-            className="font-mono text-sm font-bold"
-            style={{ color: fillPct > 85 ? '#F59E0B' : '#3DB240' }}
-          >{fillPct}%</span>
-          <span className="font-mono text-[10px] font-semibold text-white/30 uppercase ml-1">filled</span>
+          <span className="hidden sm:inline font-mono text-[10px] font-black text-brut-black/40 uppercase mr-2">{result.container.shortName}</span>
+          <span className={`font-mono text-sm font-black ${fillPct > 85 ? 'text-brut-orange' : 'text-brut-green'}`}>{fillPct}%</span>
+          <span className="font-mono text-[10px] font-black text-brut-black/35 uppercase ml-1">filled</span>
         </div>
       </div>
 
-      {/* Depth slider */}
       {result.packedBoxes.length > 0 && (
         <div className="absolute bottom-12 left-3 right-3 flex items-center gap-3">
-          <span className="font-mono text-[9px] font-semibold uppercase text-white/35 whitespace-nowrap">Depth</span>
+          <span className="font-mono text-[9px] font-bold uppercase text-brut-black/40 whitespace-nowrap">Depth</span>
           <input
             type="range"
             min={5}
             max={100}
             value={layerDepth}
             onChange={e => setLayerDepth(Number(e.target.value))}
-            className="flex-1 h-1 cursor-pointer"
-            style={{ accentColor: '#3DB240' }}
+            className="flex-1 h-1 accent-brut-black cursor-pointer"
           />
-          <span className="font-mono text-[9px] font-semibold text-white/35 w-8 text-right">{layerDepth}%</span>
+          <span className="font-mono text-[9px] font-bold text-brut-black/40 w-8 text-right">{layerDepth}%</span>
         </div>
       )}
 
-      {/* HTML legend overlay (bottom-right) */}
       {legend.length > 0 && (
         <div className="absolute bottom-3 right-3 flex flex-col gap-1 pointer-events-none">
           {legend.map((pr, i) => {
@@ -735,50 +708,32 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
             return (
               <div
                 key={pr.product.id}
-                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
-                style={{
-                  background: 'rgba(10,22,40,0.80)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
-                  border: `1px solid ${productColors[i]}40`,
-                  boxShadow: `inset 3px 0 0 ${productColors[i]}`,
-                }}
+                className="flex items-center gap-2 px-2 py-1.5 border-2 border-brut-black bg-white"
+                style={{ boxShadow: `2px 2px 0px ${productColors[i]}` }}
               >
-                <span className="font-mono text-[9px] font-semibold text-white/80 uppercase">{pr.product.name}</span>
-                <span className="font-mono text-[8px] text-white/35">{fmtDim(bL)}×{fmtDim(bW)}×{fmtDim(bH)} {unit}</span>
-                <span className="font-mono text-[9px] font-bold" style={{ color: productColors[i] }}>×{pr.count.toLocaleString()}</span>
+                <div className="w-2.5 h-2.5 shrink-0" style={{ backgroundColor: productColors[i] }} />
+                <span className="font-mono text-[9px] font-black text-brut-black uppercase">{pr.product.name}</span>
+                <span className="font-mono text-[8px] text-brut-black/40">{fmtDim(bL)}×{fmtDim(bW)}×{fmtDim(bH)} {unit}</span>
+                <span className="font-mono text-[9px] font-black" style={{ color: productColors[i] }}>×{pr.count.toLocaleString()}</span>
               </div>
             );
           })}
-          {result.productResults.filter(pr => pr.count > 0).length > 5 && (
-            <span className="font-mono text-[9px] text-white/30 text-right">+{result.productResults.filter(pr => pr.count > 0).length - 5} more</span>
+          {result.productResults.filter(pr => pr.count > 0).length > 6 && (
+            <span className="font-mono text-[9px] text-brut-black/35 text-right">+{result.productResults.filter(pr => pr.count > 0).length - 6} more</span>
           )}
         </div>
       )}
 
-      {/* Empty state */}
       {result.packedBoxes.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div
-            className="text-center px-8 py-6 rounded-2xl"
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              boxShadow: '0 16px 48px rgba(0,0,0,0.30)',
-            }}
-          >
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4"
-              style={{ background: 'rgba(61,178,64,0.15)', border: '1px solid rgba(61,178,64,0.25)' }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3DB240" strokeWidth="1.5">
+          <div className="text-center px-8 py-6 border-3 border-brut-black bg-white" style={{ boxShadow: '6px 6px 0px #0d0d0d' }}>
+            <div className="w-12 h-12 bg-brut-black flex items-center justify-center mx-auto mb-4">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
               </svg>
             </div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-widest text-white/60">Enter product dimensions</p>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-white/30 mt-1.5">{result.container.name}</p>
+            <p className="font-mono text-xs font-black uppercase tracking-widest text-brut-black">Enter product dimensions</p>
+            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-brut-black/40 mt-1.5">{result.container.name}</p>
           </div>
         </div>
       )}

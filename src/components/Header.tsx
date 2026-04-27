@@ -35,69 +35,65 @@ export function Header({ unit, onUnitChange, onOpenSaves, sidebarOpen, onToggleS
   }, [mobileMenuOpen]);
 
   return (
-    <header
-      className="shrink-0 flex items-center justify-between px-3 sm:px-5 py-0 relative"
-      style={{
-        height: 56,
-        background: 'rgba(6,14,26,0.92)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        zIndex: 40,
-      }}
-    >
+    <header className="shrink-0 flex items-center justify-between px-3 sm:px-4 py-0 bg-brut-hdr border-b-3 border-brut-hdr-dark relative" style={{ height: 56 }}>
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           onClick={onToggleSidebar}
-          className="lg:hidden shrink-0 flex items-center justify-center w-8 h-8 text-white/60 hover:text-white transition-colors"
+          className="lg:hidden shrink-0 flex items-center justify-center w-8 h-8 text-white/70 hover:text-white transition-colors"
           aria-label="Toggle sidebar"
         >
-          {sidebarOpen ? <X size={18} strokeWidth={2} /> : <Menu size={18} strokeWidth={2} />}
+          {sidebarOpen ? <X size={20} strokeWidth={2.5} /> : <Menu size={20} strokeWidth={2.5} />}
         </button>
 
-        <img src="/iO_smartcontainer.png" alt="iO Smart Container" className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-lg object-cover" />
+        <img src="/iO_smartcontainer.png" alt="iO Smart Container" className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-lg object-cover" />
         <div className="flex flex-col justify-center min-w-0">
-          <h1 className="text-white font-semibold text-sm sm:text-base leading-none truncate">iO Smart Container</h1>
-          <span className="text-white/30 text-[9px] font-medium uppercase tracking-widest leading-none hidden sm:block mt-0.5">by Eric Tavares</span>
+          <h1 className="text-white font-black text-sm sm:text-base lg:text-lg uppercase tracking-tight leading-none truncate">iO Smart Container</h1>
+          <span className="text-white/35 font-mono text-[9px] sm:text-[10px] uppercase tracking-widest leading-none hidden sm:block mt-0.5">by Eric Tavares</span>
         </div>
 
-        {/* Desktop nav tabs */}
-        <div className="hidden lg:flex items-center ml-4 h-full gap-1">
-          {(['calculator', 'costings'] as AppPage[]).map((page) => (
-            <button
-              key={page}
-              onClick={() => onNavigate(page)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all"
-              style={activePage === page
-                ? { background: 'rgba(61,178,64,0.15)', color: '#5DC258', border: '1px solid rgba(61,178,64,0.25)' }
-                : { background: 'transparent', color: 'rgba(255,255,255,0.45)', border: '1px solid transparent' }
-              }
-              onMouseEnter={e => { if (activePage !== page) e.currentTarget.style.color = 'rgba(255,255,255,0.75)'; }}
-              onMouseLeave={e => { if (activePage !== page) e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; }}
-            >
-              {page === 'calculator' ? <Container size={12} strokeWidth={2} /> : <Calculator size={12} strokeWidth={2} />}
-              <span className="capitalize">{page}</span>
-            </button>
-          ))}
+        <div className="hidden lg:flex items-center border-2 border-white/20 ml-2 shrink-0">
+          <button
+            onClick={() => onNavigate('calculator')}
+            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-black uppercase tracking-wider transition-colors ${
+              activePage === 'calculator'
+                ? 'bg-white text-brut-hdr'
+                : 'bg-transparent text-white/50 hover:text-white'
+            }`}
+            style={activePage !== 'calculator' ? { background: 'rgba(255,255,255,0.06)' } : {}}
+          >
+            <Container size={12} strokeWidth={2.5} />
+            <span>Container</span>
+          </button>
+          <button
+            onClick={() => onNavigate('costings')}
+            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-black uppercase tracking-wider border-l-2 border-white/20 transition-colors ${
+              activePage === 'costings'
+                ? 'bg-white text-brut-hdr'
+                : 'bg-transparent text-white/50 hover:text-white'
+            }`}
+            style={activePage !== 'costings' ? { background: 'rgba(255,255,255,0.06)' } : {}}
+          >
+            <Calculator size={12} strokeWidth={2.5} />
+            <span>Costings</span>
+          </button>
         </div>
       </div>
 
-      {/* Desktop right controls */}
-      <div className="hidden lg:flex items-center gap-2 shrink-0">
-        {/* Unit selector */}
-        <div
-          className="flex p-0.5 rounded-lg gap-0.5"
-          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.10)' }}
-        >
-          {(['cm', 'mm', 'in'] as UnitSystem[]).map((u) => (
+      <div className="hidden lg:flex items-center gap-3 shrink-0">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-white/40 hidden lg:inline">Unit</span>
+        <div className="flex border-2 border-white/30">
+          {(['cm', 'mm', 'in'] as UnitSystem[]).map((u, i) => (
             <button
               key={u}
               onClick={() => onUnitChange(u)}
-              className="px-3 py-1.5 text-xs font-semibold rounded-md transition-all"
-              style={unit === u
-                ? { background: 'rgba(255,255,255,0.18)', color: 'white' }
-                : { background: 'transparent', color: 'rgba(255,255,255,0.40)' }
-              }
+              className={`px-3.5 py-2 text-xs font-black uppercase tracking-wider transition-colors ${
+                i > 0 ? 'border-l-2 border-white/30' : ''
+              } ${
+                unit === u
+                  ? 'bg-white text-brut-hdr'
+                  : 'bg-transparent text-white/50 hover:text-white'
+              }`}
+              style={unit !== u ? { background: 'rgba(255,255,255,0.06)' } : {}}
             >
               {u}
             </button>
@@ -106,94 +102,85 @@ export function Header({ unit, onUnitChange, onOpenSaves, sidebarOpen, onToggleS
 
         <button
           onClick={onOpenSaves}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.60)' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'white'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.60)'; }}
+          className="flex items-center gap-1.5 px-3.5 py-2 border-2 border-white/30 text-white/70 hover:text-white transition-all text-xs font-black uppercase tracking-wider"
+          style={{ background: 'rgba(255,255,255,0.07)' }}
         >
-          <Bookmark size={12} strokeWidth={2} />
+          <Bookmark size={13} strokeWidth={2.5} />
           <span>Saves</span>
         </button>
 
-        <div
-          className="flex items-center gap-2.5 pl-3"
-          style={{ borderLeft: '1px solid rgba(255,255,255,0.10)' }}
-        >
+        <div className="flex items-center gap-3 border-l-2 border-white/20 pl-3">
           <div className="flex flex-col items-end">
-            <span className="text-[9px] font-medium uppercase tracking-widest text-white/30">Signed in</span>
-            <span className="text-xs font-semibold text-white/80 leading-none">{displayName}</span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-white/30 font-bold">Signed in as</span>
+            <span className="font-black text-xs text-white leading-none">{displayName}</span>
           </div>
           <button
             onClick={signOut}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.45)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(220,38,38,0.12)'; e.currentTarget.style.color = 'rgba(255,100,100,0.85)'; e.currentTarget.style.borderColor = 'rgba(220,38,38,0.25)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; }}
+            className="flex items-center gap-1.5 px-3 py-2 border-2 border-white/25 text-white/55 hover:border-white/70 hover:text-white transition-all text-xs font-black uppercase tracking-wider"
+            style={{ background: 'rgba(255,255,255,0.05)' }}
             title="Sign out"
           >
-            <LogOut size={12} strokeWidth={2} />
+            <LogOut size={13} strokeWidth={2.5} />
             <span>Out</span>
           </button>
         </div>
       </div>
 
-      {/* Mobile menu button */}
       <div className="lg:hidden shrink-0" ref={menuRef}>
         <button
           onClick={() => setMobileMenuOpen(o => !o)}
-          className="flex items-center gap-1.5 p-2 rounded-lg transition-all"
-          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.60)' }}
+          className="flex items-center gap-1.5 px-3 py-2 border-2 border-white/30 text-white/70 hover:text-white transition-all"
+          style={{ background: 'rgba(255,255,255,0.07)' }}
           aria-label="Open menu"
         >
-          <SlidersHorizontal size={15} strokeWidth={2} />
+          <SlidersHorizontal size={15} strokeWidth={2.5} />
         </button>
 
         {mobileMenuOpen && (
           <div
-            className="absolute right-3 top-[calc(100%+6px)] z-50 w-60 rounded-xl overflow-hidden"
-            style={{
-              background: 'rgba(10,22,40,0.95)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.10)',
-              boxShadow: '0 16px 48px rgba(0,0,0,0.35)',
-            }}
+            className="absolute right-4 top-[calc(100%+6px)] z-50 w-60 border-3 border-brut-hdr-dark bg-brut-hdr shadow-xl"
+            style={{ boxShadow: '4px 4px 0px #0d0d0d' }}
           >
-            <div className="p-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-              <p className="text-[9px] font-semibold uppercase tracking-widest text-white/35 mb-2">Page</p>
-              <div className="flex gap-1.5">
-                {(['calculator', 'costings'] as AppPage[]).map(page => (
-                  <button
-                    key={page}
-                    onClick={() => { onNavigate(page); setMobileMenuOpen(false); }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all capitalize"
-                    style={activePage === page
-                      ? { background: 'rgba(61,178,64,0.15)', color: '#5DC258', border: '1px solid rgba(61,178,64,0.25)' }
-                      : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.50)', border: '1px solid rgba(255,255,255,0.08)' }
-                    }
-                  >
-                    {page === 'calculator' ? <Container size={11} strokeWidth={2} /> : <Calculator size={11} strokeWidth={2} />}
-                    {page}
-                  </button>
-                ))}
+            <div className="p-3 border-b-2 border-white/15">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-white/40 mb-2">Page</p>
+              <div className="flex border-2 border-white/30">
+                <button
+                  onClick={() => { onNavigate('calculator'); setMobileMenuOpen(false); }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-black uppercase tracking-wider transition-colors ${
+                    activePage === 'calculator' ? 'bg-white text-brut-hdr' : 'bg-transparent text-white/50 hover:text-white'
+                  }`}
+                  style={activePage !== 'calculator' ? { background: 'rgba(255,255,255,0.06)' } : {}}
+                >
+                  <Container size={11} strokeWidth={2.5} />
+                  Container
+                </button>
+                <button
+                  onClick={() => { onNavigate('costings'); setMobileMenuOpen(false); }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-black uppercase tracking-wider border-l-2 border-white/30 transition-colors ${
+                    activePage === 'costings' ? 'bg-white text-brut-hdr' : 'bg-transparent text-white/50 hover:text-white'
+                  }`}
+                  style={activePage !== 'costings' ? { background: 'rgba(255,255,255,0.06)' } : {}}
+                >
+                  <Calculator size={11} strokeWidth={2.5} />
+                  Costings
+                </button>
               </div>
             </div>
-
-            <div className="p-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-              <p className="text-[9px] font-semibold uppercase tracking-widest text-white/35 mb-2">Unit</p>
-              <div
-                className="flex p-0.5 rounded-lg gap-0.5"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-              >
-                {(['cm', 'mm', 'in'] as UnitSystem[]).map(u => (
+            <div className="p-3 border-b-2 border-white/15">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-white/40 mb-2">Unit</p>
+              <div className="flex border-2 border-white/30">
+                {(['cm', 'mm', 'in'] as UnitSystem[]).map((u, i) => (
                   <button
                     key={u}
                     onClick={() => { onUnitChange(u); setMobileMenuOpen(false); }}
-                    className="flex-1 py-2 text-xs font-semibold rounded-md transition-all"
-                    style={unit === u
-                      ? { background: 'rgba(255,255,255,0.16)', color: 'white' }
-                      : { color: 'rgba(255,255,255,0.40)' }
-                    }
+                    className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider transition-colors ${
+                      i > 0 ? 'border-l-2 border-white/30' : ''
+                    } ${
+                      unit === u
+                        ? 'bg-white text-brut-hdr'
+                        : 'bg-transparent text-white/50 hover:text-white'
+                    }`}
+                    style={unit !== u ? { background: 'rgba(255,255,255,0.06)' } : {}}
                   >
                     {u}
                   </button>
@@ -201,28 +188,28 @@ export function Header({ unit, onUnitChange, onOpenSaves, sidebarOpen, onToggleS
               </div>
             </div>
 
-            <div className="p-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="p-3 border-b-2 border-white/15">
               <button
                 onClick={() => { onOpenSaves(); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.60)' }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 border-2 border-white/30 text-white/70 hover:text-white transition-all text-xs font-black uppercase tracking-wider"
+                style={{ background: 'rgba(255,255,255,0.07)' }}
               >
-                <Bookmark size={13} strokeWidth={2} />
+                <Bookmark size={14} strokeWidth={2.5} />
                 Saves
               </button>
             </div>
 
             <div className="p-3">
-              <div className="mb-3">
-                <p className="text-[9px] font-semibold uppercase tracking-widest text-white/30 mb-0.5">Signed in as</p>
-                <p className="text-sm font-semibold text-white">{displayName}</p>
+              <div className="mb-2.5">
+                <p className="font-mono text-[9px] uppercase tracking-widest text-white/30 font-bold">Signed in as</p>
+                <p className="font-black text-xs text-white leading-none mt-0.5">{displayName}</p>
               </div>
               <button
                 onClick={() => { signOut(); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all"
-                style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.18)', color: 'rgba(255,100,100,0.80)' }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 border-2 border-white/25 text-white/55 hover:border-white/70 hover:text-white transition-all text-xs font-black uppercase tracking-wider"
+                style={{ background: 'rgba(255,255,255,0.05)' }}
               >
-                <LogOut size={13} strokeWidth={2} />
+                <LogOut size={14} strokeWidth={2.5} />
                 Sign Out
               </button>
             </div>
