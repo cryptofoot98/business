@@ -46,15 +46,16 @@ const UNIT_MULTIPLIERS: Record<UnitSystem, number> = {
 
 function LoadingScreen() {
   return (
-    <div className="h-screen flex items-center justify-center" style={{ background: '#060412' }}>
+    <div className="h-screen flex items-center justify-center" style={{ background: '#f0f8f0' }}>
       <div className="flex items-center gap-3 px-6 py-4" style={{
-        background: 'rgba(255,255,255,0.07)',
+        background: 'rgba(255,255,255,0.72)',
         backdropFilter: 'blur(24px)',
-        border: '1px solid rgba(255,255,255,0.12)',
-        borderRadius: 14,
+        border: '1px solid rgba(255,255,255,0.85)',
+        borderRadius: 100,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)',
       }}>
-        <Loader size={18} className="animate-spin" style={{ color: 'rgba(196,181,253,0.7)' }} />
-        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(232,228,248,0.6)' }}>Loading…</span>
+        <Loader size={18} className="animate-spin" style={{ color: '#16a34a' }} />
+        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.6)' }}>Loading…</span>
       </div>
     </div>
   );
@@ -353,7 +354,7 @@ function MainApp() {
   return (
     <div
       className="flex flex-col h-screen overflow-hidden"
-      style={{ background: '#060412', color: '#e8e4f8' }}
+      style={{ background: '#f0f8f0', color: '#14532d' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -395,10 +396,10 @@ function MainApp() {
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
           style={{
-            background: 'rgba(10,8,30,0.75)',
+            background: 'rgba(240,248,240,0.82)',
             backdropFilter: 'blur(32px) saturate(160%)',
             WebkitBackdropFilter: 'blur(32px) saturate(160%)',
-            borderRight: '1px solid rgba(255,255,255,0.07)',
+            borderRight: '1px solid rgba(0,0,0,0.06)',
           }}
         >
           <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-brut">
@@ -443,10 +444,10 @@ function MainApp() {
         <main className="flex-1 flex flex-col overflow-hidden" style={{ background: 'transparent' }}>
           <div className="flex-1 min-h-0 p-2 sm:p-4">
             <div className="w-full h-full" style={{
-              background: 'rgba(255,255,255,0.04)',
+              background: 'rgba(255,255,255,0.58)',
               backdropFilter: 'blur(16px)',
               WebkitBackdropFilter: 'blur(16px)',
-              border: '1px solid rgba(255,255,255,0.09)',
+              border: '1px solid rgba(255,255,255,0.80)',
               borderRadius: 16,
               overflow: 'hidden',
             }}>
@@ -459,8 +460,8 @@ function MainApp() {
           </div>
 
           <div className="shrink-0 overflow-y-auto max-h-48 sm:max-h-64 md:max-h-80 lg:max-h-96 p-3 sm:p-5 scrollbar-brut" style={{
-            borderTop: '1px solid rgba(255,255,255,0.07)',
-            background: 'rgba(8,6,24,0.6)',
+            borderTop: '1px solid rgba(0,0,0,0.06)',
+            background: 'rgba(245,250,245,0.78)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
           }}>

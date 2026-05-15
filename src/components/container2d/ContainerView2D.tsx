@@ -18,9 +18,9 @@ type ViewMode = 'front' | 'side' | 'top';
 
 const PAD = 28;
 const PAD_BOTTOM = 44;
-const BG = '#0c0920';
-const CONTAINER_BG = '#16103a';
-const BLACK = 'rgba(210,200,255,0.75)';
+const BG = '#eef7ee';
+const CONTAINER_BG = '#f8fdf8';
+const BLACK = '#14532d';
 const WALL_STROKE = 2;
 const GAP = 1.5;
 
@@ -60,7 +60,7 @@ function drawContainer(ctx: CanvasRenderingContext2D, cx: number, cy: number, cw
   ctx.fillRect(cx, cy, cw, ch);
 
   const ribCount = Math.max(6, Math.floor(cw / 50));
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.strokeStyle = 'rgba(0,0,0,0.04)';
   ctx.lineWidth = 1;
   for (let i = 1; i < ribCount; i++) {
     const rx = cx + (cw / ribCount) * i;
@@ -131,10 +131,10 @@ function drawReeferZones(
   if (floorClear > 0) {
     const fh = floorClear * scale;
     const fy = cy + ch - fh;
-    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.fillStyle = 'rgba(22,163,74,0.06)';
     ctx.fillRect(cx, fy, cw, fh);
-    drawHatch(ctx, cx, fy, cw, fh, 'rgba(255,255,255,0.07)', 7);
-    ctx.fillStyle = 'rgba(200,190,255,0.55)';
+    drawHatch(ctx, cx, fy, cw, fh, 'rgba(22,163,74,0.1)', 7);
+    ctx.fillStyle = 'rgba(20,83,45,0.5)';
     ctx.font = 'bold 9px "Courier New", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -423,7 +423,7 @@ function drawDimLabel(
   x1: number, y1: number, x2: number, y2: number,
   label: string, side: 'bottom' | 'left',
 ) {
-  ctx.strokeStyle = 'rgba(200,190,255,0.18)';
+  ctx.strokeStyle = 'rgba(20,83,45,0.15)';
   ctx.lineWidth = 1;
   ctx.setLineDash([3, 3]);
   ctx.beginPath();
@@ -435,7 +435,7 @@ function drawDimLabel(
   const mx = (x1 + x2) / 2;
   const my = (y1 + y2) / 2;
   ctx.font = 'bold 9px "Courier New", monospace';
-  ctx.fillStyle = 'rgba(200,190,255,0.45)';
+  ctx.fillStyle = 'rgba(20,83,45,0.4)';
   ctx.textBaseline = 'middle';
   if (side === 'bottom') {
     ctx.textAlign = 'center';
@@ -583,7 +583,7 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
 
       if (result.productResults.length > MAX_LEGEND) {
         ctx.font = 'bold 10px "Courier New", monospace';
-        ctx.fillStyle = 'rgba(200,190,255,0.35)';
+        ctx.fillStyle = 'rgba(20,83,45,0.4)';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         ctx.fillText(`+${result.productResults.length - MAX_LEGEND} more`, xOff, labelY + 1);
@@ -629,11 +629,12 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
   const legend = result.productResults.filter(pr => pr.count > 0).slice(0, 6);
 
   const GLASS_CHIP = {
-    background: 'rgba(255,255,255,0.08)',
+    background: 'rgba(255,255,255,0.72)',
     backdropFilter: 'blur(16px)',
     WebkitBackdropFilter: 'blur(16px)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: 8,
+    border: '1px solid rgba(255,255,255,0.85)',
+    borderRadius: 100,
+    boxShadow: '0 2px 10px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.9)',
   } as const;
 
   return (
@@ -643,11 +644,11 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
       {/* View mode tabs */}
       <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex items-center gap-1 sm:gap-1.5 flex-wrap max-w-[calc(100%-80px)]">
         <div className="flex p-0.5" style={{
-          background: 'rgba(255,255,255,0.06)',
+          background: 'rgba(0,0,0,0.04)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 10,
+          border: '1px solid rgba(0,0,0,0.06)',
+          borderRadius: 100,
         }}>
           {(['front', 'side', 'top'] as ViewMode[]).map(mode => (
             <button
@@ -655,16 +656,16 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
               onClick={() => setViewMode(mode)}
               className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider transition-all whitespace-nowrap"
               style={viewMode === mode ? {
-                background: 'linear-gradient(135deg, rgba(139,92,246,0.8), rgba(99,102,241,0.8))',
-                border: '1px solid rgba(255,255,255,0.2)',
-                borderRadius: 7,
+                background: 'linear-gradient(135deg, #16a34a, #15803d)',
+                border: '1px solid rgba(255,255,255,0.28)',
+                borderRadius: 100,
                 color: '#fff',
-                boxShadow: '0 2px 8px rgba(139,92,246,0.3)',
+                boxShadow: '0 2px 8px rgba(22,163,74,0.35)',
               } : {
                 background: 'transparent',
                 border: '1px solid transparent',
-                borderRadius: 7,
-                color: 'rgba(200,190,255,0.5)',
+                borderRadius: 100,
+                color: 'rgba(20,83,45,0.45)',
               }}
             >
               <span className="hidden sm:inline">{VIEW_LABELS[mode]}</span>
@@ -710,16 +711,16 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
             : '0 4px 12px rgba(16,185,129,0.2)',
           borderColor: fillPct > 85 ? 'rgba(217,106,28,0.3)' : 'rgba(16,185,129,0.3)',
         }}>
-          <span className="hidden sm:inline font-mono text-[10px] font-semibold uppercase mr-2" style={{ color: 'rgba(200,190,255,0.38)' }}>{result.container.shortName}</span>
-          <span className="font-mono text-sm font-black" style={{ color: fillPct > 85 ? '#d96a1c' : '#10b981' }}>{fillPct}%</span>
-          <span className="font-mono text-[10px] font-semibold uppercase ml-1" style={{ color: 'rgba(200,190,255,0.35)' }}>filled</span>
+          <span className="hidden sm:inline font-mono text-[10px] font-semibold uppercase mr-2" style={{ color: 'rgba(20,83,45,0.38)' }}>{result.container.shortName}</span>
+          <span className="font-mono text-sm font-black" style={{ color: fillPct > 85 ? '#d96a1c' : '#16a34a' }}>{fillPct}%</span>
+          <span className="font-mono text-[10px] font-semibold uppercase ml-1" style={{ color: 'rgba(20,83,45,0.38)' }}>filled</span>
         </div>
       </div>
 
       {/* Depth slider */}
       {result.packedBoxes.length > 0 && (
         <div className="absolute bottom-12 left-3 right-3 flex items-center gap-3">
-          <span className="font-mono text-[9px] font-semibold uppercase whitespace-nowrap" style={{ color: 'rgba(200,190,255,0.38)' }}>Depth</span>
+          <span className="font-mono text-[9px] font-semibold uppercase whitespace-nowrap" style={{ color: 'rgba(20,83,45,0.45)' }}>Depth</span>
           <input
             type="range"
             min={5}
@@ -727,9 +728,9 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
             value={layerDepth}
             onChange={e => setLayerDepth(Number(e.target.value))}
             className="flex-1 h-1 cursor-pointer"
-            style={{ accentColor: '#8b5cf6' }}
+            style={{ accentColor: '#16a34a' }}
           />
-          <span className="font-mono text-[9px] font-semibold w-8 text-right" style={{ color: 'rgba(200,190,255,0.38)' }}>{layerDepth}%</span>
+          <span className="font-mono text-[9px] font-semibold w-8 text-right" style={{ color: 'rgba(20,83,45,0.45)' }}>{layerDepth}%</span>
         </div>
       )}
 
@@ -745,22 +746,23 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
                 key={pr.product.id}
                 className="flex items-center gap-2 px-2 py-1.5"
                 style={{
-                  background: 'rgba(12,9,32,0.75)',
+                  background: 'rgba(255,255,255,0.72)',
                   backdropFilter: 'blur(16px)',
                   WebkitBackdropFilter: 'blur(16px)',
-                  border: `1px solid rgba(${productColors[i].slice(1).match(/../g)?.map(h => parseInt(h, 16)).join(',') ?? '139,92,246'},0.3)`,
-                  borderRadius: 8,
+                  border: `1px solid rgba(${productColors[i].slice(1).match(/../g)?.map(h => parseInt(h, 16)).join(',') ?? '22,163,74'},0.25)`,
+                  borderRadius: 100,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
                 }}
               >
-                <div className="w-2.5 h-2.5 shrink-0 rounded-sm" style={{ backgroundColor: productColors[i] }} />
-                <span className="font-mono text-[9px] font-semibold uppercase" style={{ color: 'rgba(232,228,248,0.85)' }}>{pr.product.name}</span>
-                <span className="font-mono text-[8px]" style={{ color: 'rgba(200,190,255,0.38)' }}>{fmtDim(bL)}×{fmtDim(bW)}×{fmtDim(bH)} {unit}</span>
+                <div className="w-2.5 h-2.5 shrink-0 rounded-full" style={{ backgroundColor: productColors[i] }} />
+                <span className="font-mono text-[9px] font-semibold uppercase" style={{ color: '#14532d' }}>{pr.product.name}</span>
+                <span className="font-mono text-[8px]" style={{ color: 'rgba(20,83,45,0.45)' }}>{fmtDim(bL)}×{fmtDim(bW)}×{fmtDim(bH)} {unit}</span>
                 <span className="font-mono text-[9px] font-semibold" style={{ color: productColors[i] }}>×{pr.count.toLocaleString()}</span>
               </div>
             );
           })}
           {result.productResults.filter(pr => pr.count > 0).length > 6 && (
-            <span className="font-mono text-[9px] text-right" style={{ color: 'rgba(200,190,255,0.35)' }}>+{result.productResults.filter(pr => pr.count > 0).length - 6} more</span>
+            <span className="font-mono text-[9px] text-right" style={{ color: 'rgba(20,83,45,0.38)' }}>+{result.productResults.filter(pr => pr.count > 0).length - 6} more</span>
           )}
         </div>
       )}
@@ -768,24 +770,24 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
       {result.packedBoxes.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center px-8 py-6" style={{
-            background: 'rgba(12,9,32,0.82)',
+            background: 'rgba(255,255,255,0.88)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255,255,255,0.12)',
+            border: '1px solid rgba(255,255,255,0.85)',
             borderRadius: 20,
-            boxShadow: '0 16px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95)',
           }}>
             <div className="w-12 h-12 flex items-center justify-center mx-auto mb-4" style={{
-              background: 'rgba(139,92,246,0.2)',
-              border: '1px solid rgba(139,92,246,0.35)',
+              background: 'rgba(22,163,74,0.1)',
+              border: '1px solid rgba(22,163,74,0.25)',
               borderRadius: 14,
             }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(196,181,253,0.8)" strokeWidth="2">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
               </svg>
             </div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(232,228,248,0.75)' }}>Enter product dimensions</p>
-            <p className="font-mono text-[10px] font-medium uppercase tracking-widest mt-1.5" style={{ color: 'rgba(200,190,255,0.38)' }}>{result.container.name}</p>
+            <p className="font-mono text-xs font-semibold uppercase tracking-widest" style={{ color: '#14532d' }}>Enter product dimensions</p>
+            <p className="font-mono text-[10px] font-medium uppercase tracking-widest mt-1.5" style={{ color: 'rgba(20,83,45,0.45)' }}>{result.container.name}</p>
           </div>
         </div>
       )}

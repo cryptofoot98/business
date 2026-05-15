@@ -5,12 +5,12 @@ import { useAuth } from '../contexts/AuthContext';
 type Mode = 'signin' | 'signup';
 
 const GLASS_CARD = {
-  background: 'rgba(255,255,255,0.08)',
-  backdropFilter: 'blur(32px) saturate(160%)',
-  WebkitBackdropFilter: 'blur(32px) saturate(160%)',
-  border: '1px solid rgba(255,255,255,0.14)',
+  background: 'rgba(255,255,255,0.72)',
+  backdropFilter: 'blur(32px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+  border: '1px solid rgba(255,255,255,0.85)',
   borderRadius: 24,
-  boxShadow: '0 16px 64px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
+  boxShadow: '0 8px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.95)',
 } as const;
 
 export function AuthPage() {
@@ -60,47 +60,47 @@ export function AuthPage() {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden" style={{ background: '#060412' }}>
+    <div className="h-screen flex overflow-hidden" style={{ background: '#f0f8f0' }}>
 
       {/* ── LEFT PANEL ── */}
       <div
         className="hidden lg:flex w-1/2 flex-col justify-between p-12"
         style={{
-          background: 'rgba(255,255,255,0.04)',
+          background: 'rgba(255,255,255,0.48)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          borderRight: '1px solid rgba(255,255,255,0.08)',
+          borderRight: '1px solid rgba(0,0,0,0.06)',
         }}
       >
         {/* Logo */}
         <div className="flex items-center gap-3">
           <div style={{
-            background: 'rgba(139,92,246,0.2)',
-            border: '1px solid rgba(139,92,246,0.35)',
+            background: 'rgba(22,163,74,0.1)',
+            border: '1px solid rgba(22,163,74,0.25)',
             borderRadius: 12,
             padding: 3,
           }}>
             <img src="/iO_smartcontainer.png" alt="iO Smart Container" className="w-8 h-8 rounded-lg object-cover" />
           </div>
-          <span className="text-white font-bold text-lg">Smart Container</span>
+          <span className="font-bold text-lg" style={{ color: '#14532d' }}>Smart Container</span>
         </div>
 
         {/* Hero text */}
         <div>
           <div className="mb-8">
-            <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: 'rgba(196,181,253,0.55)' }}>
+            <p className="text-[11px] font-semibold uppercase tracking-widest mb-4" style={{ color: 'rgba(22,163,74,0.6)' }}>
               Built for logistics
             </p>
-            <h2 className="text-white font-black text-5xl leading-none tracking-tight mb-6">
+            <h2 className="font-black text-5xl leading-none tracking-tight mb-6" style={{ color: '#14532d' }}>
               Pack smarter.<br />
               <span style={{
-                background: 'linear-gradient(135deg, #c63320, #e05a40)',
+                background: 'linear-gradient(135deg, #16a34a, #15803d)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
               }}>Ship more.</span>
             </h2>
-            <p className="text-sm leading-relaxed max-w-sm" style={{ color: 'rgba(232,228,248,0.42)' }}>
+            <p className="text-sm leading-relaxed max-w-sm" style={{ color: 'rgba(20,83,45,0.55)' }}>
               Calculate exact carton quantities, weight utilization, and optimal pallet configurations for any shipping container.
             </p>
           </div>
@@ -114,18 +114,19 @@ export function AuthPage() {
               { label: 'Pallet Standards', value: 'EUR / US' },
             ].map(({ label, value }) => (
               <div key={label} className="p-4" style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.68)',
+                border: '1px solid rgba(255,255,255,0.85)',
                 borderRadius: 14,
+                boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
               }}>
-                <div className="text-3xl font-black text-white leading-none mb-1">{value}</div>
-                <div className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgba(232,228,248,0.32)' }}>{label}</div>
+                <div className="text-3xl font-black leading-none mb-1" style={{ color: '#16a34a' }}>{value}</div>
+                <div className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'rgba(20,83,45,0.42)' }}>{label}</div>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: 'rgba(232,228,248,0.18)' }}>
+        <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: 'rgba(20,83,45,0.25)' }}>
           by Eric Tavares
         </p>
       </div>
@@ -137,22 +138,21 @@ export function AuthPage() {
             {/* Mobile logo */}
             <div className="flex lg:hidden items-center gap-3 mb-8">
               <div style={{
-                background: 'rgba(139,92,246,0.2)',
-                border: '1px solid rgba(139,92,246,0.35)',
+                background: 'rgba(22,163,74,0.1)',
+                border: '1px solid rgba(22,163,74,0.25)',
                 borderRadius: 10,
                 padding: 3,
               }}>
-                <Ship size={16} className="text-white m-1" strokeWidth={2.5} />
+                <Ship size={16} style={{ color: '#16a34a', margin: 4 }} strokeWidth={2.5} />
               </div>
-              <span className="font-bold text-lg text-white">Smart Container</span>
+              <span className="font-bold text-lg" style={{ color: '#14532d' }}>Smart Container</span>
             </div>
 
             {/* Mode switcher */}
-            <div className="flex mb-7" style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 12,
-              padding: 4,
+            <div className="flex mb-7 p-1" style={{
+              background: 'rgba(0,0,0,0.04)',
+              border: '1px solid rgba(0,0,0,0.06)',
+              borderRadius: 100,
             }}>
               {(['signin', 'signup'] as Mode[]).map(m => (
                 <button
@@ -160,13 +160,13 @@ export function AuthPage() {
                   onClick={() => switchMode(m)}
                   className="flex-1 py-2.5 text-sm font-semibold transition-all"
                   style={{
-                    borderRadius: 9,
-                    color: mode === m ? '#ffffff' : 'rgba(232,228,248,0.45)',
+                    borderRadius: 100,
+                    color: mode === m ? '#ffffff' : 'rgba(20,83,45,0.5)',
                     background: mode === m
-                      ? 'linear-gradient(135deg, rgba(139,92,246,0.85), rgba(99,102,241,0.85))'
+                      ? 'linear-gradient(135deg, #16a34a, #15803d)'
                       : 'transparent',
-                    border: mode === m ? '1px solid rgba(255,255,255,0.18)' : '1px solid transparent',
-                    boxShadow: mode === m ? '0 4px 16px rgba(139,92,246,0.3), inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+                    border: mode === m ? '1px solid rgba(255,255,255,0.28)' : '1px solid transparent',
+                    boxShadow: mode === m ? '0 4px 16px rgba(22,163,74,0.38), inset 0 1px 0 rgba(255,255,255,0.28)' : 'none',
                   }}
                 >
                   {m === 'signin' ? 'Sign In' : 'Create Account'}
@@ -176,22 +176,22 @@ export function AuthPage() {
 
             {success ? (
               <div className="p-5" style={{
-                background: 'rgba(16,185,129,0.1)',
-                border: '1px solid rgba(16,185,129,0.3)',
-                borderRadius: 14,
-                boxShadow: '0 4px 16px rgba(16,185,129,0.15)',
+                background: 'rgba(22,163,74,0.08)',
+                border: '1px solid rgba(22,163,74,0.22)',
+                borderRadius: 16,
+                boxShadow: '0 2px 12px rgba(22,163,74,0.1)',
               }}>
                 <div className="w-10 h-10 flex items-center justify-center mb-4" style={{
-                  background: 'rgba(16,185,129,0.2)',
-                  border: '1px solid rgba(16,185,129,0.4)',
+                  background: 'rgba(22,163,74,0.12)',
+                  border: '1px solid rgba(22,163,74,0.28)',
                   borderRadius: 10,
                 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5">
                     <polyline points="20,6 9,17 4,12" />
                   </svg>
                 </div>
-                <p className="font-semibold text-sm text-white mb-2">Account Created</p>
-                <p className="text-sm" style={{ color: 'rgba(232,228,248,0.55)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: '#14532d' }}>Account Created</p>
+                <p className="text-sm" style={{ color: 'rgba(20,83,45,0.58)' }}>
                   Check your email to confirm your account, then sign in below.
                 </p>
                 <button
@@ -204,17 +204,17 @@ export function AuthPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="mb-2">
-                  <h3 className="text-2xl font-black text-white leading-none">
+                  <h3 className="text-2xl font-black leading-none" style={{ color: '#14532d' }}>
                     {mode === 'signin' ? 'Welcome back' : 'New account'}
                   </h3>
-                  <p className="text-[11px] uppercase tracking-widest font-medium mt-1.5" style={{ color: 'rgba(232,228,248,0.38)' }}>
+                  <p className="text-[11px] uppercase tracking-widest font-medium mt-1.5" style={{ color: 'rgba(20,83,45,0.42)' }}>
                     {mode === 'signin' ? 'Sign in to continue' : 'Create your account to get started'}
                   </p>
                 </div>
 
                 {mode === 'signup' && (
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(232,228,248,0.45)' }}>Full Name</label>
+                    <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.5)' }}>Full Name</label>
                     <input
                       type="text"
                       value={fullName}
@@ -228,7 +228,7 @@ export function AuthPage() {
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(232,228,248,0.45)' }}>Email</label>
+                  <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.5)' }}>Email</label>
                   <input
                     type="email"
                     value={email}
@@ -241,7 +241,7 @@ export function AuthPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(232,228,248,0.45)' }}>Password</label>
+                  <label className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.5)' }}>Password</label>
                   <input
                     type="password"
                     value={password}
@@ -256,13 +256,13 @@ export function AuthPage() {
 
                 {error && (
                   <div className="flex items-start gap-2.5 p-3" style={{
-                    background: 'rgba(198,51,32,0.1)',
-                    border: '1px solid rgba(198,51,32,0.3)',
-                    borderRadius: 10,
-                    boxShadow: '0 4px 12px rgba(198,51,32,0.15)',
+                    background: 'rgba(220,38,38,0.07)',
+                    border: '1px solid rgba(220,38,38,0.2)',
+                    borderRadius: 12,
+                    boxShadow: '0 2px 8px rgba(220,38,38,0.08)',
                   }}>
-                    <AlertTriangle size={14} style={{ color: '#c63320' }} className="shrink-0 mt-0.5" />
-                    <p className="text-xs font-medium leading-snug" style={{ color: '#ef9990' }}>{error}</p>
+                    <AlertTriangle size={14} style={{ color: '#dc2626' }} className="shrink-0 mt-0.5" />
+                    <p className="text-xs font-medium leading-snug" style={{ color: '#b91c1c' }}>{error}</p>
                   </div>
                 )}
 
