@@ -72,11 +72,23 @@ function useCountUp(target: number, decimals = 0, suffix = '') {
 function StatItem({ value, suffix, label, decimals }: { value: number; suffix?: string; label: string; decimals?: number }) {
   const { ref, display } = useCountUp(value, decimals, suffix ?? '');
   return (
-    <div ref={ref} className="text-center">
-      <div className="font-display text-5xl md:text-6xl text-white leading-none mb-2" style={{ textShadow: '3px 3px 0px #c63320' }}>
+    <div ref={ref} className="text-center py-8 px-6" style={{
+      background: 'rgba(255,255,255,0.06)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255,255,255,0.1)',
+      borderRadius: 20,
+      boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12)',
+    }}>
+      <div className="text-5xl md:text-6xl font-black text-white leading-none mb-2" style={{
+        background: 'linear-gradient(135deg, #ffffff 0%, #c4b5fd 60%, #93c5fd 100%)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+      }}>
         {display}
       </div>
-      <div className="font-mono text-[11px] uppercase tracking-widest text-white/40 font-bold">{label}</div>
+      <div className="text-[11px] uppercase tracking-widest font-semibold" style={{ color: 'rgba(232,228,248,0.45)' }}>{label}</div>
     </div>
   );
 }
@@ -84,37 +96,43 @@ function StatItem({ value, suffix, label, decimals }: { value: number; suffix?: 
 const FEATURES = [
   {
     icon: <Layers size={20} />,
-    color: '#c63320',
+    color: '#8b5cf6',
+    colorRgb: '139,92,246',
     title: 'Real-Time 2D Visualization',
     desc: 'See exactly how every carton fits inside your container. Switch between front, side, and top views. Drag a depth slider to peer inside any layer.',
   },
   {
     icon: <Package size={20} />,
-    color: '#d96a1c',
+    color: '#c63320',
+    colorRgb: '198,51,32',
     title: 'Up to 20 Products at Once',
     desc: 'Mix products with different dimensions, weights, and stacking rules in a single load plan. CSV bulk import included — drop your spreadsheet and go.',
   },
   {
     icon: <BarChart3 size={20} />,
-    color: '#1572b6',
+    color: '#22d3ee',
+    colorRgb: '34,211,238',
     title: 'Weight Distribution & Axle Loads',
     desc: 'Calculates center of gravity and computes front/rear axle loads against legal limits. No more overloaded axles at the weigh station.',
   },
   {
     icon: <Target size={20} />,
-    color: '#1a4f7a',
+    color: '#10b981',
+    colorRgb: '16,185,129',
     title: 'Stacking & Orientation Constraints',
     desc: 'Mark products as fragile, non-stackable, or lock their orientation. The engine respects every rule while maximising your cubic utilisation.',
   },
   {
     icon: <Truck size={20} />,
-    color: '#df9a10',
+    color: '#d96a1c',
+    colorRgb: '217,106,28',
     title: 'Multi-Container Planning',
     desc: 'Set quantities and Smart Container automatically plans how many containers you need, distributing cargo evenly across the fleet.',
   },
   {
     icon: <FileDown size={20} />,
-    color: '#2d6a9a',
+    color: '#6366f1',
+    colorRgb: '99,102,241',
     title: 'Export & Print Ready',
     desc: 'Download a full CSV load manifest or print a formatted load report with a single click. Hand it straight to the warehouse team.',
   },
@@ -126,7 +144,8 @@ const VEHICLES = [
     label: 'ISO Containers',
     badge: '20ft · 40ft · HC · Reefer',
     desc: 'Standard dry, high-cube, reefer, open-top, and flat-rack. Every ISO variant ships with certified inner dimensions.',
-    color: '#0c2844',
+    color: '#8b5cf6',
+    colorRgb: '139,92,246',
   },
   {
     icon: <Truck size={22} />,
@@ -134,13 +153,15 @@ const VEHICLES = [
     badge: 'Van · Curtainsider · Flatbed',
     desc: 'European and standard 13m trailers with full axle load calculations. Know before you load.',
     color: '#c63320',
+    colorRgb: '198,51,32',
   },
   {
     icon: <Wind size={22} />,
     label: 'Air Freight',
     badge: 'LD3 · LD7 · PMC Pallet',
     desc: 'Major ULD types for belly and main-deck air cargo. Exact pallet footprints and max payload weights.',
-    color: '#1a4f7a',
+    color: '#22d3ee',
+    colorRgb: '34,211,238',
   },
   {
     icon: <Package size={22} />,
@@ -148,6 +169,7 @@ const VEHICLES = [
     badge: '5 · 10 · 20 CBM',
     desc: 'Less-than-container-load booking spaces to plan partial shipments and avoid paying for air.',
     color: '#d96a1c',
+    colorRgb: '217,106,28',
   },
 ];
 
@@ -169,41 +191,80 @@ const STEPS = [
   },
 ];
 
+const GLASS_NAV_SCROLLED = {
+  background: 'rgba(6,4,18,0.82)',
+  backdropFilter: 'blur(28px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+  borderBottom: '1px solid rgba(255,255,255,0.08)',
+} as const;
+
+const GLASS_NAV = {
+  background: 'transparent',
+  backdropFilter: 'none',
+  WebkitBackdropFilter: 'none',
+  borderBottom: '1px solid transparent',
+} as const;
+
 export function LandingPage({ onGetStarted }: Props) {
   useScrollFade();
   const scrolled = useScrolledNav();
 
   return (
-    <div className="relative overflow-x-hidden" style={{ background: '#0d0d0d' }}>
+    <div className="relative overflow-x-hidden" style={{ background: '#060412' }}>
+
       {/* ─── NAV ─── */}
       <nav
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-        style={{
-          background: scrolled ? 'rgba(13,13,13,0.96)' : 'transparent',
-          borderBottom: scrolled ? '2px solid rgba(255,255,255,0.08)' : '2px solid transparent',
-          backdropFilter: scrolled ? 'blur(12px)' : 'none',
-        }}
+        style={scrolled ? GLASS_NAV_SCROLLED : GLASS_NAV}
       >
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/iO_smartcontainer.png" alt="iO Smart Container" className="w-9 h-9 rounded-lg object-cover shrink-0" />
+            <div style={{
+              background: 'rgba(139,92,246,0.2)',
+              border: '1px solid rgba(139,92,246,0.4)',
+              borderRadius: 10,
+              padding: 2,
+              backdropFilter: 'blur(12px)',
+            }}>
+              <img src="/iO_smartcontainer.png" alt="iO Smart Container" className="w-8 h-8 rounded-lg object-cover" />
+            </div>
             <div className="flex flex-col justify-center">
-              <span className="text-white font-black text-base uppercase tracking-tight leading-none">iO Smart Container</span>
-              <span className="hidden sm:block font-mono text-[10px] text-white/25 uppercase tracking-widest font-bold mt-0.5">by Eric Tavares</span>
+              <span className="text-white font-bold text-base leading-none">iO Smart Container</span>
+              <span className="hidden sm:block text-[10px] font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.3)', letterSpacing: '0.12em' }}>by Eric Tavares</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={onGetStarted}
-              className="px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white/70 hover:text-white transition-colors border-2 border-white/20 hover:border-white/50"
-              style={{ background: 'rgba(255,255,255,0.05)' }}
+              className="px-5 py-2.5 text-sm font-semibold transition-all"
+              style={{
+                color: 'rgba(255,255,255,0.65)',
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 10,
+                backdropFilter: 'blur(12px)',
+              }}
+              onMouseEnter={e => {
+                (e.target as HTMLButtonElement).style.background = 'rgba(255,255,255,0.13)';
+                (e.target as HTMLButtonElement).style.color = 'white';
+              }}
+              onMouseLeave={e => {
+                (e.target as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)';
+                (e.target as HTMLButtonElement).style.color = 'rgba(255,255,255,0.65)';
+              }}
             >
               Sign In
             </button>
             <button
               onClick={onGetStarted}
-              className="px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white flex items-center gap-2 transition-all hover:gap-3"
-              style={{ background: '#c63320', border: '2px solid #952515', boxShadow: '3px 3px 0px #0d0d0d' }}
+              className="px-5 py-2.5 text-sm font-semibold text-white flex items-center gap-2 transition-all"
+              style={{
+                background: 'linear-gradient(135deg, rgba(198,51,32,0.9), rgba(150,30,15,0.9))',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 10,
+                boxShadow: '0 4px 20px rgba(198,51,32,0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
+                backdropFilter: 'blur(12px)',
+              }}
             >
               Get Started <ArrowRight size={13} />
             </button>
@@ -219,37 +280,62 @@ export function LandingPage({ onGetStarted }: Props) {
         <div
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse 70% 60% at 50% 55%, rgba(13,13,13,0) 30%, rgba(13,13,13,0.85) 80%, #0d0d0d 100%)',
+            background: 'radial-gradient(ellipse 70% 60% at 50% 55%, rgba(6,4,18,0) 30%, rgba(6,4,18,0.8) 80%, #060412 100%)',
           }}
         />
 
         <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 border border-brut-hdr/60 mb-8"
-            style={{ background: 'rgba(27,107,64,0.15)' }}>
-            <div className="w-1.5 h-1.5 bg-brut-hdr rounded-full animate-pulse" />
-            <span className="font-mono text-[10px] text-brut-hdr uppercase tracking-widest font-bold">Load optimization for logistics teams</span>
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full" style={{
+            background: 'rgba(139,92,246,0.12)',
+            border: '1px solid rgba(139,92,246,0.3)',
+            backdropFilter: 'blur(16px)',
+            boxShadow: '0 0 24px rgba(139,92,246,0.1), inset 0 1px 0 rgba(255,255,255,0.12)',
+          }}>
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#8b5cf6', boxShadow: '0 0 6px #8b5cf6' }} />
+            <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(196,181,253,0.85)' }}>Load optimization for logistics teams</span>
           </div>
 
-          <h1 className="font-display text-6xl sm:text-7xl md:text-8xl lg:text-9xl text-white uppercase leading-none tracking-tighter mb-6"
-            style={{ textShadow: '4px 4px 0px rgba(0,0,0,0.5)' }}>
+          <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-white leading-none tracking-tighter mb-6">
             Load<br />
-            <span style={{ color: '#c63320', textShadow: '4px 4px 0px rgba(0,0,0,0.5)' }}>Smarter.</span><br />
+            <span style={{
+              background: 'linear-gradient(135deg, #c63320 0%, #e05a40 50%, #ff7a60 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>Smarter.</span><br />
             Ship More.
           </h1>
 
-          <p className="text-white/55 font-mono text-sm md:text-base leading-relaxed max-w-xl mx-auto mb-10">
+          <p className="text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-10" style={{ color: 'rgba(232,228,248,0.55)' }}>
             Calculate exact carton quantities, weight distribution, and optimal packing configurations for any container or vehicle — in under a second.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={onGetStarted}
-              className="w-full sm:w-auto px-8 py-4 text-sm font-black uppercase tracking-wider text-white flex items-center justify-center gap-3 transition-all hover:gap-4 hover:-translate-y-0.5"
-              style={{ background: '#c63320', border: '3px solid #952515', boxShadow: '5px 5px 0px #0d0d0d' }}
+              className="w-full sm:w-auto px-8 py-4 text-sm font-semibold text-white flex items-center justify-center gap-3 transition-all"
+              style={{
+                background: 'linear-gradient(135deg, rgba(198,51,32,0.92), rgba(150,30,15,0.92))',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 14,
+                boxShadow: '0 8px 32px rgba(198,51,32,0.4), inset 0 1px 0 rgba(255,255,255,0.22)',
+                backdropFilter: 'blur(12px)',
+              }}
             >
               Start Optimizing Free <ArrowRight size={15} />
             </button>
-            <a href="#how-it-works" className="w-full sm:w-auto px-8 py-4 text-sm font-black uppercase tracking-wider text-white/60 hover:text-white flex items-center justify-center gap-2 transition-colors border-2 border-white/15 hover:border-white/40">
+            <a
+              href="#how-it-works"
+              className="w-full sm:w-auto px-8 py-4 text-sm font-semibold flex items-center justify-center gap-2 transition-all"
+              style={{
+                color: 'rgba(232,228,248,0.65)',
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.14)',
+                borderRadius: 14,
+                backdropFilter: 'blur(12px)',
+              }}
+            >
               See How It Works
             </a>
           </div>
@@ -257,22 +343,23 @@ export function LandingPage({ onGetStarted }: Props) {
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-10">
             {['No credit card needed', 'Free forever', 'No install required'].map(t => (
               <div key={t} className="flex items-center gap-2">
-                <CheckCircle size={12} className="text-brut-hdr" />
-                <span className="font-mono text-[11px] text-white/35 font-bold uppercase tracking-wide">{t}</span>
+                <CheckCircle size={12} style={{ color: '#8b5cf6' }} />
+                <span className="text-[11px] font-medium uppercase tracking-wide" style={{ color: 'rgba(232,228,248,0.38)' }}>{t}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <a href="#stats" className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-white/30 hover:text-white/60 transition-colors animate-bounce">
-          <span className="font-mono text-[9px] uppercase tracking-widest font-bold">Scroll</span>
+        <a href="#stats" className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 transition-all animate-bounce"
+          style={{ color: 'rgba(232,228,248,0.3)' }}>
+          <span className="text-[9px] uppercase tracking-widest font-semibold">Scroll</span>
           <ChevronDown size={16} />
         </a>
       </section>
 
       {/* ─── STATS STRIP ─── */}
-      <section id="stats" className="py-20 border-y border-white/8" style={{ background: '#111' }}>
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-10">
+      <section id="stats" className="py-20 px-6">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatItem value={22} suffix="+" label="Vehicle & Container Types" />
           <StatItem value={6} label="Orientations per Product" />
           <StatItem value={20} label="Products Per Load Plan" />
@@ -281,18 +368,18 @@ export function LandingPage({ onGetStarted }: Props) {
       </section>
 
       {/* ─── FEATURES ─── */}
-      <section
-        id="features"
-        className="py-24 md:py-32"
-        style={{ background: '#ede8df' }}
-      >
-        <div className="max-w-7xl mx-auto px-6">
+      <section id="features" className="py-24 md:py-32 px-6">
+        <div className="max-w-7xl mx-auto">
           <div data-fade className="fade-init mb-16 text-center">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-brut-black/35 mb-3">What you get</p>
-            <h2 className="font-display text-5xl md:text-6xl text-brut-black uppercase leading-none tracking-tighter"
-              style={{ textShadow: '3px 3px 0px rgba(0,0,0,0.12)' }}>
+            <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: 'rgba(196,181,253,0.6)' }}>What you get</p>
+            <h2 className="text-5xl md:text-6xl font-black text-white leading-none tracking-tight">
               Everything a<br />
-              <span style={{ color: '#c63320' }}>logistics team needs.</span>
+              <span style={{
+                background: 'linear-gradient(135deg, #c63320, #e05a40)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>logistics team needs.</span>
             </h2>
           </div>
 
@@ -302,18 +389,41 @@ export function LandingPage({ onGetStarted }: Props) {
                 key={f.title}
                 data-fade
                 data-fade-delay={i * 80}
-                className="fade-init bg-white border-3 border-brut-black p-6 flex flex-col gap-4 group hover:-translate-y-1 transition-transform"
-                style={{ boxShadow: `5px 5px 0px ${f.color}` }}
+                className="fade-init p-6 flex flex-col gap-4 group transition-all duration-300"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  backdropFilter: 'blur(24px)',
+                  WebkitBackdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 20,
+                  boxShadow: `0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(${f.colorRgb},0.08)`,
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
+                  (e.currentTarget as HTMLDivElement).style.boxShadow = `0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(${f.colorRgb},0.2), 0 0 32px rgba(${f.colorRgb},0.1)`;
+                  (e.currentTarget as HTMLDivElement).style.borderColor = `rgba(${f.colorRgb},0.25)`;
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+                  (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(${f.colorRgb},0.08)`;
+                  (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.1)';
+                }}
               >
                 <div
-                  className="w-10 h-10 flex items-center justify-center text-white border-2 border-brut-black shrink-0"
-                  style={{ background: f.color }}
+                  className="w-10 h-10 flex items-center justify-center text-white shrink-0"
+                  style={{
+                    background: `linear-gradient(135deg, rgba(${f.colorRgb},0.3), rgba(${f.colorRgb},0.15))`,
+                    border: `1px solid rgba(${f.colorRgb},0.35)`,
+                    borderRadius: 12,
+                    boxShadow: `0 4px 12px rgba(${f.colorRgb},0.2)`,
+                    color: f.color,
+                  }}
                 >
                   {f.icon}
                 </div>
                 <div>
-                  <h3 className="font-black text-base uppercase tracking-tight text-brut-black leading-tight mb-2">{f.title}</h3>
-                  <p className="font-mono text-xs text-brut-black/55 leading-relaxed font-medium">{f.desc}</p>
+                  <h3 className="font-bold text-base text-white leading-tight mb-2">{f.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: 'rgba(232,228,248,0.5)' }}>{f.desc}</p>
                 </div>
               </div>
             ))}
@@ -322,44 +432,50 @@ export function LandingPage({ onGetStarted }: Props) {
       </section>
 
       {/* ─── HOW IT WORKS ─── */}
-      <section
-        id="how-it-works"
-        className="py-24 md:py-32"
-        style={{ background: '#0d0d0d' }}
-      >
-        <div className="max-w-7xl mx-auto px-6">
+      <section id="how-it-works" className="py-24 md:py-32 px-6">
+        <div className="max-w-7xl mx-auto">
           <div data-fade className="fade-init mb-16">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-white/30 mb-3">The process</p>
-            <h2 className="font-display text-5xl md:text-6xl text-white uppercase leading-none tracking-tighter">
+            <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: 'rgba(196,181,253,0.6)' }}>The process</p>
+            <h2 className="text-5xl md:text-6xl font-black text-white leading-none tracking-tight">
               Three steps.<br />
-              <span style={{ color: '#c63320' }}>Infinite cargo.</span>
+              <span style={{
+                background: 'linear-gradient(135deg, #c63320, #e05a40)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>Infinite cargo.</span>
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {STEPS.map((s, i) => (
               <div
                 key={s.n}
                 data-fade
                 data-fade-delay={i * 120}
-                className="fade-init relative"
+                className="fade-init relative p-8 h-full"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  backdropFilter: 'blur(24px)',
+                  WebkitBackdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255,255,255,0.09)',
+                  borderRadius: 20,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
+                }}
               >
-                {i < STEPS.length - 1 && (
-                  <div
-                    className="hidden md:block absolute top-8 left-full w-8 h-[2px] z-10"
-                    style={{ background: 'rgba(255,255,255,0.1)', transform: 'translateX(-16px)' }}
-                  />
-                )}
-                <div className="border-2 border-white/12 p-8 h-full" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                  <div
-                    className="font-display text-6xl leading-none mb-6"
-                    style={{ color: '#c63320', textShadow: '2px 2px 0px rgba(0,0,0,0.5)' }}
-                  >
-                    {s.n}
-                  </div>
-                  <h3 className="font-black text-lg uppercase tracking-tight text-white leading-tight mb-3">{s.title}</h3>
-                  <p className="font-mono text-xs text-white/40 leading-relaxed font-medium">{s.desc}</p>
+                <div
+                  className="text-6xl font-black leading-none mb-6"
+                  style={{
+                    background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  {s.n}
                 </div>
+                <h3 className="font-bold text-lg text-white leading-tight mb-3">{s.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: 'rgba(232,228,248,0.45)' }}>{s.desc}</p>
               </div>
             ))}
           </div>
@@ -367,17 +483,18 @@ export function LandingPage({ onGetStarted }: Props) {
       </section>
 
       {/* ─── VEHICLE TYPES ─── */}
-      <section
-        id="vehicles"
-        className="py-24 md:py-32"
-        style={{ background: '#f7f4ef' }}
-      >
-        <div className="max-w-7xl mx-auto px-6">
+      <section id="vehicles" className="py-24 md:py-32 px-6">
+        <div className="max-w-7xl mx-auto">
           <div data-fade className="fade-init mb-16 text-center">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-brut-black/35 mb-3">Supported transport modes</p>
-            <h2 className="font-display text-5xl md:text-6xl text-brut-black uppercase leading-none tracking-tighter">
+            <p className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: 'rgba(196,181,253,0.6)' }}>Supported transport modes</p>
+            <h2 className="text-5xl md:text-6xl font-black text-white leading-none tracking-tight">
               Every mode.<br />
-              <span style={{ color: '#0c2844' }}>One tool.</span>
+              <span style={{
+                background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}>One tool.</span>
             </h2>
           </div>
 
@@ -387,24 +504,52 @@ export function LandingPage({ onGetStarted }: Props) {
                 key={v.label}
                 data-fade
                 data-fade-delay={i * 100}
-                className="fade-init border-3 border-brut-black bg-white p-6 flex flex-col gap-4 hover:-translate-y-1 transition-transform"
-                style={{ boxShadow: `5px 5px 0px ${v.color}` }}
+                className="fade-init p-6 flex flex-col gap-4 transition-all duration-300"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  backdropFilter: 'blur(24px)',
+                  WebkitBackdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 20,
+                  boxShadow: `0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(${v.colorRgb},0.06)`,
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
+                  (e.currentTarget as HTMLDivElement).style.boxShadow = `0 16px 48px rgba(0,0,0,0.4), 0 0 24px rgba(${v.colorRgb},0.12)`;
+                  (e.currentTarget as HTMLDivElement).style.borderColor = `rgba(${v.colorRgb},0.3)`;
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+                  (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(${v.colorRgb},0.06)`;
+                  (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.1)';
+                }}
               >
                 <div
-                  className="w-12 h-12 flex items-center justify-center text-white border-2 border-brut-black shrink-0"
-                  style={{ background: v.color }}
+                  className="w-12 h-12 flex items-center justify-center shrink-0"
+                  style={{
+                    background: `linear-gradient(135deg, rgba(${v.colorRgb},0.28), rgba(${v.colorRgb},0.12))`,
+                    border: `1px solid rgba(${v.colorRgb},0.35)`,
+                    borderRadius: 14,
+                    color: v.color,
+                    boxShadow: `0 4px 16px rgba(${v.colorRgb},0.2)`,
+                  }}
                 >
                   {v.icon}
                 </div>
                 <div>
-                  <h3 className="font-black text-sm uppercase tracking-tight text-brut-black leading-tight mb-1">{v.label}</h3>
+                  <h3 className="font-bold text-sm text-white leading-tight mb-1">{v.label}</h3>
                   <div
-                    className="inline-block font-mono text-[9px] font-bold uppercase tracking-wider text-white px-2 py-1 mb-3"
-                    style={{ background: v.color }}
+                    className="inline-block text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 mb-3"
+                    style={{
+                      background: `rgba(${v.colorRgb},0.18)`,
+                      border: `1px solid rgba(${v.colorRgb},0.3)`,
+                      borderRadius: 6,
+                      color: v.color,
+                    }}
                   >
                     {v.badge}
                   </div>
-                  <p className="font-mono text-xs text-brut-black/50 leading-relaxed font-medium">{v.desc}</p>
+                  <p className="text-xs leading-relaxed" style={{ color: 'rgba(232,228,248,0.48)' }}>{v.desc}</p>
                 </div>
               </div>
             ))}
@@ -413,32 +558,52 @@ export function LandingPage({ onGetStarted }: Props) {
       </section>
 
       {/* ─── AI SECTION ─── */}
-      <section
-        className="py-24 md:py-32 relative overflow-hidden"
-        style={{ background: '#0c2844' }}
-      >
-        <div
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage: 'repeating-linear-gradient(45deg, #ffffff 0, #ffffff 1px, transparent 0, transparent 50%)',
-            backgroundSize: '20px 20px',
-          }}
-        />
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          <div data-fade className="fade-init">
-            <div className="inline-flex items-center justify-center w-16 h-16 border-3 border-white/30 mb-8" style={{ background: 'rgba(255,255,255,0.1)' }}>
-              <Bot size={28} className="text-white" />
+      <section className="py-24 md:py-32 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div
+            data-fade
+            className="fade-init text-center px-8 md:px-16 py-16 md:py-20 relative overflow-hidden"
+            style={{
+              background: 'rgba(139,92,246,0.08)',
+              backdropFilter: 'blur(32px)',
+              WebkitBackdropFilter: 'blur(32px)',
+              border: '1px solid rgba(139,92,246,0.22)',
+              borderRadius: 28,
+              boxShadow: '0 0 80px rgba(139,92,246,0.12), 0 8px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.12)',
+            }}
+          >
+            {/* Glow orb */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+              background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(139,92,246,0.15) 0%, transparent 70%)',
+            }} />
+
+            <div
+              className="inline-flex items-center justify-center w-16 h-16 mb-8 relative"
+              style={{
+                background: 'rgba(139,92,246,0.2)',
+                border: '1px solid rgba(139,92,246,0.4)',
+                borderRadius: 20,
+                boxShadow: '0 8px 32px rgba(139,92,246,0.3)',
+              }}
+            >
+              <Bot size={28} style={{ color: '#c4b5fd' }} />
             </div>
-            <h2 className="font-display text-5xl md:text-6xl text-white uppercase leading-none tracking-tighter mb-6">
+            <h2 className="text-5xl md:text-6xl font-black text-white leading-none tracking-tight mb-6 relative">
               Your AI<br />Load Planner.
             </h2>
-            <p className="font-mono text-sm text-white/60 leading-relaxed max-w-xl mx-auto mb-10 font-medium">
+            <p className="text-sm leading-relaxed max-w-xl mx-auto mb-10 relative" style={{ color: 'rgba(232,228,248,0.55)' }}>
               Describe your shipment in plain English. The AI assistant picks the right container, sets your dimensions, and builds a full load plan — ready to tweak or export instantly.
             </p>
             <button
               onClick={onGetStarted}
-              className="inline-flex items-center gap-3 px-8 py-4 text-sm font-black uppercase tracking-wider transition-all hover:gap-4 hover:-translate-y-0.5"
-              style={{ background: '#0d0d0d', color: '#fff', border: '3px solid #0d0d0d', boxShadow: '5px 5px 0px rgba(0,0,0,0.3)' }}
+              className="inline-flex items-center gap-3 px-8 py-4 text-sm font-semibold text-white transition-all relative"
+              style={{
+                background: 'linear-gradient(135deg, rgba(139,92,246,0.88), rgba(99,102,241,0.88))',
+                border: '1px solid rgba(255,255,255,0.22)',
+                borderRadius: 14,
+                boxShadow: '0 8px 32px rgba(139,92,246,0.4), inset 0 1px 0 rgba(255,255,255,0.22)',
+                backdropFilter: 'blur(12px)',
+              }}
             >
               Try the AI Assistant <ArrowRight size={15} />
             </button>
@@ -447,32 +612,48 @@ export function LandingPage({ onGetStarted }: Props) {
       </section>
 
       {/* ─── FINAL CTA ─── */}
-      <section
-        className="py-24 md:py-32"
-        style={{ background: '#0d0d0d' }}
-      >
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <div data-fade className="fade-init">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-white/30 mb-6">Ready to stop guessing?</p>
-            <h2 className="font-display text-6xl md:text-8xl text-white uppercase leading-none tracking-tighter mb-6"
-              style={{ textShadow: '4px 4px 0px #c63320' }}>
+      <section className="py-24 md:py-32 px-6">
+        <div
+          className="max-w-3xl mx-auto text-center px-8 py-16 relative overflow-hidden"
+          style={{
+            background: 'rgba(255,255,255,0.05)',
+            backdropFilter: 'blur(32px)',
+            WebkitBackdropFilter: 'blur(32px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 28,
+            boxShadow: '0 8px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+          }}
+        >
+          <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(198,51,32,0.08) 0%, transparent 70%)',
+          }} />
+
+          <div data-fade className="fade-init relative">
+            <p className="text-[11px] font-semibold uppercase tracking-widest mb-6" style={{ color: 'rgba(232,228,248,0.35)' }}>Ready to stop guessing?</p>
+            <h2 className="text-6xl md:text-8xl font-black text-white leading-none tracking-tighter mb-6">
               Ship Zero Air.
             </h2>
-            <p className="font-mono text-sm text-white/40 leading-relaxed max-w-lg mx-auto mb-10 font-medium">
+            <p className="text-sm leading-relaxed max-w-lg mx-auto mb-10" style={{ color: 'rgba(232,228,248,0.45)' }}>
               Join freight teams who calculate exact load plans before they pick up a single carton. Free to use, no credit card, no install.
             </p>
             <button
               onClick={onGetStarted}
-              className="inline-flex items-center gap-3 px-10 py-5 text-base font-black uppercase tracking-wider text-white transition-all hover:gap-4 hover:-translate-y-0.5"
-              style={{ background: '#c63320', border: '3px solid #952515', boxShadow: '6px 6px 0px rgba(255,255,255,0.08)' }}
+              className="inline-flex items-center gap-3 px-10 py-5 text-base font-semibold text-white transition-all"
+              style={{
+                background: 'linear-gradient(135deg, rgba(198,51,32,0.92), rgba(150,30,15,0.92))',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 16,
+                boxShadow: '0 8px 32px rgba(198,51,32,0.4), inset 0 1px 0 rgba(255,255,255,0.22)',
+                backdropFilter: 'blur(12px)',
+              }}
             >
               Get Started Free <ArrowRight size={17} />
             </button>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8">
               {['No credit card', 'Always free', 'Instant results'].map(t => (
                 <div key={t} className="flex items-center gap-2">
-                  <CheckCircle size={12} className="text-brut-hdr" />
-                  <span className="font-mono text-[10px] text-white/30 font-bold uppercase tracking-wide">{t}</span>
+                  <CheckCircle size={12} style={{ color: '#8b5cf6' }} />
+                  <span className="text-[10px] font-medium uppercase tracking-wide" style={{ color: 'rgba(232,228,248,0.32)' }}>{t}</span>
                 </div>
               ))}
             </div>
@@ -481,21 +662,21 @@ export function LandingPage({ onGetStarted }: Props) {
       </section>
 
       {/* ─── FOOTER ─── */}
-      <footer
-        className="py-10 border-t border-white/8"
-        style={{ background: '#080808' }}
-      >
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="py-10 px-6" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src="/iO_smartcontainer.png" alt="iO Smart Container" className="w-7 h-7 rounded-md object-cover shrink-0" />
-            <span className="font-black text-sm uppercase tracking-tight text-white">iO Smart Container</span>
+            <img src="/iO_smartcontainer.png" alt="iO Smart Container" className="w-7 h-7 rounded-md object-cover" style={{ opacity: 0.8 }} />
+            <span className="font-bold text-sm text-white">iO Smart Container</span>
           </div>
-          <p className="font-mono text-[10px] uppercase tracking-widest text-white/20 font-bold">
+          <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: 'rgba(232,228,248,0.2)' }}>
             Built by Eric Tavares · {new Date().getFullYear()}
           </p>
           <button
             onClick={onGetStarted}
-            className="font-mono text-[10px] uppercase tracking-widest text-white/40 hover:text-white transition-colors font-bold flex items-center gap-1.5"
+            className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-medium transition-colors"
+            style={{ color: 'rgba(232,228,248,0.35)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'rgba(232,228,248,0.8)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(232,228,248,0.35)')}
           >
             Sign In <ArrowRight size={10} />
           </button>
