@@ -72,30 +72,48 @@ export function CNCodePanel({
   return (
     <div className="space-y-3">
       <div className="relative" ref={dropdownRef}>
-        <label className="block font-mono text-[10px] uppercase tracking-widest text-slate-400 mb-1">
+        <label className="block font-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(20,83,45,0.52)' }}>
           Search commodity (description or HS code)
         </label>
         <div className="relative">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" strokeWidth={2.5} />
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(20,83,45,0.45)' }} strokeWidth={2.5} />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="e.g. t-shirts, 8471, smartphone..."
-            className="w-full pl-8 pr-3 py-2.5 bg-slate-800 border-2 border-slate-600 text-white text-sm font-mono focus:border-sky-500 focus:outline-none transition-colors"
+            className="w-full pl-8 pr-3 py-2.5 text-sm font-mono focus:outline-none transition-colors"
+            style={{
+              background: 'rgba(255,255,255,0.70)',
+              border: '1px solid rgba(0,0,0,0.09)',
+              borderRadius: '12px',
+              color: '#14532d',
+            }}
           />
         </div>
         {showDropdown && results.length > 0 && (
-          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-slate-800 border-2 border-slate-600 shadow-xl max-h-56 overflow-y-auto">
+          <div
+            className="absolute z-50 top-full left-0 right-0 mt-1 max-h-56 overflow-y-auto"
+            style={{
+              background: 'rgba(255,255,255,0.96)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(0,0,0,0.09)',
+              borderRadius: '12px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+            }}
+          >
             {results.map(entry => (
               <button
                 key={entry.code}
                 onClick={() => selectEntry(entry)}
-                className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-slate-700 transition-colors text-left border-b border-slate-700 last:border-0"
+                className="w-full flex items-start gap-3 px-3 py-2.5 transition-colors text-left last:border-0"
+                style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(22,163,74,0.06)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-                <span className="font-mono text-xs text-sky-400 shrink-0 mt-0.5">{entry.code}</span>
-                <span className="text-xs text-white leading-tight">{entry.description}</span>
-                <span className="ml-auto font-mono text-xs text-amber-400 shrink-0 mt-0.5">
+                <span className="font-mono text-xs shrink-0 mt-0.5" style={{ color: '#16a34a' }}>{entry.code}</span>
+                <span className="text-xs leading-tight" style={{ color: '#14532d' }}>{entry.description}</span>
+                <span className="ml-auto font-mono text-xs shrink-0 mt-0.5" style={{ color: '#d96a1c' }}>
                   {destCode === 'UK' ? entry.ukDutyRate : entry.euDutyRate}%
                 </span>
               </button>
@@ -106,7 +124,7 @@ export function CNCodePanel({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block font-mono text-[10px] uppercase tracking-widest text-slate-400 mb-1">
+          <label className="block font-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(20,83,45,0.52)' }}>
             CN / HS Code
           </label>
           <input
@@ -115,11 +133,17 @@ export function CNCodePanel({
             onChange={e => onCNCodeChange(e.target.value)}
             placeholder="e.g. 61099000"
             maxLength={10}
-            className="w-full px-3 py-2.5 bg-slate-800 border-2 border-slate-600 text-white text-sm font-mono focus:border-sky-500 focus:outline-none transition-colors tracking-widest"
+            className="w-full px-3 py-2.5 text-sm font-mono focus:outline-none transition-colors tracking-widest"
+            style={{
+              background: 'rgba(255,255,255,0.70)',
+              border: '1px solid rgba(0,0,0,0.09)',
+              borderRadius: '12px',
+              color: '#14532d',
+            }}
           />
         </div>
         <div>
-          <label className="block font-mono text-[10px] uppercase tracking-widest text-slate-400 mb-1">
+          <label className="block font-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(20,83,45,0.52)' }}>
             Customs Duty Rate (%)
           </label>
           <input
@@ -129,14 +153,20 @@ export function CNCodePanel({
             min={0}
             max={100}
             step={0.1}
-            className="w-full px-3 py-2.5 bg-slate-800 border-2 border-slate-600 text-white text-sm font-mono focus:border-sky-500 focus:outline-none transition-colors"
+            className="w-full px-3 py-2.5 text-sm font-mono focus:outline-none transition-colors"
+            style={{
+              background: 'rgba(255,255,255,0.70)',
+              border: '1px solid rgba(0,0,0,0.09)',
+              borderRadius: '12px',
+              color: '#14532d',
+            }}
           />
         </div>
       </div>
 
       {isChina && (
         <div>
-          <label className="block font-mono text-[10px] uppercase tracking-widest text-slate-400 mb-1">
+          <label className="block font-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(20,83,45,0.52)' }}>
             Anti-Dumping Duty Rate (%)
           </label>
           <input
@@ -146,52 +176,86 @@ export function CNCodePanel({
             min={0}
             max={100}
             step={0.1}
-            className="w-full px-3 py-2.5 bg-slate-800 border-2 border-slate-600 text-white text-sm font-mono focus:border-sky-500 focus:outline-none transition-colors"
+            className="w-full px-3 py-2.5 text-sm font-mono focus:outline-none transition-colors"
+            style={{
+              background: 'rgba(255,255,255,0.70)',
+              border: '1px solid rgba(0,0,0,0.09)',
+              borderRadius: '12px',
+              color: '#14532d',
+            }}
           />
         </div>
       )}
 
       {foundEntry && (
         <div className="space-y-2 pt-1">
-          <div className="flex items-center gap-2 px-3 py-2 bg-sky-950 border border-sky-800">
-            <Info size={13} className="text-sky-400 shrink-0" strokeWidth={2.5} />
+          <div
+            className="flex items-center gap-2 px-3 py-2"
+            style={{
+              background: 'rgba(22,163,74,0.08)',
+              border: '1px solid rgba(22,163,74,0.22)',
+              borderRadius: '12px',
+            }}
+          >
+            <Info size={13} className="shrink-0" style={{ color: '#16a34a' }} strokeWidth={2.5} />
             <div>
-              <p className="text-xs text-sky-300 font-bold leading-tight">{foundEntry.description}</p>
-              <p className="font-mono text-[10px] text-sky-500 mt-0.5">
-                UK duty: <span className="text-sky-300">{foundEntry.ukDutyRate}%</span>
+              <p className="text-xs font-bold leading-tight" style={{ color: '#14532d' }}>{foundEntry.description}</p>
+              <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.6)' }}>
+                UK duty: <span style={{ color: '#14532d' }}>{foundEntry.ukDutyRate}%</span>
                 {' · '}
-                EU duty: <span className="text-sky-300">{foundEntry.euDutyRate}%</span>
+                EU duty: <span style={{ color: '#14532d' }}>{foundEntry.euDutyRate}%</span>
                 {foundEntry.gspReduction !== undefined && (
-                  <span className="text-emerald-400"> · GSP rate: {foundEntry.gspReduction}%</span>
+                  <span style={{ color: '#16a34a' }}> · GSP rate: {foundEntry.gspReduction}%</span>
                 )}
               </p>
             </div>
           </div>
 
           {foundEntry.requiresLicence && (
-            <div className="flex items-start gap-2 px-3 py-2 bg-amber-950 border border-amber-700">
-              <ShieldAlert size={13} className="text-amber-400 shrink-0 mt-0.5" strokeWidth={2.5} />
+            <div
+              className="flex items-start gap-2 px-3 py-2"
+              style={{
+                background: 'rgba(217,119,6,0.08)',
+                border: '1px solid rgba(217,119,6,0.25)',
+                borderRadius: '12px',
+              }}
+            >
+              <ShieldAlert size={13} className="text-amber-500 shrink-0 mt-0.5" strokeWidth={2.5} />
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-widest text-amber-400 font-bold mb-0.5">Import Licence Required</p>
-                <p className="text-xs text-amber-300 leading-snug">{foundEntry.licenceNote}</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-amber-500 font-bold mb-0.5">Import Licence Required</p>
+                <p className="text-xs leading-snug" style={{ color: '#92400e' }}>{foundEntry.licenceNote}</p>
               </div>
             </div>
           )}
 
           {isChina && foundEntry.antiDumpingChina && (
-            <div className="flex items-start gap-2 px-3 py-2 bg-red-950 border border-red-800">
-              <AlertTriangle size={13} className="text-red-400 shrink-0 mt-0.5" strokeWidth={2.5} />
+            <div
+              className="flex items-start gap-2 px-3 py-2"
+              style={{
+                background: 'rgba(220,38,38,0.08)',
+                border: '1px solid rgba(220,38,38,0.2)',
+                borderRadius: '12px',
+              }}
+            >
+              <AlertTriangle size={13} className="text-red-500 shrink-0 mt-0.5" strokeWidth={2.5} />
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-widest text-red-400 font-bold mb-0.5">Anti-Dumping Duties — China Origin</p>
-                <p className="text-xs text-red-300 leading-snug">{foundEntry.antiDumpingNote}</p>
+                <p className="font-mono text-[10px] uppercase tracking-widest text-red-500 font-bold mb-0.5">Anti-Dumping Duties — China Origin</p>
+                <p className="text-xs leading-snug" style={{ color: '#991b1b' }}>{foundEntry.antiDumpingNote}</p>
               </div>
             </div>
           )}
 
           {!foundEntry.requiresLicence && !(isChina && foundEntry.antiDumpingChina) && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-emerald-950 border border-emerald-800">
-              <CheckCircle size={13} className="text-emerald-400 shrink-0" strokeWidth={2.5} />
-              <p className="text-xs text-emerald-300">No special licence or anti-dumping duties identified for this commodity.</p>
+            <div
+              className="flex items-center gap-2 px-3 py-2"
+              style={{
+                background: 'rgba(22,163,74,0.08)',
+                border: '1px solid rgba(22,163,74,0.22)',
+                borderRadius: '12px',
+              }}
+            >
+              <CheckCircle size={13} className="shrink-0" style={{ color: '#16a34a' }} strokeWidth={2.5} />
+              <p className="text-xs" style={{ color: '#14532d' }}>No special licence or anti-dumping duties identified for this commodity.</p>
             </div>
           )}
         </div>

@@ -137,6 +137,7 @@ function MainApp() {
   const [chatOpen, setChatOpen] = useState(false);
   const [multiContainerIndex, setMultiContainerIndex] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [productMode, setProductMode] = useState<'single' | 'multi'>('single');
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
@@ -218,12 +219,14 @@ function MainApp() {
     setMultiContainerIndex(0);
   }, []);
 
+  const productLimit = productMode === 'single' ? 1 : 3;
+
   const handleAdd = useCallback(() => {
     setProducts(prev => {
-      if (prev.length >= MAX_PRODUCTS) return prev;
+      if (prev.length >= productLimit) return prev;
       return [...prev, makeProduct(prev.length)];
     });
-  }, []);
+  }, [productLimit]);
 
   const handleRemove = useCallback((id: string) => {
     setProducts(prev => prev.filter(p => p.id !== id));
@@ -240,7 +243,7 @@ function MainApp() {
 
   const handleAddProduct = useCallback((data: Omit<Product, 'id' | 'color'>) => {
     setProducts(prev => {
-      if (prev.length >= MAX_PRODUCTS) return prev;
+      if (prev.length >= productLimit) return prev;
       const idx = prev.length;
       return [...prev, {
         ...data,
@@ -396,10 +399,11 @@ function MainApp() {
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
           style={{
-            background: 'rgba(240,248,240,0.82)',
-            backdropFilter: 'blur(32px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(32px) saturate(160%)',
-            borderRight: '1px solid rgba(0,0,0,0.06)',
+            background: 'rgba(209,236,210,0.96)',
+            backdropFilter: 'blur(32px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(32px) saturate(180%)',
+            borderRight: '1px solid rgba(22,163,74,0.14)',
+            boxShadow: '2px 0 24px rgba(0,0,0,0.04)',
           }}
         >
           <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-brut">
@@ -426,7 +430,39 @@ function MainApp() {
             <div className="brut-divider" />
 
             <div>
-              <p className="brut-section-label mb-4">Products</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="brut-section-label">Products</p>
+                <div className="flex p-0.5" style={{
+                  background: 'rgba(0,0,0,0.06)',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  borderRadius: 100,
+                }}>
+                  {(['single', 'multi'] as const).map(mode => (
+                    <button
+                      key={mode}
+                      onClick={() => {
+                        setProductMode(mode);
+                        if (mode === 'single') setProducts(prev => prev.slice(0, 1));
+                      }}
+                      className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider transition-all"
+                      style={productMode === mode ? {
+                        background: 'linear-gradient(135deg, #16a34a, #15803d)',
+                        border: '1px solid rgba(255,255,255,0.28)',
+                        borderRadius: 100,
+                        color: '#fff',
+                        boxShadow: '0 2px 8px rgba(22,163,74,0.35)',
+                      } : {
+                        background: 'transparent',
+                        border: '1px solid transparent',
+                        borderRadius: 100,
+                        color: 'rgba(20,83,45,0.5)',
+                      }}
+                    >
+                      {mode === 'single' ? 'Single' : 'Multi (2–3)'}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <ProductForm
                 products={products}
                 unit={unit}
@@ -436,6 +472,7 @@ function MainApp() {
                 onRemove={handleRemove}
                 onImportCSV={handleImportCSV}
                 onAddProduct={handleAddProduct}
+                maxProducts={productLimit}
               />
             </div>
           </div>

@@ -132,9 +132,10 @@ interface Props {
   onRemove: (id: string) => void;
   onImportCSV: (products: Product[]) => void;
   onAddProduct: (data: Omit<Product, 'id' | 'color'>) => void;
+  maxProducts?: number;
 }
 
-export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove, onImportCSV, onAddProduct }: Props) {
+export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove, onImportCSV, onAddProduct, maxProducts = MAX_PRODUCTS }: Props) {
   const [expandedConstraints, setExpandedConstraints] = useState<Set<string>>(new Set());
   const [csvModalOpen, setCsvModalOpen] = useState(false);
   const [csvPreview, setCsvPreview] = useState<CSVImportResult | null>(null);
@@ -195,7 +196,7 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="font-mono text-[10px] text-brut-black/40 uppercase font-bold">
-          {products.length}/{MAX_PRODUCTS} products
+          {products.length}/{maxProducts} products
         </span>
         <div className="flex items-center gap-1.5">
           {userId && (
@@ -302,7 +303,7 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
         );
       })}
 
-      {products.length < MAX_PRODUCTS && (
+      {products.length < maxProducts && (
         <button
           onClick={onAdd}
           className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-brut-black/30 hover:border-brut-black bg-transparent hover:bg-brut-bg text-brut-black/50 hover:text-brut-black font-mono text-xs font-bold uppercase tracking-wider transition-all"

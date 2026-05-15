@@ -1153,6 +1153,124 @@ function packMultiProductWidthZones(
   return { totalCount, productResults, packedBoxes: allPackedBoxes };
 }
 
+// Exhaustive split search for exactly 2 products — tries every valid box-boundary split
+// in both the length and width directions and picks the combination with the highest total count.
+function exhaustiveTwoProductPack(
+  p1: Product,
+  p2: Product,
+  bodyLength: number,
+  containerWidth: number,
+  evaHeight: number,
+  floorOriginZ: number,
+  evaporatorDepth: number,
+  payloadLimit: number,
+  visualBudget: number,
+  generatePositions: boolean,
+): MultiProductZoneResult {
+  const o1 = getOrientationsForProduct(p1);
+  const o2 = getOrientationsForProduct(p2);
+  const ms1 = p1.stackable === false || p1.fragile === true ? 1 : Infinity;
+  const ms2 = p2.stackable === false || p2.fragile === true ? 1 : Infinity;
+  const qty1 = p1.quantity && p1.quantity > 0 ? p1.quantity : Infinity;
+  const qty2 = p2.quantity && p2.quantity > 0 ? p2.quantity : Infinity;
+  const eff1 = Math.min(qty1, p1.grossWeight > 0 ? Math.floor(payloadLimit / p1.grossWeight) : Infinity);
+  const eff2 = Math.min(qty2, p2.grossWeight > 0 ? Math.floor(payloadLimit / p2.grossWeight) : Infinity);
+
+  // Collect candidate split points (multiples of each orientation's primary dimension)
+  const lenSplits = new Set<number>();
+  for (const [bL] of o1) for (let r = 1; r * bL < bodyLength; r++) lenSplits.add(r * bL);
+  for (const [bL] of o2) for (let r = 1; r * bL < bodyLength; r++) lenSplits.add(bodyLength - r * bL);
+
+  const wSplits = new Set<number>();
+  for (const [, bW] of o1) for (let c = 1; c * bW < containerWidth; c++) wSplits.add(c * bW);
+  for (const [, bW] of o2) for (let c = 1; c * bW < containerWidth; c++) wSplits.add(containerWidth - c * bW);
+
+  let bestTotal = 0;
+  let bestC1 = 0;
+  let bestC2 = 0;
+  let bestSplit = Math.floor(bodyLength / 2);
+  let bestIsLength = true;
+  let bestReversed = false;
+
+  function tryLenSplit(split: number, reversed: boolean) {
+    if (split <= 0 || split >= bodyLength) return;
+    const rem = bodyLength - split;
+    const [pa, pb, oa, ob, ma, mb, ea, eb] = reversed
+      ? [p2, p1, o2, o1, ms2, ms1, eff2, eff1]
+      : [p1, p2, o1, o2, ms1, ms2, eff1, eff2];
+    const ra = packBlock(split, containerWidth, evaHeight, oa, ma, ea, false, 0, 0, 0, 0);
+    const adjEB = Math.min(eb, pb.grossWeight > 0 ? Math.floor(Math.max(0, payloadLimit - ra.count * pa.grossWeight) / pb.grossWeight) : Infinity);
+    const rb = packBlock(rem, containerWidth, evaHeight, ob, mb, adjEB, false, 0, 0, 0, 0);
+    const total = ra.count + rb.count;
+    if (total > bestTotal) {
+      bestTotal = total;
+      bestC1 = reversed ? rb.count : ra.count;
+      bestC2 = reversed ? ra.count : rb.count;
+      bestSplit = split;
+      bestIsLength = true;
+      bestReversed = reversed;
+    }
+  }
+
+  function tryWidSplit(split: number, reversed: boolean) {
+    if (split <= 0 || split >= containerWidth) return;
+    const rem = containerWidth - split;
+    const [pa, pb, oa, ob, ma, mb, ea, eb] = reversed
+      ? [p2, p1, o2, o1, ms2, ms1, eff2, eff1]
+      : [p1, p2, o1, o2, ms1, ms2, eff1, eff2];
+    const ra = packBlock(bodyLength, split, evaHeight, oa, ma, ea, false, 0, 0, 0, 0);
+    const adjEB = Math.min(eb, pb.grossWeight > 0 ? Math.floor(Math.max(0, payloadLimit - ra.count * pa.grossWeight) / pb.grossWeight) : Infinity);
+    const rb = packBlock(bodyLength, rem, evaHeight, ob, mb, adjEB, false, 0, 0, 0, 0);
+    const total = ra.count + rb.count;
+    if (total > bestTotal) {
+      bestTotal = total;
+      bestC1 = reversed ? rb.count : ra.count;
+      bestC2 = reversed ? ra.count : rb.count;
+      bestSplit = split;
+      bestIsLength = false;
+      bestReversed = reversed;
+    }
+  }
+
+  for (const s of lenSplits) { tryLenSplit(s, false); tryLenSplit(s, true); }
+  for (const s of wSplits) { tryWidSplit(s, false); tryWidSplit(s, true); }
+
+  // Generate positions for winning configuration
+  const [front, back] = bestReversed ? [p2, p1] : [p1, p2];
+  const [of1, of2] = bestReversed ? [o2, o1] : [o1, o2];
+  const [mf1, mf2] = bestReversed ? [ms2, ms1] : [ms1, ms2];
+  const [ef1, ef2] = bestReversed ? [eff2, eff1] : [eff1, eff2];
+  const vb1 = bestTotal > 0 ? Math.min(visualBudget, Math.round(visualBudget * (bestReversed ? bestC2 : bestC1) / bestTotal)) : Math.floor(visualBudget / 2);
+  const vb2 = visualBudget - vb1;
+
+  const productResults: ProductResult[] = [];
+  const allPackedBoxes: PackedBox[] = [];
+
+  if (bestIsLength) {
+    const rem = bodyLength - bestSplit;
+    const r1 = packBlock(bestSplit, containerWidth, evaHeight, of1, mf1, ef1, generatePositions, evaporatorDepth, 0, floorOriginZ, vb1);
+    const r2 = packBlock(rem, containerWidth, evaHeight, of2, mf2, ef2, generatePositions, evaporatorDepth + bestSplit, 0, floorOriginZ, vb2);
+    for (const box of r1.positions) allPackedBoxes.push({ ...box, productId: front.id });
+    for (const box of r2.positions) allPackedBoxes.push({ ...box, productId: back.id });
+    productResults.push({ product: front, count: r1.count, orientation: r1.orientation, nX: r1.nX, nY: r1.nY, nZ: r1.nZ, volumeUsed: r1.count * (front.length * front.width * front.height) });
+    productResults.push({ product: back, count: r2.count, orientation: r2.orientation, nX: r2.nX, nY: r2.nY, nZ: r2.nZ, volumeUsed: r2.count * (back.length * back.width * back.height) });
+  } else {
+    const rem = containerWidth - bestSplit;
+    const r1 = packBlock(bodyLength, bestSplit, evaHeight, of1, mf1, ef1, generatePositions, evaporatorDepth, 0, floorOriginZ, vb1);
+    const r2 = packBlock(bodyLength, rem, evaHeight, of2, mf2, ef2, generatePositions, evaporatorDepth, bestSplit, floorOriginZ, vb2);
+    for (const box of r1.positions) allPackedBoxes.push({ ...box, productId: front.id });
+    for (const box of r2.positions) allPackedBoxes.push({ ...box, productId: back.id });
+    productResults.push({ product: front, count: r1.count, orientation: r1.orientation, nX: r1.nX, nY: r1.nY, nZ: r1.nZ, volumeUsed: r1.count * (front.length * front.width * front.height) });
+    productResults.push({ product: back, count: r2.count, orientation: r2.orientation, nX: r2.nX, nY: r2.nY, nZ: r2.nZ, volumeUsed: r2.count * (back.length * back.width * back.height) });
+  }
+
+  // Restore original product order
+  const originalOrder = [p1, p2];
+  productResults.sort((a, b) => originalOrder.findIndex(p => p.id === a.product.id) - originalOrder.findIndex(p => p.id === b.product.id));
+
+  return { totalCount: bestTotal, productResults, packedBoxes: allPackedBoxes };
+}
+
 export function calculatePacking(
   container: ContainerType,
   products: Product[],
@@ -1234,8 +1352,19 @@ export function calculatePacking(
       allPackedBoxes.push({ ...box, productId: p.id });
     }
 
+  } else if (sortedProducts.length === 2) {
+    // 2-product: exhaustive split search guarantees optimal zone boundary
+    const twoResult = exhaustiveTwoProductPack(
+      sortedProducts[0], sortedProducts[1],
+      bodyLength, container.innerWidth, evaHeight,
+      floorOriginZ, evaporatorDepth, container.maxPayload,
+      MAX_VISUAL_BOXES, true,
+    );
+    productResults.push(...twoResult.productResults);
+    allPackedBoxes.push(...twoResult.packedBoxes);
+
   } else {
-    // Multi-product: count-only first pass across all permutations, then generate positions for winner
+    // Multi-product (3+): count-only first pass across all permutations, then generate positions for winner
     const perms = sortedProducts.length <= 5
       ? permutations(sortedProducts)
       : [sortedProducts];

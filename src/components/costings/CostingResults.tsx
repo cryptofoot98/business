@@ -24,17 +24,17 @@ interface MetricProps {
 }
 
 function Metric({ label, value, sub, accent = 'default' }: MetricProps) {
-  const colors = {
-    default: 'text-white',
-    positive: 'text-emerald-400',
-    negative: 'text-red-400',
-    warning: 'text-amber-400',
+  const colors: Record<string, string> = {
+    default: '#14532d',
+    positive: '#16a34a',
+    negative: '#dc2626',
+    warning: '#d96a1c',
   };
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="font-mono text-[9px] uppercase tracking-widest text-slate-400">{label}</span>
-      <span className={`font-black text-lg leading-none ${colors[accent]}`}>{value}</span>
-      {sub && <span className="font-mono text-[10px] text-slate-500">{sub}</span>}
+      <span className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.52)' }}>{label}</span>
+      <span className="font-black text-lg leading-none" style={{ color: colors[accent] }}>{value}</span>
+      {sub && <span className="font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.38)' }}>{sub}</span>}
     </div>
   );
 }
@@ -62,8 +62,11 @@ function CostWaterfall({ results }: WaterfallProps) {
 
   return (
     <div className="space-y-2">
-      <p className="font-mono text-[9px] uppercase tracking-widest text-slate-400">Cost Breakdown</p>
-      <div className="flex h-6 w-full overflow-hidden border border-slate-700">
+      <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.52)' }}>Cost Breakdown</p>
+      <div
+        className="flex h-6 w-full overflow-hidden"
+        style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '8px', overflow: 'hidden' }}
+      >
         {segments.map(seg => {
           const pct = grandTotal > 0 ? (seg.value / grandTotal) * 100 : 0;
           return pct > 0 ? (
@@ -86,15 +89,15 @@ function CostWaterfall({ results }: WaterfallProps) {
         {segments.map(seg => (
           <div key={seg.label} className="flex items-center gap-1">
             <div className="w-2 h-2 shrink-0" style={{ backgroundColor: seg.color }} />
-            <span className="font-mono text-[9px] text-slate-400">{seg.label}</span>
-            <span className="font-mono text-[9px] text-slate-300">{grandTotal > 0 ? fmtPct((seg.value / grandTotal) * 100) : '0%'}</span>
+            <span className="font-mono text-[9px]" style={{ color: 'rgba(20,83,45,0.5)' }}>{seg.label}</span>
+            <span className="font-mono text-[9px]" style={{ color: 'rgba(20,83,45,0.7)' }}>{grandTotal > 0 ? fmtPct((seg.value / grandTotal) * 100) : '0%'}</span>
           </div>
         ))}
         {revenue > total && (
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 shrink-0 bg-emerald-500" />
-            <span className="font-mono text-[9px] text-slate-400">Profit</span>
-            <span className="font-mono text-[9px] text-slate-300">{fmtPct(((revenue - total) / grandTotal) * 100)}</span>
+            <span className="font-mono text-[9px]" style={{ color: 'rgba(20,83,45,0.5)' }}>Profit</span>
+            <span className="font-mono text-[9px]" style={{ color: 'rgba(20,83,45,0.7)' }}>{fmtPct(((revenue - total) / grandTotal) * 100)}</span>
           </div>
         )}
       </div>
@@ -111,15 +114,15 @@ interface CostRowProps {
 
 function CostRow({ icon, label, value, sub }: CostRowProps) {
   return (
-    <div className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
+    <div className="flex items-center justify-between py-2 last:border-0" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
       <div className="flex items-center gap-2">
-        <span className="text-slate-500">{icon}</span>
+        <span style={{ color: 'rgba(20,83,45,0.45)' }}>{icon}</span>
         <div>
-          <span className="text-sm text-slate-300 font-medium">{label}</span>
-          {sub && <span className="block font-mono text-[10px] text-slate-500">{sub}</span>}
+          <span className="text-sm font-medium" style={{ color: '#14532d' }}>{label}</span>
+          {sub && <span className="block font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.38)' }}>{sub}</span>}
         </div>
       </div>
-      <span className="font-mono text-sm text-white font-bold">£{fmt(value)}</span>
+      <span className="font-mono text-sm font-bold" style={{ color: '#14532d' }}>£{fmt(value)}</span>
     </div>
   );
 }
@@ -136,13 +139,25 @@ export function CostingResults({ results, targetSellingPrice, onTargetSellingPri
   const profitAccent = results.grossProfitGBP >= 0 ? 'positive' : 'negative';
 
   return (
-    <div className="flex flex-col gap-0 bg-slate-900 border-2 border-slate-700" style={{ boxShadow: '4px 4px 0px #0f172a' }}>
-      <div className="px-4 py-3 bg-slate-800 border-b-2 border-slate-700">
-        <h3 className="font-black text-xs uppercase tracking-widest text-white">Live Cost Summary</h3>
-        <p className="font-mono text-[10px] text-slate-400 mt-0.5">All values in GBP · Updates instantly</p>
+    <div
+      className="flex flex-col gap-0"
+      style={{
+        background: 'rgba(255,255,255,0.68)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255,255,255,0.85)',
+        borderRadius: '16px',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        className="px-4 py-3"
+        style={{ background: 'rgba(255,255,255,0.5)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}
+      >
+        <h3 className="font-black text-xs uppercase tracking-widest" style={{ color: '#14532d' }}>Live Cost Summary</h3>
+        <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.52)' }}>All values in GBP · Updates instantly</p>
       </div>
 
-      <div className="p-4 border-b-2 border-slate-800 space-y-4">
+      <div className="p-4 space-y-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
         <div className="grid grid-cols-2 gap-4">
           <Metric
             label="Total Landed Cost"
@@ -172,18 +187,19 @@ export function CostingResults({ results, targetSellingPrice, onTargetSellingPri
 
       <button
         onClick={() => setDetailOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-2.5 bg-slate-800 border-b-2 border-slate-700 hover:bg-slate-750 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2.5 transition-colors"
+        style={{ background: 'rgba(255,255,255,0.5)', borderBottom: '1px solid rgba(0,0,0,0.06)' }}
       >
-        <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400">Charges &amp; Gross Margin</span>
+        <span className="font-mono text-[10px] uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.52)' }}>Charges &amp; Gross Margin</span>
         {detailOpen
-          ? <ChevronUp size={13} className="text-slate-400" strokeWidth={2.5} />
-          : <ChevronDown size={13} className="text-slate-400" strokeWidth={2.5} />
+          ? <ChevronUp size={13} style={{ color: 'rgba(20,83,45,0.52)' }} strokeWidth={2.5} />
+          : <ChevronDown size={13} style={{ color: 'rgba(20,83,45,0.52)' }} strokeWidth={2.5} />
         }
       </button>
 
       {detailOpen && (
         <>
-          <div className="px-4 py-3 border-b-2 border-slate-800">
+          <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
             <div className="space-y-1">
               <CostRow icon={<Package size={12} />} label="Product & Packing" value={results.totalProductCostGBP} />
               <CostRow icon={<Ship size={12} />} label="Freight & Surcharges" value={results.totalFreightGBP} />
@@ -193,17 +209,21 @@ export function CostingResults({ results, targetSellingPrice, onTargetSellingPri
               {results.customFieldResults.length > 0 && (
                 <>
                   {results.customFieldResults.map(cf => (
-                    <div key={cf.id} className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
+                    <div
+                      key={cf.id}
+                      className="flex items-center justify-between py-2 last:border-0"
+                      style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}
+                    >
                       <div className="flex items-center gap-2">
-                        <span className="text-slate-500"><Sliders size={12} /></span>
+                        <span style={{ color: 'rgba(20,83,45,0.45)' }}><Sliders size={12} /></span>
                         <div>
-                          <span className="text-sm text-slate-300 font-medium">{cf.name || 'Custom field'}</span>
-                          <span className={`block font-mono text-[10px] ${cf.effect === 'cost' ? 'text-red-400' : 'text-emerald-400'}`}>
+                          <span className="text-sm font-medium" style={{ color: '#14532d' }}>{cf.name || 'Custom field'}</span>
+                          <span className={`block font-mono text-[10px] ${cf.effect === 'cost' ? 'text-red-500' : 'text-emerald-600'}`}>
                             {cf.effect === 'cost' ? 'Extra cost' : 'Benefit / deduction'}
                           </span>
                         </div>
                       </div>
-                      <span className={`font-mono text-sm font-bold ${cf.effect === 'cost' ? 'text-red-400' : 'text-emerald-400'}`}>
+                      <span className={`font-mono text-sm font-bold ${cf.effect === 'cost' ? 'text-red-500' : 'text-emerald-600'}`}>
                         {cf.effect === 'cost' ? '+' : '-'}£{fmt(cf.amountGBP)}
                       </span>
                     </div>
@@ -213,7 +233,7 @@ export function CostingResults({ results, targetSellingPrice, onTargetSellingPri
             </div>
           </div>
 
-          <div className="px-4 py-3 border-b-2 border-slate-800">
+          <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
             <div className="grid grid-cols-2 gap-4">
               <Metric
                 label="Gross Margin"
@@ -240,32 +260,56 @@ export function CostingResults({ results, targetSellingPrice, onTargetSellingPri
           </div>
 
           {results.grossMarginPercent > 0 && results.grossMarginPercent < 15 && (
-            <div className="mx-4 mb-3 flex items-center gap-2 px-3 py-2 bg-amber-950 border border-amber-700">
-              <TrendingDown size={13} className="text-amber-400 shrink-0" strokeWidth={2.5} />
-              <p className="text-xs text-amber-300">Margin below 15% — consider renegotiating product cost or freight terms.</p>
+            <div
+              className="mx-4 mb-3 flex items-center gap-2 px-3 py-2"
+              style={{
+                background: 'rgba(217,119,6,0.08)',
+                border: '1px solid rgba(217,119,6,0.25)',
+                borderRadius: '10px',
+                color: '#92400e',
+              }}
+            >
+              <TrendingDown size={13} className="text-amber-600 shrink-0" strokeWidth={2.5} />
+              <p className="text-xs">Margin below 15% — consider renegotiating product cost or freight terms.</p>
             </div>
           )}
           {results.grossMarginPercent >= 30 && (
-            <div className="mx-4 mb-3 flex items-center gap-2 px-3 py-2 bg-emerald-950 border border-emerald-800">
-              <TrendingUp size={13} className="text-emerald-400 shrink-0" strokeWidth={2.5} />
-              <p className="text-xs text-emerald-300">Healthy margin above 30%. Good commercial position.</p>
+            <div
+              className="mx-4 mb-3 flex items-center gap-2 px-3 py-2"
+              style={{
+                background: 'rgba(22,163,74,0.08)',
+                border: '1px solid rgba(22,163,74,0.25)',
+                borderRadius: '10px',
+                color: '#14532d',
+              }}
+            >
+              <TrendingUp size={13} className="shrink-0" style={{ color: '#16a34a' }} strokeWidth={2.5} />
+              <p className="text-xs">Healthy margin above 30%. Good commercial position.</p>
             </div>
           )}
           {results.grossProfitGBP < 0 && (
-            <div className="mx-4 mb-3 flex items-center gap-2 px-3 py-2 bg-red-950 border border-red-800">
-              <TrendingDown size={13} className="text-red-400 shrink-0" strokeWidth={2.5} />
-              <p className="text-xs text-red-300">Selling below cost. Increase selling price above £{fmt(results.breakEvenSellingPriceGBP)}/unit.</p>
+            <div
+              className="mx-4 mb-3 flex items-center gap-2 px-3 py-2"
+              style={{
+                background: 'rgba(220,38,38,0.08)',
+                border: '1px solid rgba(220,38,38,0.2)',
+                borderRadius: '10px',
+                color: '#991b1b',
+              }}
+            >
+              <TrendingDown size={13} className="shrink-0 text-red-500" strokeWidth={2.5} />
+              <p className="text-xs">Selling below cost. Increase selling price above £{fmt(results.breakEvenSellingPriceGBP)}/unit.</p>
             </div>
           )}
         </>
       )}
 
-      <div className="p-4 border-t-2 border-slate-800 space-y-3">
-        <label className="block font-mono text-[10px] uppercase tracking-widest text-slate-400">
+      <div className="p-4 space-y-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+        <label className="block font-mono text-[10px] uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.52)' }}>
           Target Selling Price per Unit (£)
         </label>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-sm text-slate-400">£</span>
+          <span className="font-mono text-sm" style={{ color: 'rgba(20,83,45,0.52)' }}>£</span>
           <input
             type="number"
             value={targetSellingPrice || ''}
@@ -273,12 +317,25 @@ export function CostingResults({ results, targetSellingPrice, onTargetSellingPri
             placeholder="0.00"
             min={0}
             step={0.01}
-            className="flex-1 px-3 py-2.5 bg-slate-800 border-2 border-slate-600 text-white text-sm font-mono focus:border-sky-500 focus:outline-none transition-colors"
+            className="flex-1 px-3 py-2.5 text-sm font-mono focus:outline-none transition-colors"
+            style={{
+              background: 'rgba(255,255,255,0.70)',
+              border: '1px solid rgba(0,0,0,0.09)',
+              borderRadius: '12px',
+              color: '#14532d',
+            }}
           />
         </div>
-        <div className="flex items-center gap-1 px-2 py-1.5 bg-slate-800 border border-slate-700">
-          <span className="font-mono text-[10px] text-slate-400">Break-even:</span>
-          <span className="font-mono text-[10px] text-amber-400 font-bold ml-1">£{fmt(results.breakEvenSellingPriceGBP)}/unit</span>
+        <div
+          className="flex items-center gap-1 px-2 py-1.5"
+          style={{
+            background: 'rgba(255,255,255,0.60)',
+            border: '1px solid rgba(0,0,0,0.07)',
+            borderRadius: '8px',
+          }}
+        >
+          <span className="font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.52)' }}>Break-even:</span>
+          <span className="font-mono text-[10px] font-bold ml-1" style={{ color: '#d96a1c' }}>£{fmt(results.breakEvenSellingPriceGBP)}/unit</span>
         </div>
       </div>
 

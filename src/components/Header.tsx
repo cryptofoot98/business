@@ -16,10 +16,11 @@ interface Props {
 }
 
 const NAV_STYLE = {
-  background: 'rgba(245,250,245,0.88)',
-  backdropFilter: 'blur(28px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-  borderBottom: '1px solid rgba(0,0,0,0.06)',
+  background: 'rgba(255,255,255,0.94)',
+  backdropFilter: 'blur(28px) saturate(200%)',
+  WebkitBackdropFilter: 'blur(28px) saturate(200%)',
+  borderBottom: '1px solid rgba(0,0,0,0.08)',
+  boxShadow: '0 1px 12px rgba(0,0,0,0.06)',
   height: 56,
 } as const;
 

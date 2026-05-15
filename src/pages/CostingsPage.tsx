@@ -78,16 +78,25 @@ interface SectionProps {
 function Section({ title, subtitle, children, defaultOpen = true }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-2 border-slate-700 bg-slate-900" style={{ boxShadow: '3px 3px 0px #0f172a' }}>
+    <div style={{
+      background: 'rgba(255,255,255,0.68)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255,255,255,0.85)',
+      borderRadius: '16px',
+      overflow: 'hidden',
+    }}>
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-slate-800 border-b-2 border-slate-700 hover:bg-slate-750 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 transition-colors"
+        style={{ background: 'rgba(255,255,255,0.5)', borderBottom: open ? '1px solid rgba(0,0,0,0.06)' : 'none' }}
       >
         <div className="text-left">
-          <h3 className="font-black text-xs uppercase tracking-widest text-white">{title}</h3>
-          {subtitle && <p className="font-mono text-[10px] text-slate-400 mt-0.5">{subtitle}</p>}
+          <h3 className="font-black text-xs uppercase tracking-widest" style={{ color: '#14532d' }}>{title}</h3>
+          {subtitle && <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.52)' }}>{subtitle}</p>}
         </div>
-        {open ? <ChevronUp size={14} className="text-slate-400" strokeWidth={2.5} /> : <ChevronDown size={14} className="text-slate-400" strokeWidth={2.5} />}
+        {open
+          ? <ChevronUp size={14} style={{ color: 'rgba(20,83,45,0.52)' }} strokeWidth={2.5} />
+          : <ChevronDown size={14} style={{ color: 'rgba(20,83,45,0.52)' }} strokeWidth={2.5} />}
       </button>
       {open && <div className="p-4 space-y-3">{children}</div>}
     </div>
@@ -103,9 +112,9 @@ interface FieldProps {
 function Field({ label, note, children }: FieldProps) {
   return (
     <div>
-      <label className="block font-mono text-[10px] uppercase tracking-widest text-slate-400 mb-1">{label}</label>
+      <label className="block font-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(20,83,45,0.52)' }}>{label}</label>
       {children}
-      {note && <p className="font-mono text-[10px] text-slate-500 mt-1">{note}</p>}
+      {note && <p className="font-mono text-[10px] mt-1" style={{ color: 'rgba(20,83,45,0.38)' }}>{note}</p>}
     </div>
   );
 }
@@ -128,8 +137,15 @@ function NumInput({
   placeholder?: string;
 }) {
   return (
-    <div className="flex items-center border-2 border-slate-600 bg-slate-800 focus-within:border-sky-500 transition-colors">
-      {prefix && <span className="px-2.5 font-mono text-xs text-slate-400 border-r border-slate-600 select-none">{prefix}</span>}
+    <div className="flex items-center transition-colors" style={{
+      background: 'rgba(255,255,255,0.70)',
+      border: '1px solid rgba(0,0,0,0.09)',
+      borderRadius: '12px',
+      overflow: 'hidden',
+    }}>
+      {prefix && (
+        <span className="px-2.5 font-mono text-xs select-none" style={{ color: 'rgba(20,83,45,0.52)', borderRight: '1px solid rgba(0,0,0,0.06)' }}>{prefix}</span>
+      )}
       <input
         type="number"
         value={value || ''}
@@ -137,9 +153,12 @@ function NumInput({
         min={min}
         step={step}
         placeholder={placeholder}
-        className="flex-1 px-3 py-2.5 bg-transparent text-white text-sm font-mono focus:outline-none"
+        className="flex-1 px-3 py-2.5 bg-transparent text-sm font-mono focus:outline-none"
+        style={{ color: '#14532d' }}
       />
-      {suffix && <span className="px-2.5 font-mono text-xs text-slate-400 border-l border-slate-600 select-none">{suffix}</span>}
+      {suffix && (
+        <span className="px-2.5 font-mono text-xs select-none" style={{ color: 'rgba(20,83,45,0.52)', borderLeft: '1px solid rgba(0,0,0,0.06)' }}>{suffix}</span>
+      )}
     </div>
   );
 }
@@ -157,7 +176,13 @@ function Select<T extends string>({
     <select
       value={value}
       onChange={e => onChange(e.target.value as T)}
-      className="w-full px-3 py-2.5 bg-slate-800 border-2 border-slate-600 text-white text-sm font-mono focus:border-sky-500 focus:outline-none transition-colors appearance-none"
+      className="w-full px-3 py-2.5 text-sm font-mono focus:outline-none transition-colors appearance-none"
+      style={{
+        background: 'rgba(255,255,255,0.70)',
+        border: '1px solid rgba(0,0,0,0.09)',
+        borderRadius: '12px',
+        color: '#14532d',
+      }}
     >
       {options.map(o => (
         <option key={o.value} value={o.value}>{o.label}</option>
@@ -279,27 +304,44 @@ export function CostingsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-slate-950">
-      <div className="shrink-0 px-4 py-3 bg-slate-900 border-b-2 border-slate-800 flex items-center justify-between gap-3 flex-wrap">
+    <div className="flex flex-col h-full overflow-hidden" style={{ background: 'transparent' }}>
+      <div
+        className="shrink-0 px-4 py-3 flex items-center justify-between gap-3 flex-wrap"
+        style={{
+          background: 'rgba(255,255,255,0.72)',
+          backdropFilter: 'blur(24px)',
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
+        }}
+      >
         <div>
-          <h2 className="font-black text-sm uppercase tracking-widest text-white">Import Costing Calculator</h2>
-          <p className="font-mono text-[10px] text-slate-400 mt-0.5">
+          <h2 className="font-black text-sm uppercase tracking-widest" style={{ color: '#14532d' }}>Import Costing Calculator</h2>
+          <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.52)' }}>
             Asia → UK/EU · All costs in GBP
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => { setShowSaved(o => !o); if (!showSaved) loadSavedList(); }}
-            className="flex items-center gap-1.5 px-3 py-2 border-2 border-slate-600 text-slate-300 hover:border-sky-500 hover:text-white transition-all text-xs font-black uppercase tracking-wider"
-            style={{ background: 'rgba(255,255,255,0.04)' }}
+            className="flex items-center gap-1.5 px-3 py-2 transition-all text-xs font-black uppercase tracking-wider"
+            style={{
+              background: 'rgba(255,255,255,0.65)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              borderRadius: '100px',
+              color: '#15803d',
+            }}
           >
             <FolderOpen size={12} strokeWidth={2.5} />
             Saved
           </button>
           <button
             onClick={handleReset}
-            className="flex items-center gap-1.5 px-3 py-2 border-2 border-slate-600 text-slate-300 hover:border-slate-400 hover:text-white transition-all text-xs font-black uppercase tracking-wider"
-            style={{ background: 'rgba(255,255,255,0.04)' }}
+            className="flex items-center gap-1.5 px-3 py-2 transition-all text-xs font-black uppercase tracking-wider"
+            style={{
+              background: 'rgba(255,255,255,0.65)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              borderRadius: '100px',
+              color: '#15803d',
+            }}
           >
             <RotateCcw size={12} strokeWidth={2.5} />
             Reset
@@ -309,44 +351,68 @@ export function CostingsPage() {
             value={saveName}
             onChange={e => setSaveName(e.target.value)}
             placeholder="Calculation name..."
-            className="px-3 py-2 bg-slate-800 border-2 border-slate-600 text-white text-xs font-mono focus:border-sky-500 focus:outline-none transition-colors w-44"
+            className="px-3 py-2 text-xs font-mono focus:outline-none transition-colors w-44"
+            style={{
+              background: 'rgba(255,255,255,0.70)',
+              border: '1px solid rgba(0,0,0,0.09)',
+              borderRadius: '12px',
+              color: '#14532d',
+            }}
           />
           <button
             onClick={handleSave}
             disabled={saving || !saveName.trim()}
-            className="flex items-center gap-1.5 px-3 py-2 border-2 border-sky-600 bg-sky-600 text-white hover:bg-sky-500 hover:border-sky-500 transition-all text-xs font-black uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-3 py-2 transition-all text-xs font-black uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              background: 'linear-gradient(135deg, #16a34a, #15803d)',
+              borderRadius: '100px',
+              color: '#fff',
+              border: 'none',
+            }}
           >
             <Save size={12} strokeWidth={2.5} />
             {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
         {saveError && (
-          <p className="w-full font-mono text-[10px] text-red-400 mt-1">{saveError}</p>
+          <p className="w-full font-mono text-[10px] text-red-500 mt-1">{saveError}</p>
         )}
       </div>
 
       {showSaved && (
-        <div className="shrink-0 border-b-2 border-slate-800 bg-slate-900 px-4 py-3 max-h-56 overflow-y-auto">
+        <div
+          className="shrink-0 px-4 py-3 max-h-56 overflow-y-auto"
+          style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', background: 'rgba(255,255,255,0.60)' }}
+        >
           {loadingList ? (
-            <p className="font-mono text-xs text-slate-400">Loading...</p>
+            <p className="font-mono text-xs" style={{ color: 'rgba(20,83,45,0.52)' }}>Loading...</p>
           ) : savedList.length === 0 ? (
-            <p className="font-mono text-xs text-slate-400">No saved calculations yet.</p>
+            <p className="font-mono text-xs" style={{ color: 'rgba(20,83,45,0.52)' }}>No saved calculations yet.</p>
           ) : (
             <div className="space-y-1">
               {savedList.map(s => (
-                <div key={s.id} className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-800 border border-slate-700 hover:border-sky-600 transition-colors group">
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between gap-2 px-3 py-2 transition-colors group"
+                  style={{
+                    background: 'rgba(255,255,255,0.65)',
+                    border: '1px solid rgba(0,0,0,0.07)',
+                    borderRadius: '12px',
+                  }}
+                >
                   <button onClick={() => loadCosting(s)} className="flex-1 text-left">
-                    <span className="text-sm text-white font-bold">{s.name}</span>
-                    <span className="ml-3 font-mono text-[10px] text-slate-400">
+                    <span className="text-sm font-bold" style={{ color: '#14532d' }}>{s.name}</span>
+                    <span className="ml-3 font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.52)' }}>
                       {TRADE_ROUTES.find(r => r.id === s.trade_route)?.label}
                     </span>
-                    <span className="ml-3 font-mono text-[10px] text-slate-500">
+                    <span className="ml-3 font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.38)' }}>
                       {new Date(s.updated_at).toLocaleDateString('en-GB')}
                     </span>
                   </button>
                   <button
                     onClick={() => handleDelete(s.id)}
-                    className="p-1.5 text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1.5 transition-colors opacity-0 group-hover:opacity-100 hover:text-red-500"
+                    style={{ color: 'rgba(20,83,45,0.35)' }}
                   >
                     <Trash2 size={12} strokeWidth={2.5} />
                   </button>
@@ -359,7 +425,7 @@ export function CostingsPage() {
 
       <div className="flex-1 overflow-y-auto">
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-0 min-h-full">
-          <div className="p-4 space-y-4 overflow-y-auto border-r border-slate-800">
+          <div className="p-4 space-y-4 overflow-y-auto" style={{ borderRight: '1px solid rgba(0,0,0,0.06)' }}>
 
             <Section title="A — Trade Route & Product Cost" subtitle="Origin, currency & unit economics">
               <Field label="Trade Route">
@@ -527,8 +593,8 @@ export function CostingsPage() {
                 </Field>
               </div>
 
-              <div className="border border-slate-700 p-3 space-y-2">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-slate-400">Surcharges (per container)</p>
+              <div className="p-3 space-y-2" style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px' }}>
+                <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.52)' }}>Surcharges (per container)</p>
                 <div className="grid grid-cols-1 gap-2">
                   {[
                     { key: 'enableBAF', amtKey: 'bafSurcharge', label: 'BAF — Bunker Adjustment Factor' },
@@ -541,9 +607,10 @@ export function CostingsPage() {
                           type="checkbox"
                           checked={inputs.freight[key as keyof typeof inputs.freight] as boolean}
                           onChange={e => setFreight({ [key]: e.target.checked })}
-                          className="w-3.5 h-3.5 accent-sky-500"
+                          className="w-3.5 h-3.5"
+                          style={{ accentColor: '#16a34a' }}
                         />
-                        <span className="font-mono text-[10px] text-slate-300 w-52">{label}</span>
+                        <span className="font-mono text-[10px] w-52" style={{ color: '#14532d' }}>{label}</span>
                       </label>
                       <div className="flex-1">
                         <NumInput
@@ -555,7 +622,7 @@ export function CostingsPage() {
                     </div>
                   ))}
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-[10px] text-slate-300 w-56 shrink-0">Other surcharges (EBS, GRI, etc.)</span>
+                    <span className="font-mono text-[10px] w-56 shrink-0" style={{ color: '#14532d' }}>Other surcharges (EBS, GRI, etc.)</span>
                     <div className="flex-1">
                       <NumInput
                         value={inputs.freight.otherSurcharges}
@@ -600,14 +667,22 @@ export function CostingsPage() {
                   />
                 </Field>
                 <Field label="VAT Registration">
-                  <label className="flex items-center gap-2 px-3 py-2.5 bg-slate-800 border-2 border-slate-600 cursor-pointer hover:border-sky-500 transition-colors">
+                  <label
+                    className="flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors"
+                    style={{
+                      background: 'rgba(255,255,255,0.70)',
+                      border: '1px solid rgba(0,0,0,0.09)',
+                      borderRadius: '12px',
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={inputs.clearance.vatRegistered}
                       onChange={e => setClearance({ vatRegistered: e.target.checked })}
-                      className="w-3.5 h-3.5 accent-sky-500"
+                      className="w-3.5 h-3.5"
+                      style={{ accentColor: '#16a34a' }}
                     />
-                    <span className="text-sm text-slate-300 font-mono">VAT registered (defer on import)</span>
+                    <span className="text-sm font-mono" style={{ color: '#14532d' }}>VAT registered (defer on import)</span>
                   </label>
                 </Field>
               </div>
@@ -743,7 +818,7 @@ export function CostingsPage() {
 
           </div>
 
-          <div className="p-4 bg-slate-950 border-t xl:border-t-0 border-slate-800">
+          <div className="p-4 border-t xl:border-t-0" style={{ background: 'transparent', borderColor: 'rgba(0,0,0,0.06)' }}>
             <div className="sticky top-4">
               <CostingResults
                 results={results}
@@ -758,11 +833,15 @@ export function CostingsPage() {
       <button
         id="costings-advisor-fab"
         onClick={() => setChatOpen(o => !o)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-brut-hdr flex items-center justify-center shadow-lg border-2 border-brut-hdr-dark transition-transform duration-200 hover:scale-105 active:scale-95"
-        style={{ boxShadow: '3px 3px 0px #0d0d0d' }}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 flex items-center justify-center shadow-lg transition-transform duration-200 hover:scale-105 active:scale-95"
+        style={{
+          background: 'linear-gradient(135deg, #16a34a, #15803d)',
+          borderRadius: '100%',
+          border: 'none',
+        }}
         aria-label={chatOpen ? 'Close Costings Advisor' : 'Open Costings Advisor'}
       >
-        {chatOpen ? <X size={22} className="text-white" /> : <MessageCircle size={22} className="text-white" />}
+        {chatOpen ? <X size={22} style={{ color: '#fff' }} /> : <MessageCircle size={22} style={{ color: '#fff' }} />}
       </button>
 
       {chatOpen && (
