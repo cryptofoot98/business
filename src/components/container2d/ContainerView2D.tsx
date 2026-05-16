@@ -1,6 +1,8 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { PackingResult, PackedPallet } from '../../types';
 import { getReeferClearances } from '../../utils/packing';
+import { ContainerView3D } from '../container3d/ContainerView3D';
+import { RotateCcw } from 'lucide-react';
 
 const CM_TO_UNIT: Record<string, number> = {
   cm: 1,
@@ -14,7 +16,7 @@ interface Props {
   unit: string;
 }
 
-type ViewMode = 'front' | 'side' | 'top';
+type ViewMode = 'front' | 'side' | 'top' | '3d';
 
 const PAD = 28;
 const PAD_BOTTOM = 44;
@@ -451,20 +453,23 @@ const VIEW_LABELS: Record<ViewMode, string> = {
   front: 'Front (W×H)',
   side: 'Side (L×H)',
   top: 'Top (L×W)',
+  '3d': '3D View',
 };
 
 const VIEW_LABELS_SHORT: Record<ViewMode, string> = {
   front: 'Front',
   side: 'Side',
   top: 'Top',
+  '3d': '3D',
 };
 
 export function ContainerView2D({ result, productColors, unit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
   const dirtyRef = useRef(true);
-  const [viewMode, setViewMode] = useState<ViewMode>('front');
+  const [viewMode, setViewMode] = useState<ViewMode>('3d');
   const [layerDepth, setLayerDepth] = useState(100);
+  const [cameraKey, setCameraKey] = useState(0);
 
   const colorMap = useRef<Record<string, [number, number, number]>>({});
   colorMap.current = {};
@@ -639,10 +644,25 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
 
   return (
     <div className="w-full h-full relative" style={{ background: BG }}>
-      <canvas ref={canvasRef} className="w-full h-full block" />
+      {/* Canvas (2D modes) */}
+      {viewMode !== '3d' && (
+        <canvas ref={canvasRef} className="w-full h-full block" />
+      )}
+
+      {/* 3D view */}
+      {viewMode === '3d' && (
+        <div className="absolute inset-0">
+          <ContainerView3D
+            result={result}
+            productColors={productColors}
+            depthPct={layerDepth}
+            cameraKey={cameraKey}
+          />
+        </div>
+      )}
 
       {/* View mode tabs */}
-      <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex items-center gap-1 sm:gap-1.5 flex-wrap max-w-[calc(100%-80px)]">
+      <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex items-center gap-1 sm:gap-1.5 flex-wrap max-w-[calc(100%-90px)]">
         <div className="flex p-0.5" style={{
           background: 'rgba(0,0,0,0.04)',
           backdropFilter: 'blur(16px)',
@@ -650,7 +670,7 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
           border: '1px solid rgba(0,0,0,0.06)',
           borderRadius: 100,
         }}>
-          {(['front', 'side', 'top'] as ViewMode[]).map(mode => (
+          {(['front', 'side', 'top', '3d'] as ViewMode[]).map(mode => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
@@ -673,6 +693,26 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
             </button>
           ))}
         </div>
+
+        {/* Reset camera button (3D only) */}
+        {viewMode === '3d' && (
+          <button
+            onClick={() => setCameraKey(k => k + 1)}
+            title="Reset camera"
+            className="flex items-center gap-1 px-2 py-1.5 transition-all"
+            style={{
+              background: 'rgba(255,255,255,0.72)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              borderRadius: 100,
+              color: 'rgba(20,83,45,0.55)',
+            }}
+          >
+            <RotateCcw size={10} />
+            <span className="text-[9px] font-semibold uppercase hidden sm:inline">Reset view</span>
+          </button>
+        )}
       </div>
 
       {/* Top-right badges */}
@@ -720,7 +760,9 @@ export function ContainerView2D({ result, productColors, unit }: Props) {
       {/* Depth slider */}
       {result.packedBoxes.length > 0 && (
         <div className="absolute bottom-12 left-3 right-3 flex items-center gap-3">
-          <span className="font-mono text-[9px] font-semibold uppercase whitespace-nowrap" style={{ color: 'rgba(20,83,45,0.45)' }}>Depth</span>
+          <span className="font-mono text-[9px] font-semibold uppercase whitespace-nowrap" style={{ color: 'rgba(20,83,45,0.45)' }}>
+            {viewMode === '3d' ? 'Cut' : 'Depth'}
+          </span>
           <input
             type="range"
             min={5}
