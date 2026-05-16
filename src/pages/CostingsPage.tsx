@@ -79,24 +79,29 @@ function Section({ title, subtitle, children, defaultOpen = true }: SectionProps
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.68)',
+      background: 'rgba(255,255,255,0.75)',
       backdropFilter: 'blur(20px)',
-      border: '1px solid rgba(255,255,255,0.85)',
+      border: '1px solid rgba(22,163,74,0.18)',
       borderRadius: '16px',
       overflow: 'hidden',
     }}>
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-4 py-3 transition-colors"
-        style={{ background: 'rgba(255,255,255,0.5)', borderBottom: open ? '1px solid rgba(0,0,0,0.06)' : 'none' }}
+        style={{
+          background: open
+            ? 'linear-gradient(135deg, #16a34a, #15803d)'
+            : 'rgba(22,163,74,0.08)',
+          borderBottom: open ? '1px solid rgba(22,163,74,0.25)' : 'none',
+        }}
       >
         <div className="text-left">
-          <h3 className="font-black text-xs uppercase tracking-widest" style={{ color: '#14532d' }}>{title}</h3>
-          {subtitle && <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.52)' }}>{subtitle}</p>}
+          <h3 className="font-black text-xs uppercase tracking-widest" style={{ color: open ? '#fff' : '#15803d' }}>{title}</h3>
+          {subtitle && <p className="font-mono text-[10px] mt-0.5" style={{ color: open ? 'rgba(255,255,255,0.7)' : 'rgba(20,83,45,0.52)' }}>{subtitle}</p>}
         </div>
         {open
-          ? <ChevronUp size={14} style={{ color: 'rgba(20,83,45,0.52)' }} strokeWidth={2.5} />
-          : <ChevronDown size={14} style={{ color: 'rgba(20,83,45,0.52)' }} strokeWidth={2.5} />}
+          ? <ChevronUp size={14} style={{ color: open ? 'rgba(255,255,255,0.8)' : 'rgba(20,83,45,0.52)' }} strokeWidth={2.5} />
+          : <ChevronDown size={14} style={{ color: open ? 'rgba(255,255,255,0.8)' : 'rgba(20,83,45,0.52)' }} strokeWidth={2.5} />}
       </button>
       {open && <div className="p-4 space-y-3">{children}</div>}
     </div>
@@ -138,13 +143,13 @@ function NumInput({
 }) {
   return (
     <div className="flex items-center transition-colors" style={{
-      background: 'rgba(255,255,255,0.70)',
-      border: '1px solid rgba(0,0,0,0.09)',
+      background: 'rgba(255,255,255,0.85)',
+      border: '1px solid rgba(22,163,74,0.22)',
       borderRadius: '12px',
       overflow: 'hidden',
     }}>
       {prefix && (
-        <span className="px-2.5 font-mono text-xs select-none" style={{ color: 'rgba(20,83,45,0.52)', borderRight: '1px solid rgba(0,0,0,0.06)' }}>{prefix}</span>
+        <span className="px-2.5 font-mono text-xs font-bold select-none" style={{ color: '#16a34a', background: 'rgba(22,163,74,0.08)', borderRight: '1px solid rgba(22,163,74,0.15)' }}>{prefix}</span>
       )}
       <input
         type="number"
@@ -157,7 +162,7 @@ function NumInput({
         style={{ color: '#14532d' }}
       />
       {suffix && (
-        <span className="px-2.5 font-mono text-xs select-none" style={{ color: 'rgba(20,83,45,0.52)', borderLeft: '1px solid rgba(0,0,0,0.06)' }}>{suffix}</span>
+        <span className="px-2.5 font-mono text-xs font-bold select-none" style={{ color: '#16a34a', background: 'rgba(22,163,74,0.08)', borderLeft: '1px solid rgba(22,163,74,0.15)' }}>{suffix}</span>
       )}
     </div>
   );
@@ -178,8 +183,8 @@ function Select<T extends string>({
       onChange={e => onChange(e.target.value as T)}
       className="w-full px-3 py-2.5 text-sm font-mono focus:outline-none transition-colors appearance-none"
       style={{
-        background: 'rgba(255,255,255,0.70)',
-        border: '1px solid rgba(0,0,0,0.09)',
+        background: 'rgba(255,255,255,0.85)',
+        border: '1px solid rgba(22,163,74,0.22)',
         borderRadius: '12px',
         color: '#14532d',
       }}
@@ -308,14 +313,14 @@ export function CostingsPage() {
       <div
         className="shrink-0 px-4 py-3 flex items-center justify-between gap-3 flex-wrap"
         style={{
-          background: 'rgba(255,255,255,0.72)',
+          background: 'linear-gradient(135deg, rgba(20,83,45,0.97), rgba(15,70,34,0.95))',
           backdropFilter: 'blur(24px)',
-          borderBottom: '1px solid rgba(0,0,0,0.06)',
+          borderBottom: '1px solid rgba(22,163,74,0.25)',
         }}
       >
         <div>
-          <h2 className="font-black text-sm uppercase tracking-widest" style={{ color: '#14532d' }}>Import Costing Calculator</h2>
-          <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.52)' }}>
+          <h2 className="font-black text-sm uppercase tracking-widest" style={{ color: '#fff' }}>Import Costing Calculator</h2>
+          <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
             Asia → UK/EU · All costs in GBP
           </p>
         </div>
@@ -324,10 +329,10 @@ export function CostingsPage() {
             onClick={() => { setShowSaved(o => !o); if (!showSaved) loadSavedList(); }}
             className="flex items-center gap-1.5 px-3 py-2 transition-all text-xs font-black uppercase tracking-wider"
             style={{
-              background: 'rgba(255,255,255,0.65)',
-              border: '1px solid rgba(0,0,0,0.08)',
+              background: 'rgba(255,255,255,0.12)',
+              border: '1px solid rgba(255,255,255,0.22)',
               borderRadius: '100px',
-              color: '#15803d',
+              color: '#fff',
             }}
           >
             <FolderOpen size={12} strokeWidth={2.5} />
@@ -337,10 +342,10 @@ export function CostingsPage() {
             onClick={handleReset}
             className="flex items-center gap-1.5 px-3 py-2 transition-all text-xs font-black uppercase tracking-wider"
             style={{
-              background: 'rgba(255,255,255,0.65)',
-              border: '1px solid rgba(0,0,0,0.08)',
+              background: 'rgba(255,255,255,0.12)',
+              border: '1px solid rgba(255,255,255,0.22)',
               borderRadius: '100px',
-              color: '#15803d',
+              color: '#fff',
             }}
           >
             <RotateCcw size={12} strokeWidth={2.5} />
@@ -353,10 +358,10 @@ export function CostingsPage() {
             placeholder="Calculation name..."
             className="px-3 py-2 text-xs font-mono focus:outline-none transition-colors w-44"
             style={{
-              background: 'rgba(255,255,255,0.70)',
-              border: '1px solid rgba(0,0,0,0.09)',
+              background: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.22)',
               borderRadius: '12px',
-              color: '#14532d',
+              color: '#fff',
             }}
           />
           <button
@@ -364,9 +369,9 @@ export function CostingsPage() {
             disabled={saving || !saveName.trim()}
             className="flex items-center gap-1.5 px-3 py-2 transition-all text-xs font-black uppercase tracking-wider disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
-              background: 'linear-gradient(135deg, #16a34a, #15803d)',
+              background: 'rgba(255,255,255,0.95)',
               borderRadius: '100px',
-              color: '#fff',
+              color: '#15803d',
               border: 'none',
             }}
           >
@@ -375,14 +380,14 @@ export function CostingsPage() {
           </button>
         </div>
         {saveError && (
-          <p className="w-full font-mono text-[10px] text-red-500 mt-1">{saveError}</p>
+          <p className="w-full font-mono text-[10px] text-red-300 mt-1">{saveError}</p>
         )}
       </div>
 
       {showSaved && (
         <div
           className="shrink-0 px-4 py-3 max-h-56 overflow-y-auto"
-          style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', background: 'rgba(255,255,255,0.60)' }}
+          style={{ borderBottom: '1px solid rgba(22,163,74,0.15)', background: 'rgba(240,248,240,0.85)' }}
         >
           {loadingList ? (
             <p className="font-mono text-xs" style={{ color: 'rgba(20,83,45,0.52)' }}>Loading...</p>
@@ -593,7 +598,7 @@ export function CostingsPage() {
                 </Field>
               </div>
 
-              <div className="p-3 space-y-2" style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px' }}>
+              <div className="p-3 space-y-2" style={{ background: 'rgba(22,163,74,0.05)', border: '1px solid rgba(22,163,74,0.18)', borderRadius: '12px' }}>
                 <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.52)' }}>Surcharges (per container)</p>
                 <div className="grid grid-cols-1 gap-2">
                   {[
@@ -670,8 +675,8 @@ export function CostingsPage() {
                   <label
                     className="flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors"
                     style={{
-                      background: 'rgba(255,255,255,0.70)',
-                      border: '1px solid rgba(0,0,0,0.09)',
+                      background: 'rgba(255,255,255,0.85)',
+                      border: '1px solid rgba(22,163,74,0.22)',
                       borderRadius: '12px',
                     }}
                   >
