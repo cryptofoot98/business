@@ -19,7 +19,7 @@ interface FieldProps {
 function NumericField({ label, value, onChange, unit, min = 0 }: FieldProps) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="font-mono text-[10px] font-bold uppercase tracking-widest text-brut-black/50">{label}</label>
+      <label className="font-mono text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.42)' }}>{label}</label>
       <div className="relative flex items-center">
         <input
           type="number"
@@ -27,10 +27,16 @@ function NumericField({ label, value, onChange, unit, min = 0 }: FieldProps) {
           value={value || ''}
           onChange={e => onChange(parseFloat(e.target.value) || 0)}
           onWheel={e => e.currentTarget.blur()}
-          className="brut-input w-full pl-3 pr-9 py-2.5 text-sm font-black placeholder-brut-black/25"
+          className="w-full pl-3 pr-8 py-2 text-sm font-medium focus:outline-none transition-all placeholder:opacity-30"
+          style={{
+            background: 'rgba(255,255,255,0.88)',
+            border: '1px solid rgba(22,163,74,0.2)',
+            borderRadius: 9,
+            color: '#14532d',
+          }}
           placeholder="0"
         />
-        <span className="absolute right-2.5 font-mono text-[10px] font-bold text-brut-black/35 pointer-events-none select-none">{unit}</span>
+        <span className="absolute right-2.5 font-mono text-[10px] pointer-events-none select-none" style={{ color: 'rgba(20,83,45,0.35)' }}>{unit}</span>
       </div>
     </div>
   );
@@ -43,80 +49,104 @@ interface ConstraintsProps {
 }
 
 function ConstraintsPanel({ product, onUpdate, unit }: ConstraintsProps) {
+  const pillWrap = {
+    background: 'rgba(0,0,0,0.05)',
+    border: '1px solid rgba(0,0,0,0.07)',
+    borderRadius: 100,
+    padding: 2,
+  } as const;
+
   return (
-    <div className="space-y-3 pt-3 border-t border-brut-black/10">
+    <div className="space-y-3 pt-3" style={{ borderTop: '1px solid rgba(22,163,74,0.1)' }}>
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
-          <label className="font-mono text-[10px] font-bold uppercase tracking-widest text-brut-black/50">Qty to ship</label>
-          <div className="relative flex items-center">
-            <input
-              type="number"
-              min={0}
-              value={product.quantity || ''}
-              onChange={e => onUpdate('quantity', parseInt(e.target.value) || undefined)}
-              onWheel={e => e.currentTarget.blur()}
-              className="brut-input w-full pl-3 pr-3 py-2 text-sm font-black placeholder-brut-black/25"
-              placeholder="∞"
-            />
-          </div>
+          <label className="font-mono text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.42)' }}>Qty to ship</label>
+          <input
+            type="number"
+            min={0}
+            value={product.quantity || ''}
+            onChange={e => onUpdate('quantity', parseInt(e.target.value) || undefined)}
+            onWheel={e => e.currentTarget.blur()}
+            className="w-full px-3 py-2 text-sm font-medium focus:outline-none transition-all"
+            style={{ background: 'rgba(255,255,255,0.88)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 9, color: '#14532d' }}
+            placeholder="∞"
+          />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="font-mono text-[10px] font-bold uppercase tracking-widest text-brut-black/50">Priority</label>
-          <div className="relative flex items-center">
-            <input
-              type="number"
-              min={1}
-              max={10}
-              value={product.priority ?? 5}
-              onChange={e => onUpdate('priority', Math.min(10, Math.max(1, parseInt(e.target.value) || 5)))}
-              onWheel={e => e.currentTarget.blur()}
-              className="brut-input w-full pl-3 pr-3 py-2 text-sm font-black"
-            />
-          </div>
+          <label className="font-mono text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.42)' }}>Priority</label>
+          <input
+            type="number"
+            min={1}
+            max={10}
+            value={product.priority ?? 5}
+            onChange={e => onUpdate('priority', Math.min(10, Math.max(1, parseInt(e.target.value) || 5)))}
+            onWheel={e => e.currentTarget.blur()}
+            className="w-full px-3 py-2 text-sm font-medium focus:outline-none transition-all"
+            style={{ background: 'rgba(255,255,255,0.88)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 9, color: '#14532d' }}
+          />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => onUpdate('stackable', !product.stackable)}
-          className={`flex items-center gap-2 px-3 py-2 border-2 border-brut-black text-left text-[11px] font-black uppercase tracking-tight transition-all ${
-            product.stackable === false
-              ? 'bg-brut-red text-white'
-              : 'bg-white text-brut-black hover:bg-brut-bg'
-          }`}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wide text-left transition-all"
+          style={product.stackable === false ? {
+            background: 'rgba(220,38,38,0.1)',
+            border: '1px solid rgba(220,38,38,0.3)',
+            color: '#dc2626',
+          } : {
+            background: 'rgba(255,255,255,0.7)',
+            border: '1px solid rgba(22,163,74,0.15)',
+            color: 'rgba(20,83,45,0.55)',
+          }}
         >
-          <Layers size={11} />
+          <Layers size={11} strokeWidth={2} />
           Non-stackable
         </button>
         <button
           onClick={() => onUpdate('fragile', !product.fragile)}
-          className={`flex items-center gap-2 px-3 py-2 border-2 border-brut-black text-left text-[11px] font-black uppercase tracking-tight transition-all ${
-            product.fragile
-              ? 'bg-brut-orange text-white'
-              : 'bg-white text-brut-black hover:bg-brut-bg'
-          }`}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold uppercase tracking-wide text-left transition-all"
+          style={product.fragile ? {
+            background: 'rgba(217,119,6,0.1)',
+            border: '1px solid rgba(217,119,6,0.3)',
+            color: '#d97706',
+          } : {
+            background: 'rgba(255,255,255,0.7)',
+            border: '1px solid rgba(22,163,74,0.15)',
+            color: 'rgba(20,83,45,0.55)',
+          }}
         >
-          <AlertTriangle size={11} />
+          <AlertTriangle size={11} strokeWidth={2} />
           Fragile
         </button>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="font-mono text-[10px] font-bold uppercase tracking-widest text-brut-black/50">Orientation</label>
-        <div className="grid grid-cols-3 gap-1">
-          {(['none', 'upright', 'on-side'] as OrientationLock[]).map(lock => (
-            <button
-              key={lock}
-              onClick={() => onUpdate('orientationLock', lock)}
-              className={`py-1.5 text-[10px] font-black uppercase border-2 border-brut-black transition-all ${
-                (product.orientationLock ?? 'none') === lock
-                  ? 'bg-brut-black text-white'
-                  : 'bg-white text-brut-black hover:bg-brut-bg'
-              }`}
-            >
-              {lock === 'none' ? 'Free' : lock === 'upright' ? 'Upright' : 'On Side'}
-            </button>
-          ))}
+      <div className="flex flex-col gap-1.5">
+        <label className="font-mono text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.42)' }}>Orientation</label>
+        <div className="flex gap-0.5" style={pillWrap}>
+          {(['none', 'upright', 'on-side'] as OrientationLock[]).map(lock => {
+            const isActive = (product.orientationLock ?? 'none') === lock;
+            return (
+              <button
+                key={lock}
+                onClick={() => onUpdate('orientationLock', lock)}
+                className="flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all"
+                style={isActive ? {
+                  background: 'linear-gradient(135deg, #16a34a, #15803d)',
+                  borderRadius: 100,
+                  color: '#fff',
+                  boxShadow: '0 1px 6px rgba(22,163,74,0.3)',
+                } : {
+                  background: 'transparent',
+                  borderRadius: 100,
+                  color: 'rgba(20,83,45,0.5)',
+                }}
+              >
+                {lock === 'none' ? 'Free' : lock === 'upright' ? 'Upright' : 'Side'}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -169,9 +199,7 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
   };
 
   const handleImportConfirm = () => {
-    if (csvPreview && csvPreview.products.length > 0) {
-      onImportCSV(csvPreview.products);
-    }
+    if (csvPreview && csvPreview.products.length > 0) onImportCSV(csvPreview.products);
     setCsvModalOpen(false);
     setCsvPreview(null);
   };
@@ -194,80 +222,90 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
 
   return (
     <div className="space-y-3">
+      {/* Toolbar */}
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[10px] text-brut-black/40 uppercase font-bold">
+        <span className="font-mono text-[10px] font-medium" style={{ color: 'rgba(20,83,45,0.38)' }}>
           {products.length}/{maxProducts} products
         </span>
         <div className="flex items-center gap-1.5">
           {userId && (
             <button
               onClick={() => setSavedModalOpen(true)}
-              title="Saved Products"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 border-2 border-brut-black bg-white hover:bg-brut-bg text-[10px] font-black uppercase tracking-wider shadow-brut-sm hover:shadow-brut transition-all"
+              className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all"
+              style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(22,163,74,0.18)', borderRadius: 100, color: '#15803d' }}
             >
-              <Package size={10} />
+              <Package size={10} strokeWidth={2} />
               Library
             </button>
           )}
           <button
             onClick={() => setCsvModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 border-2 border-brut-black bg-white hover:bg-brut-bg text-[10px] font-black uppercase tracking-wider shadow-brut-sm hover:shadow-brut transition-all"
+            className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all"
+            style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(22,163,74,0.18)', borderRadius: 100, color: '#15803d' }}
           >
-            <Upload size={10} />
-            CSV import
+            <Upload size={10} strokeWidth={2} />
+            CSV
           </button>
         </div>
       </div>
 
+      {/* Product cards */}
       {products.map((p, idx) => {
         const isExpanded = expandedConstraints.has(p.id);
         const hasConstraints = hasActiveConstraints(p);
         return (
           <div
             key={p.id}
-            className="border-2 border-brut-black bg-brut-white overflow-hidden"
-            style={{ boxShadow: `4px 4px 0px ${p.color}` }}
+            className="overflow-hidden"
+            style={{
+              background: 'rgba(255,255,255,0.82)',
+              border: '1px solid rgba(22,163,74,0.14)',
+              borderRadius: 14,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
+            }}
           >
-            <div
-              className="flex items-center justify-between px-3 py-2 border-b-2 border-brut-black"
-              style={{ backgroundColor: p.color }}
-            >
+            {/* Colored header */}
+            <div className="flex items-center gap-2 px-3 py-2" style={{ background: p.color }}>
               <input
                 type="text"
                 value={p.name}
                 onChange={e => onUpdate(p.id, 'name', e.target.value)}
-                className="text-sm font-black uppercase tracking-tight text-white bg-transparent border-none outline-none w-full min-w-0 placeholder-white/60"
+                className="text-sm font-semibold text-white bg-transparent border-none outline-none w-full min-w-0"
+                style={{ '::placeholder': { color: 'rgba(255,255,255,0.55)' } } as React.CSSProperties}
                 placeholder={PRODUCT_LABELS[idx] ?? `Product ${idx + 1}`}
               />
-              <div className="flex items-center gap-1 shrink-0 ml-2">
+              <div className="flex items-center gap-1 shrink-0">
                 {p.quantity && p.quantity > 0 ? (
-                  <span className="font-mono text-[9px] text-white/70 font-bold mr-1">×{p.quantity}</span>
+                  <span className="font-mono text-[9px] text-white/70 font-medium mr-0.5">×{p.quantity}</span>
                 ) : null}
                 {userId && (
                   <button
                     onClick={() => handleSaveProduct(p)}
                     disabled={savingId === p.id}
-                    title={saveErrorId === p.id ? 'Save failed' : 'Save product to library'}
-                    className={`p-0.5 transition-colors ${saveErrorId === p.id ? 'text-brut-red' : savedIds.has(p.id) ? 'text-white' : 'text-white/50 hover:text-white'} disabled:opacity-40`}
+                    title={saveErrorId === p.id ? 'Save failed' : 'Save to library'}
+                    className="p-0.5 transition-colors disabled:opacity-40"
+                    style={{ color: saveErrorId === p.id ? '#fca5a5' : savedIds.has(p.id) ? '#fff' : 'rgba(255,255,255,0.55)' }}
                   >
                     {saveErrorId === p.id
-                      ? <X size={13} strokeWidth={2.5} />
-                      : <Bookmark size={13} strokeWidth={2.5} fill={savedIds.has(p.id) ? 'currentColor' : 'none'} />
+                      ? <X size={12} strokeWidth={2} />
+                      : <Bookmark size={12} strokeWidth={2} fill={savedIds.has(p.id) ? 'currentColor' : 'none'} />
                     }
                   </button>
                 )}
                 {products.length > 1 && (
                   <button
                     onClick={() => onRemove(p.id)}
-                    className="text-white/70 hover:text-white transition-colors p-0.5"
+                    className="p-0.5 transition-colors"
+                    style={{ color: 'rgba(255,255,255,0.6)' }}
                   >
-                    <Trash2 size={13} strokeWidth={2.5} />
+                    <Trash2 size={12} strokeWidth={2} />
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="p-3 space-y-3">
+            {/* Body */}
+            <div className="p-3 space-y-2.5">
               <div className="grid grid-cols-3 gap-2">
                 <NumericField label="D" value={p.length} onChange={v => onUpdate(p.id, 'length', v)} unit={unit} />
                 <NumericField label="W" value={p.width} onChange={v => onUpdate(p.id, 'width', v)} unit={unit} />
@@ -278,17 +316,20 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
                 <NumericField label="Gross wt" value={p.grossWeight} onChange={v => onUpdate(p.id, 'grossWeight', v)} unit="kg" />
               </div>
 
+              {/* Constraints toggle */}
               <button
                 onClick={() => toggleConstraints(p.id)}
-                className="flex items-center justify-between w-full text-left py-1.5 px-0 group"
+                className="flex items-center justify-between w-full text-left py-1 group"
               >
-                <span className="flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-widest text-brut-black/50 group-hover:text-brut-black transition-colors">
+                <span className="flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-widest transition-colors" style={{ color: 'rgba(20,83,45,0.45)' }}>
                   Constraints
-                  {hasConstraints && <span className="w-1.5 h-1.5 rounded-full bg-brut-orange" />}
+                  {hasConstraints && (
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#d97706' }} />
+                  )}
                 </span>
                 {isExpanded
-                  ? <ChevronUp size={12} className="text-brut-black/40" />
-                  : <ChevronDown size={12} className="text-brut-black/40" />}
+                  ? <ChevronUp size={12} strokeWidth={2} style={{ color: 'rgba(20,83,45,0.35)' }} />
+                  : <ChevronDown size={12} strokeWidth={2} style={{ color: 'rgba(20,83,45,0.35)' }} />}
               </button>
 
               {isExpanded && (
@@ -303,16 +344,25 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
         );
       })}
 
+      {/* Add product */}
       {products.length < maxProducts && (
         <button
           onClick={onAdd}
-          className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-brut-black/30 hover:border-brut-black bg-transparent hover:bg-brut-bg text-brut-black/50 hover:text-brut-black font-mono text-xs font-bold uppercase tracking-wider transition-all"
+          className="w-full flex items-center justify-center gap-2 py-3 font-mono text-xs font-semibold uppercase tracking-wider transition-all"
+          style={{
+            border: '1px dashed rgba(22,163,74,0.3)',
+            borderRadius: 12,
+            color: 'rgba(20,83,45,0.42)',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(22,163,74,0.6)'; (e.currentTarget as HTMLButtonElement).style.color = '#15803d'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(22,163,74,0.04)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(22,163,74,0.3)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(20,83,45,0.42)'; (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
         >
-          <Plus size={14} />
+          <Plus size={14} strokeWidth={2} />
           Add product
         </button>
       )}
 
+      {/* Saved products modal */}
       {savedModalOpen && userId && (
         <SavedProductsModal
           userId={userId}
@@ -321,37 +371,40 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
         />
       )}
 
+      {/* CSV modal */}
       {csvModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-lg bg-brut-paper border-3 border-brut-black overflow-hidden" style={{ boxShadow: '8px 8px 0px #0d0d0d' }}>
-            <div className="flex items-center justify-between px-5 py-4 bg-brut-black">
-              <span className="text-sm font-black uppercase tracking-tight text-white">Import Products from CSV</span>
-              <button onClick={() => { setCsvModalOpen(false); setCsvPreview(null); }} className="text-white/60 hover:text-white">
-                ✕
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}>
+          <div className="w-full max-w-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.97)', border: '1px solid rgba(22,163,74,0.18)', borderRadius: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-5 py-4" style={{ background: 'linear-gradient(135deg, #14532d, #15803d)', borderBottom: '1px solid rgba(22,163,74,0.2)' }}>
+              <span className="text-sm font-semibold text-white">Import Products from CSV</span>
+              <button onClick={() => { setCsvModalOpen(false); setCsvPreview(null); }} className="transition-colors" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <X size={16} strokeWidth={2} />
               </button>
             </div>
 
             <div className="p-5 space-y-4">
+              {/* Drop zone */}
               <div
                 onDragEnter={() => setIsDragging(true)}
                 onDragLeave={() => setIsDragging(false)}
                 onDragOver={e => e.preventDefault()}
-                onDrop={e => {
-                  e.preventDefault();
-                  setIsDragging(false);
-                  const file = e.dataTransfer.files[0];
-                  if (file) handleCSVFile(file);
-                }}
-                className={`border-2 border-dashed py-8 text-center cursor-pointer transition-all ${
-                  isDragging ? 'border-brut-black bg-brut-bg' : 'border-brut-black/30 hover:border-brut-black'
-                }`}
+                onDrop={e => { e.preventDefault(); setIsDragging(false); const file = e.dataTransfer.files[0]; if (file) handleCSVFile(file); }}
                 onClick={() => fileRef.current?.click()}
+                className="py-8 text-center cursor-pointer rounded-xl transition-all"
+                style={isDragging ? {
+                  background: 'rgba(22,163,74,0.08)',
+                  border: '2px dashed rgba(22,163,74,0.5)',
+                } : {
+                  background: 'rgba(22,163,74,0.04)',
+                  border: '1px dashed rgba(22,163,74,0.25)',
+                }}
               >
-                <Upload size={24} className="mx-auto mb-3 text-brut-black/40" />
-                <p className="font-mono text-xs font-bold uppercase tracking-wide text-brut-black/60">
+                <Upload size={24} className="mx-auto mb-3" style={{ color: 'rgba(20,83,45,0.35)' }} />
+                <p className="font-mono text-xs font-medium" style={{ color: 'rgba(20,83,45,0.5)' }}>
                   Drop CSV here or click to browse
                 </p>
-                <p className="font-mono text-[10px] text-brut-black/35 mt-1.5">
+                <p className="font-mono text-[10px] mt-1.5" style={{ color: 'rgba(20,83,45,0.32)' }}>
                   Columns: name, length, width, height, netWeight, grossWeight, quantity
                 </p>
                 <input
@@ -365,40 +418,41 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
 
               <button
                 onClick={downloadCSVTemplate}
-                className="flex items-center gap-2 px-3 py-2 border-2 border-brut-black bg-white hover:bg-brut-bg text-xs font-black uppercase tracking-wider shadow-brut-sm transition-all"
+                className="flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-all"
+                style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 100, color: '#15803d' }}
               >
-                <Download size={12} />
+                <Download size={12} strokeWidth={2} />
                 Download template
               </button>
 
               {csvPreview && (
                 <div className="space-y-3">
                   {csvPreview.errors.length > 0 && (
-                    <div className="bg-brut-red/10 border-2 border-brut-red p-3 space-y-1">
+                    <div className="p-3 rounded-xl space-y-1" style={{ background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)' }}>
                       {csvPreview.errors.map((err, i) => (
-                        <p key={i} className="font-mono text-[10px] font-bold text-brut-red">{err}</p>
+                        <p key={i} className="font-mono text-[10px] font-medium" style={{ color: '#dc2626' }}>{err}</p>
                       ))}
                     </div>
                   )}
 
                   {csvPreview.products.length > 0 && (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-2 border-brut-black">
+                    <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid rgba(22,163,74,0.15)' }}>
+                      <table className="w-full text-left">
                         <thead>
-                          <tr className="bg-brut-black text-white">
+                          <tr style={{ background: 'rgba(22,163,74,0.08)' }}>
                             {['Name', 'L', 'W', 'H', 'Qty'].map(h => (
-                              <th key={h} className="px-2 py-2 font-mono text-[10px] font-bold uppercase tracking-wider">{h}</th>
+                              <th key={h} className="px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#15803d' }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {csvPreview.products.map((p, i) => (
-                            <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-brut-bg'}>
-                              <td className="px-2 py-1.5 font-mono text-[10px] font-bold truncate max-w-28">{p.name}</td>
-                              <td className="px-2 py-1.5 font-mono text-[10px]">{p.length}</td>
-                              <td className="px-2 py-1.5 font-mono text-[10px]">{p.width}</td>
-                              <td className="px-2 py-1.5 font-mono text-[10px]">{p.height}</td>
-                              <td className="px-2 py-1.5 font-mono text-[10px]">{p.quantity ?? '—'}</td>
+                            <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(22,163,74,0.03)', borderTop: '1px solid rgba(22,163,74,0.08)' }}>
+                              <td className="px-3 py-1.5 font-mono text-[10px] font-medium truncate max-w-28" style={{ color: '#14532d' }}>{p.name}</td>
+                              <td className="px-3 py-1.5 font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.6)' }}>{p.length}</td>
+                              <td className="px-3 py-1.5 font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.6)' }}>{p.width}</td>
+                              <td className="px-3 py-1.5 font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.6)' }}>{p.height}</td>
+                              <td className="px-3 py-1.5 font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.6)' }}>{p.quantity ?? '—'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -410,13 +464,15 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
                     <button
                       onClick={handleImportConfirm}
                       disabled={csvPreview.products.length === 0}
-                      className="flex-1 py-3 bg-brut-black text-white font-black text-xs uppercase tracking-wider border-2 border-brut-black hover:bg-brut-red transition-all disabled:opacity-40"
+                      className="flex-1 py-2.5 text-white text-xs font-semibold uppercase tracking-wider transition-all disabled:opacity-40"
+                      style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', borderRadius: 100, boxShadow: '0 3px 12px rgba(22,163,74,0.35)' }}
                     >
                       Import {csvPreview.products.length} product{csvPreview.products.length !== 1 ? 's' : ''}
                     </button>
                     <button
                       onClick={() => { setCsvModalOpen(false); setCsvPreview(null); }}
-                      className="px-4 py-3 border-2 border-brut-black bg-white hover:bg-brut-bg font-black text-xs uppercase tracking-wider"
+                      className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all"
+                      style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 100, color: '#15803d' }}
                     >
                       Cancel
                     </button>
