@@ -1,18 +1,25 @@
 import { supabase } from './supabase';
-import { CostingInputs, CostingResults, SavedCosting, TradeRoute } from '../types/costing';
+import { FoodCostingInputs, FoodCostingResult, SavedCosting } from '../types/costing';
 
 export async function saveCostingCalculation(
   userId: string,
   name: string,
-  tradeRoute: TradeRoute,
-  inputs: CostingInputs,
-  results: CostingResults,
+  inputs: FoodCostingInputs,
+  results: FoodCostingResult,
   existingId?: string
 ): Promise<SavedCosting | null> {
+  const payload = {
+    name,
+    trade_route: 'food-import',
+    inputs,
+    results,
+    updated_at: new Date().toISOString(),
+  };
+
   if (existingId) {
     const { data, error } = await supabase
       .from('costing_calculations')
-      .update({ name, trade_route: tradeRoute, inputs, results, updated_at: new Date().toISOString() })
+      .update(payload)
       .eq('id', existingId)
       .select()
       .maybeSingle();
@@ -22,7 +29,7 @@ export async function saveCostingCalculation(
 
   const { data, error } = await supabase
     .from('costing_calculations')
-    .insert({ user_id: userId, name, trade_route: tradeRoute, inputs, results })
+    .insert({ user_id: userId, ...payload })
     .select()
     .maybeSingle();
   if (error) throw error;

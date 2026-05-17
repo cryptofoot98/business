@@ -13,27 +13,20 @@ interface Props {
 
 type Box = { x: number; y: number; z: number; l: number; w: number; h: number; productId: string };
 
-const BOX_SHRINK = 0.988;
+const BOX_SHRINK = 0.984;
 
-// ── Product boxes using InstancedMesh (one draw call per product) ─────────────
+// ── Cardboard boxes via InstancedMesh ─────────────────────────────────────────
 function ProductInstances({
-  allBoxes,
-  visibleBoxes,
-  hexColor,
-  containerL,
-  containerW,
+  allBoxes, visibleBoxes, hexColor, containerL, containerW,
 }: {
-  allBoxes: Box[];
-  visibleBoxes: Box[];
-  hexColor: string;
-  containerL: number;
-  containerW: number;
+  allBoxes: Box[]; visibleBoxes: Box[];
+  hexColor: string; containerL: number; containerW: number;
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
 
   const geo = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
   const mat = useMemo(
-    () => new THREE.MeshStandardMaterial({ roughness: 0.62, metalness: 0.04 }),
+    () => new THREE.MeshStandardMaterial({ roughness: 0.82, metalness: 0.0 }),
     [],
   );
 
@@ -48,8 +41,6 @@ function ProductInstances({
     const s = new THREE.Vector3();
 
     visibleBoxes.forEach((box, i) => {
-      // Map packing coords → Three.js (Y = up)
-      // Packing: x=length, y=width, z=height
       p.set(
         box.x + box.l / 2 - containerL / 2,
         box.z + box.h / 2,
@@ -59,9 +50,10 @@ function ProductInstances({
       m.compose(p, q, s);
       mesh.setMatrixAt(i, m);
 
-      // Depth shading: boxes deeper in container appear darker
-      const t = Math.min(box.y / Math.max(containerW, 1), 1);
-      mesh.setColorAt(i, base.clone().multiplyScalar(1 - 0.3 * t));
+      // Depth shading + slight top-face brightness variation
+      const depth = Math.min(box.y / Math.max(containerW, 1), 1);
+      const brightness = 1 - 0.38 * depth;
+      mesh.setColorAt(i, base.clone().multiplyScalar(brightness));
     });
 
     mesh.count = visibleBoxes.length;
@@ -71,98 +63,166 @@ function ProductInstances({
 
   if (allBoxes.length === 0) return null;
 
-  return <instancedMesh ref={meshRef} args={[geo, mat, allBoxes.length]} />;
+  return (
+    <instancedMesh
+      ref={meshRef}
+      args={[geo, mat, allBoxes.length]}
+      castShadow
+      receiveShadow
+    />
+  );
 }
 
-// ── Container shell (wireframe + floor + transparent walls) ──────────────────
+// ── Realistic container shell ─────────────────────────────────────────────────
 function ContainerShell({ L, H, W }: { L: number; H: number; W: number }) {
-  const edges = useMemo(
-    () => new THREE.EdgesGeometry(new THREE.BoxGeometry(L, H, W)),
-    [L, H, W],
-  );
+  const WALL_T = 2;   // wall thickness cm
+  const FLOOR_T = 4;  // floor thickness
 
-  // Corrugation ribs along the length
+  // Corrugation ribs — vertical on side walls & ceiling
   const ribsGeo = useMemo(() => {
     const pts: number[] = [];
-    const ribCount = Math.max(5, Math.floor(L / 55));
-    for (let i = 1; i < ribCount; i++) {
+    const ribSpacing = 44; // ~44cm between ribs (realistic for ISO container)
+    const ribCount = Math.max(4, Math.round(L / ribSpacing));
+    for (let i = 0; i <= ribCount; i++) {
       const rx = -L / 2 + (L / ribCount) * i;
-      // Left wall rib
-      pts.push(rx, -H / 2, -W / 2, rx, H / 2, -W / 2);
-      // Right wall rib
-      pts.push(rx, -H / 2, W / 2, rx, H / 2, W / 2);
-      // Ceiling rib
-      pts.push(rx, H / 2, -W / 2, rx, H / 2, W / 2);
+      // Left wall
+      pts.push(rx, 0, -W / 2, rx, H, -W / 2);
+      // Right wall
+      pts.push(rx, 0, W / 2, rx, H, W / 2);
+      // Ceiling
+      pts.push(rx, H, -W / 2, rx, H, W / 2);
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
     return geo;
   }, [L, H, W]);
 
+  // Floor planks — horizontal lines along Z for wood plank look
+  const planksGeo = useMemo(() => {
+    const pts: number[] = [];
+    const plankCount = Math.max(3, Math.round(W / 20));
+    for (let i = 0; i <= plankCount; i++) {
+      const rz = -W / 2 + (W / plankCount) * i;
+      pts.push(-L / 2, FLOOR_T / 2, rz, L / 2, FLOOR_T / 2, rz);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    return geo;
+  }, [L, W]);
+
+  // Main structural frame edges
+  const frameGeo = useMemo(() => {
+    const pts: number[] = [
+      // Bottom rectangle
+      -L/2,0,-W/2, L/2,0,-W/2,
+      -L/2,0, W/2, L/2,0, W/2,
+      -L/2,0,-W/2,-L/2,0, W/2,
+       L/2,0,-W/2, L/2,0, W/2,
+      // Top rectangle
+      -L/2,H,-W/2, L/2,H,-W/2,
+      -L/2,H, W/2, L/2,H, W/2,
+      -L/2,H,-W/2,-L/2,H, W/2,
+       L/2,H,-W/2, L/2,H, W/2,
+      // Vertical corner posts
+      -L/2,0,-W/2,-L/2,H,-W/2,
+      -L/2,0, W/2,-L/2,H, W/2,
+       L/2,0,-W/2, L/2,H,-W/2,
+       L/2,0, W/2, L/2,H, W/2,
+    ];
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    return geo;
+  }, [L, H, W]);
+
   return (
-    <group position={[0, H / 2, 0]}>
-      {/* Outer shell — very transparent, seen from outside */}
-      <mesh>
-        <boxGeometry args={[L, H, W]} />
-        <meshStandardMaterial
-          color="#f0fdf4"
-          opacity={0.055}
-          transparent
-          side={THREE.BackSide}
-          depthWrite={false}
-        />
+    <group>
+      {/* Left wall */}
+      <mesh position={[0, H / 2, -W / 2 + WALL_T / 2]} receiveShadow>
+        <boxGeometry args={[L, H, WALL_T]} />
+        <meshStandardMaterial color="#6b8fa8" roughness={0.55} metalness={0.4} side={THREE.FrontSide} />
       </mesh>
 
-      {/* Floor */}
-      <mesh position={[0, -H / 2 + 0.5, 0]}>
-        <boxGeometry args={[L - 1, 1, W - 1]} />
-        <meshStandardMaterial color="#d1fae5" roughness={0.9} metalness={0.01} />
+      {/* Right wall */}
+      <mesh position={[0, H / 2, W / 2 - WALL_T / 2]} receiveShadow>
+        <boxGeometry args={[L, H, WALL_T]} />
+        <meshStandardMaterial color="#6b8fa8" roughness={0.55} metalness={0.4} side={THREE.FrontSide} />
       </mesh>
 
-      {/* Main wireframe edges */}
-      <lineSegments geometry={edges}>
-        <lineBasicMaterial color="#15803d" opacity={0.75} transparent />
+      {/* Back wall */}
+      <mesh position={[L / 2 - WALL_T / 2, H / 2, 0]} receiveShadow>
+        <boxGeometry args={[WALL_T, H, W]} />
+        <meshStandardMaterial color="#5e7e96" roughness={0.6} metalness={0.35} />
+      </mesh>
+
+      {/* Ceiling */}
+      <mesh position={[0, H - WALL_T / 2, 0]} receiveShadow>
+        <boxGeometry args={[L, WALL_T, W]} />
+        <meshStandardMaterial color="#6b8fa8" roughness={0.55} metalness={0.4} side={THREE.FrontSide} />
+      </mesh>
+
+      {/* Wooden floor */}
+      <mesh position={[0, FLOOR_T / 2, 0]} receiveShadow>
+        <boxGeometry args={[L - 1, FLOOR_T, W - 1]} />
+        <meshStandardMaterial color="#7a5822" roughness={0.88} metalness={0.01} />
+      </mesh>
+
+      {/* Floor plank lines */}
+      <lineSegments geometry={planksGeo}>
+        <lineBasicMaterial color="#5c3d10" opacity={0.35} transparent />
       </lineSegments>
 
-      {/* Corrugation ribs */}
+      {/* Corrugation detail */}
       <lineSegments geometry={ribsGeo}>
-        <lineBasicMaterial color="#16a34a" opacity={0.18} transparent />
+        <lineBasicMaterial color="#4a6e85" opacity={0.55} transparent />
+      </lineSegments>
+
+      {/* Structural frame */}
+      <lineSegments geometry={frameGeo}>
+        <lineBasicMaterial color="#2c3e4f" opacity={0.9} transparent />
       </lineSegments>
     </group>
   );
 }
 
-// ── Reefer clearance zone (transparent red slab at top) ──────────────────────
-function ReeferZone({ L, H, W, topClear }: { L: number; H: number; W: number; topClear: number }) {
-  if (topClear <= 0) return null;
+// ── Shadow-receiving ground plane ─────────────────────────────────────────────
+function Ground({ L, W }: { L: number; W: number }) {
+  const size = Math.max(L, W) * 2.5;
   return (
-    <mesh position={[0, H - topClear / 2, 0]}>
-      <boxGeometry args={[L - 2, topClear, W - 2]} />
-      <meshStandardMaterial color="#ef4444" opacity={0.08} transparent depthWrite={false} />
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
+      <planeGeometry args={[size, size]} />
+      <meshStandardMaterial color="#2a3340" roughness={1} metalness={0} />
     </mesh>
   );
 }
 
-// ── Camera init helper (runs once inside Canvas) ──────────────────────────────
-function CameraInit({ L, H, W }: { L: number; H: number; W: number }) {
+// ── Reefer clearance zone ─────────────────────────────────────────────────────
+function ReeferZone({ L, H, W, topClear }: { L: number; H: number; W: number; topClear: number }) {
+  if (topClear <= 0) return null;
+  return (
+    <mesh position={[0, H - topClear / 2, 0]}>
+      <boxGeometry args={[L - 4, topClear, W - 4]} />
+      <meshStandardMaterial color="#ef4444" opacity={0.1} transparent depthWrite={false} />
+    </mesh>
+  );
+}
+
+// ── Camera setup ──────────────────────────────────────────────────────────────
+function CameraSetup({ L, H, W }: { L: number; H: number; W: number }) {
   const { camera } = useThree();
   useEffect(() => {
-    camera.lookAt(0, H / 2, 0);
-  }, [camera, H]);
-  void L; void W;
+    // Position camera at front-left corner, elevated — looking into the container
+    camera.position.set(-L * 0.42, H * 1.55, W * 3.2);
+    camera.lookAt(L * 0.1, H * 0.38, 0);
+    camera.updateProjectionMatrix();
+  }, [camera, L, H, W]);
   return null;
 }
 
 // ── Main scene ────────────────────────────────────────────────────────────────
-function Scene({
-  result,
-  productColors,
-  depthPct,
-}: Omit<Props, 'cameraKey'>) {
+function Scene({ result, productColors, depthPct }: Omit<Props, 'cameraKey'>) {
   const { innerLength: L, innerWidth: W, innerHeight: H } = result.container;
   const depthLimit = depthPct < 100 ? (depthPct / 100) * W : Infinity;
 
-  // All boxes per product (controls InstancedMesh buffer size)
   const allByProduct = useMemo(() => {
     const g: Record<string, Box[]> = {};
     for (const b of result.packedBoxes) {
@@ -172,7 +232,6 @@ function Scene({
     return g;
   }, [result.packedBoxes]);
 
-  // Depth-filtered subset per product
   const visibleByProduct = useMemo(() => {
     const g: Record<string, Box[]> = {};
     for (const b of result.packedBoxes) {
@@ -187,13 +246,41 @@ function Scene({
 
   return (
     <>
-      {/* 3-point lighting for natural depth */}
-      <ambientLight intensity={0.48} />
-      <directionalLight position={[L * 0.7, H * 2.5, W * 1.3]} intensity={1.15} />
-      <directionalLight position={[-L * 0.5, H * 0.8, -W * 0.8]} intensity={0.38} color="#bbf7d0" />
-      <directionalLight position={[L * 0.2, H * 0.3, W * 0.5]} intensity={0.18} />
+      {/* Sky/ground ambient */}
+      <hemisphereLight args={['#c8dff0', '#2a3520', 0.55]} />
 
-      <CameraInit L={L} H={H} W={W} />
+      {/* Key light (sun) — front-right above, casts shadows */}
+      <directionalLight
+        position={[L * 0.6, H * 3.5, W * 2.5]}
+        intensity={1.4}
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-near={10}
+        shadow-camera-far={L * 6}
+        shadow-camera-left={-L * 1.2}
+        shadow-camera-right={L * 1.2}
+        shadow-camera-top={H * 4}
+        shadow-camera-bottom={-H}
+        shadow-bias={-0.001}
+      />
+
+      {/* Fill light — left side, soft blue-green tint */}
+      <directionalLight
+        position={[-L * 0.6, H * 1.2, -W]}
+        intensity={0.42}
+        color="#a8c8e0"
+      />
+
+      {/* Rim/back light — lifts the back of the container */}
+      <directionalLight
+        position={[L * 0.8, H * 0.5, -W * 0.8]}
+        intensity={0.22}
+        color="#d0e8d0"
+      />
+
+      <CameraSetup L={L} H={H} W={W} />
+      <Ground L={L} W={W} />
       <ContainerShell L={L} H={H} W={W} />
       {topClear > 0 && <ReeferZone L={L} H={H} W={W} topClear={topClear} />}
 
@@ -205,7 +292,7 @@ function Scene({
             key={`${pr.product.id}-${all.length}`}
             allBoxes={all}
             visibleBoxes={visible}
-            hexColor={productColors[i] ?? '#16a34a'}
+            hexColor={productColors[i] ?? '#4a9e6b'}
             containerL={L}
             containerW={W}
           />
@@ -223,22 +310,24 @@ export function ContainerView3D({ result, productColors, depthPct, cameraKey }: 
   return (
     <Canvas
       key={`${result.container.id}-${cameraKey}`}
-      gl={{ antialias: true, alpha: false }}
+      shadows="soft"
+      gl={{ antialias: true, alpha: false, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
       camera={{
-        position: [L * 0.55, H * 1.3, maxDim * 1.65],
-        fov: 45,
+        position: [-L * 0.42, H * 1.55, W * 3.2],
+        fov: 42,
         near: 1,
-        far: maxDim * 14,
+        far: maxDim * 16,
       }}
-      style={{ background: '#eef7ee' }}
+      style={{ background: '#1c2535' }}
     >
       <OrbitControls
-        target={[0, H / 2, 0]}
-        minDistance={maxDim * 0.18}
-        maxDistance={maxDim * 5.5}
+        target={[L * 0.1, H * 0.38, 0]}
+        minDistance={maxDim * 0.15}
+        maxDistance={maxDim * 6}
         enablePan
         enableDamping
-        dampingFactor={0.08}
+        dampingFactor={0.07}
+        maxPolarAngle={Math.PI * 0.88}
       />
       <Scene result={result} productColors={productColors} depthPct={depthPct} />
     </Canvas>

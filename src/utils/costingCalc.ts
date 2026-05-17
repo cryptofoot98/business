@@ -1,161 +1,124 @@
-import { CostingInputs, CostingResults, CostingBreakdown, CustomFieldResult } from '../types/costing';
+import {
+  FoodCostingInputs, FoodCostingResult, CostingSettings,
+  NpdSharedProduct, NpdScenario, BulkSharedSettings, BulkProductRow,
+} from '../types/costing';
+import {
+  DUTY_RATES, AGENT_PORT_RATES, INSURANCE_PER_FCL_GBP,
+} from '../data/costingRates';
 
-export function computeCosting(inputs: CostingInputs): CostingResults {
-  const { product, freight, clearance, domestic, insurance } = inputs;
+export function computeFoodCosting(inputs: FoodCostingInputs, settings?: CostingSettings): FoodCostingResult {
+  const {
+    costPerTonneUSD, caseWeightKg, casesPerContainer, exchangeRateUSDGBP,
+    freightCostUSD, productCategory, clearanceType, agentPort,
+    transportCostGBP, handballing, handballingCostGBP,
+    insuranceAuto, insuranceManualGBP, addition1GBP, addition2GBP, sellingPricePerCase,
+  } = inputs;
 
-  const totalUnits = product.unitsPerContainer * product.numberOfContainers;
-  const containers = product.numberOfContainers;
+  const dutyRates = settings?.dutyRates ?? DUTY_RATES;
+  const agentRates = settings?.agentPortRates ?? AGENT_PORT_RATES;
+  const insuranceDefault = settings?.insurancePerFCL ?? INSURANCE_PER_FCL_GBP;
 
-  const toGBP = (amount: number, rate: number) => amount / rate;
+  const n = Math.max(casesPerContainer, 1);
+  const ex = Math.max(exchangeRateUSDGBP, 0.001);
 
-  const productCostGBP = toGBP(product.purchasePricePerUnit * totalUnits, product.exchangeRateToGBP);
-  const packingCostGBP = toGBP(product.packingCostPerUnit * totalUnits, product.exchangeRateToGBP);
-  const inlandOriginGBP = product.inlandHaulageOrigin * containers;
-  const originForwarderGBP = freight.originForwarderFee * containers;
-  const exportCustomsGBP = freight.exportCustomsFee * containers;
+  const productCostPerCase = (costPerTonneUSD * caseWeightKg / 1000) / ex;
+  const freightPerCase = freightCostUSD / ex / n;
 
-  const oceanFreightGBP = toGBP(freight.oceanFreightUSD * containers, freight.usdToGBP);
-  const surchargesGBP =
-    (freight.enableBAF ? freight.bafSurcharge : 0) * containers +
-    (freight.enableCAF ? freight.cafSurcharge : 0) * containers +
-    (freight.enablePSS ? freight.pssSurcharge : 0) * containers +
-    freight.otherSurcharges * containers;
+  const dutyRate = dutyRates[productCategory][clearanceType];
+  let dutyPerKg: number;
+  let dutyRateLabel: string;
+  if (dutyRate.type === 'per_kg') {
+    dutyPerKg = dutyRate.rate;
+    dutyRateLabel = `£${dutyRate.rate.toFixed(3)}/kg`;
+  } else {
+    dutyPerKg = dutyRate.rate / 1000;
+    dutyRateLabel = `£${dutyRate.rate.toLocaleString()}/tonne`;
+  }
+  const dutyPerCase = dutyPerKg * caseWeightKg;
 
-  const fobValue = productCostGBP + packingCostGBP + inlandOriginGBP + originForwarderGBP + exportCustomsGBP;
-  const freightAndSurcharges = oceanFreightGBP + surchargesGBP;
+  const info = agentRates[agentPort];
+  const portClearancePerCase = (info.healthExamGBP + info.portChargesGBP) / n;
+  const transportPerCase = transportCostGBP / n;
+  const handballingPerCase = handballing ? handballingCostGBP / n : 0;
 
-  const cargoInsuranceGBP = (fobValue + freightAndSurcharges) * (insurance.cargoInsuranceRatePercent / 100);
-  const cifValueGBP = fobValue + freightAndSurcharges + cargoInsuranceGBP;
+  const insuranceTotal = insuranceAuto ? insuranceDefault : insuranceManualGBP;
+  const insurancePerCase = insuranceTotal / n;
+  const addition1PerCase = addition1GBP / n;
+  const addition2PerCase = addition2GBP / n;
 
-  const dutyableValue = cifValueGBP;
-  const customsDutyGBP = dutyableValue * (clearance.dutyRatePercent / 100);
-  const antiDumpingDutyGBP = dutyableValue * (clearance.antiDumpingDutyPercent / 100);
-  const vatBase = dutyableValue + customsDutyGBP + antiDumpingDutyGBP;
-  const vatGBP = clearance.vatRegistered ? 0 : vatBase * (clearance.vatRatePercent / 100);
-  const brokerFeeGBP = clearance.brokerFee * containers;
-  const examinationFeeGBP = clearance.examinationFee * containers;
-  const portHealthGBP = clearance.portHealthFee * containers;
-  const customsEntryGBP = clearance.customsEntryFee * containers;
+  const totalCostPerCase =
+    productCostPerCase + freightPerCase + dutyPerCase + portClearancePerCase +
+    transportPerCase + handballingPerCase + insurancePerCase +
+    addition1PerCase + addition2PerCase;
 
-  const portToWarehouseGBP = domestic.portToWarehouseHaulage * containers;
-  const devanningGBP = domestic.devannningLabour * containers;
-  const warehouseCostGBP = domestic.warehousingPerWeek * domestic.warehousWeeks * containers;
-  const labellingCostGBP = domestic.labellingPerUnit * totalUnits;
-  const deliveryCostGBP = domestic.deliveryToCustomer * containers;
-
-  const bankChargesGBP = insurance.bankCharges;
-  const financingCostGBP = (cifValueGBP * (insurance.financingRatePercent / 100) * insurance.financingDays) / 365;
-  const totalBeforeBuffer =
-    cifValueGBP + customsDutyGBP + antiDumpingDutyGBP + vatGBP +
-    brokerFeeGBP + examinationFeeGBP + portHealthGBP + customsEntryGBP +
-    portToWarehouseGBP + devanningGBP + warehouseCostGBP + labellingCostGBP +
-    deliveryCostGBP + bankChargesGBP + financingCostGBP;
-  const miscBufferGBP = totalBeforeBuffer * (insurance.miscBufferPercent / 100);
-
-  const baseBeforeCustom =
-    totalBeforeBuffer + miscBufferGBP;
-
-  const customFieldResults: CustomFieldResult[] = (inputs.customFields ?? [])
-    .filter(f => f.enabled)
-    .map(f => {
-      let raw = 0;
-      switch (f.basis) {
-        case 'flat_per_container':
-          raw = f.value * containers;
-          break;
-        case 'flat_per_unit':
-          raw = f.value * totalUnits;
-          break;
-        case 'flat_total':
-          raw = f.value;
-          break;
-        case 'percent_of_cif':
-          raw = cifValueGBP * (f.value / 100);
-          break;
-        case 'percent_of_landed':
-          raw = baseBeforeCustom * (f.value / 100);
-          break;
-        case 'percent_of_product':
-          raw = productCostGBP * (f.value / 100);
-          break;
-      }
-      return { id: f.id, name: f.name, effect: f.effect, amountGBP: raw };
-    });
-
-  const totalCustomCostsGBP = customFieldResults
-    .filter(r => r.effect === 'cost')
-    .reduce((s, r) => s + r.amountGBP, 0);
-  const totalCustomBenefitsGBP = customFieldResults
-    .filter(r => r.effect === 'benefit')
-    .reduce((s, r) => s + r.amountGBP, 0);
-  const customFieldsGBP = totalCustomCostsGBP - totalCustomBenefitsGBP;
-
-  const breakdown: CostingBreakdown = {
-    productCostGBP,
-    packingCostGBP,
-    inlandOriginGBP,
-    originForwarderGBP,
-    exportCustomsGBP,
-    oceanFreightGBP,
-    surchargesGBP,
-    cargoInsuranceGBP,
-    cifValueGBP,
-    customsDutyGBP,
-    antiDumpingDutyGBP,
-    vatGBP,
-    brokerFeeGBP,
-    examinationFeeGBP,
-    portHealthGBP,
-    customsEntryGBP,
-    portToWarehouseGBP,
-    devanningGBP,
-    warehouseCostGBP,
-    labellingCostGBP,
-    deliveryCostGBP,
-    bankChargesGBP,
-    financingCostGBP,
-    miscBufferGBP,
-    customFieldsGBP,
-  };
-
-  const totalProductCostGBP = productCostGBP + packingCostGBP + inlandOriginGBP;
-  const totalFreightGBP = originForwarderGBP + exportCustomsGBP + oceanFreightGBP + surchargesGBP + cargoInsuranceGBP;
-  const totalClearanceGBP = customsDutyGBP + antiDumpingDutyGBP + vatGBP + brokerFeeGBP + examinationFeeGBP + portHealthGBP + customsEntryGBP;
-  const totalDomesticGBP = portToWarehouseGBP + devanningGBP + warehouseCostGBP + labellingCostGBP + deliveryCostGBP;
-  const totalInsuranceOverheadGBP = bankChargesGBP + financingCostGBP + miscBufferGBP;
-
-  const totalLandedCostGBP = totalProductCostGBP + totalFreightGBP + totalClearanceGBP + totalDomesticGBP + totalInsuranceOverheadGBP + customFieldsGBP;
-  const landedCostPerUnitGBP = totalUnits > 0 ? totalLandedCostGBP / totalUnits : 0;
-
-  const dutyAndTaxTotalGBP = customsDutyGBP + antiDumpingDutyGBP + vatGBP;
-
-  const revenueGBP = inputs.targetSellingPricePerUnit * totalUnits;
-  const grossProfitGBP = revenueGBP - totalLandedCostGBP;
-  const grossProfitPerUnitGBP = totalUnits > 0 ? grossProfitGBP / totalUnits : 0;
-  const grossMarginPercent = revenueGBP > 0 ? (grossProfitGBP / revenueGBP) * 100 : 0;
-  const breakEvenSellingPriceGBP = totalUnits > 0 ? totalLandedCostGBP / totalUnits : 0;
-  const roiPercent = totalLandedCostGBP > 0 ? (grossProfitGBP / totalLandedCostGBP) * 100 : 0;
+  const costPerKg = caseWeightKg > 0 ? totalCostPerCase / caseWeightKg : 0;
+  const gmGBPPerCase = sellingPricePerCase - totalCostPerCase;
+  const gmPercent = sellingPricePerCase > 0 ? (gmGBPPerCase / sellingPricePerCase) * 100 : 0;
 
   return {
-    breakdown,
-    totalProductCostGBP,
-    totalFreightGBP,
-    totalClearanceGBP,
-    totalDomesticGBP,
-    totalInsuranceOverheadGBP,
-    totalLandedCostGBP,
-    landedCostPerUnitGBP,
-    cifValueGBP,
-    dutyAndTaxTotalGBP,
-    revenueGBP,
-    grossProfitGBP,
-    grossProfitPerUnitGBP,
-    grossMarginPercent,
-    breakEvenSellingPriceGBP,
-    roiPercent,
-    totalUnits,
-    customFieldResults,
-    totalCustomCostsGBP,
-    totalCustomBenefitsGBP,
+    productCostPerCase, freightPerCase, dutyPerCase, portClearancePerCase,
+    transportPerCase, handballingPerCase, insurancePerCase,
+    addition1PerCase, addition2PerCase, totalCostPerCase,
+    costPerKg, gmPercent, gmGBPPerCase,
+    totalCostPerContainer: totalCostPerCase * n,
+    dutyRateLabel,
   };
+}
+
+export function computeNpdScenario(
+  product: NpdSharedProduct,
+  scenario: NpdScenario,
+  settings?: CostingSettings,
+): FoodCostingResult {
+  return computeFoodCosting({
+    productName: product.productName,
+    supplier: product.supplier,
+    costPerTonneUSD: product.costPerTonneUSD,
+    caseWeightKg: product.caseWeightKg,
+    casesPerContainer: product.casesPerContainer,
+    productCategory: product.productCategory,
+    clearanceType: product.clearanceType,
+    exchangeRateUSDGBP: scenario.exchangeRateUSDGBP,
+    freightCostUSD: scenario.freightCostUSD,
+    agentPort: scenario.agentPort,
+    transportCostGBP: scenario.transportCostGBP,
+    handballing: scenario.handballing,
+    handballingCostGBP: scenario.handballingCostGBP,
+    insuranceAuto: scenario.insuranceAuto,
+    insuranceManualGBP: scenario.insuranceManualGBP,
+    addition1Label: '',
+    addition1GBP: 0,
+    addition2Label: '',
+    addition2GBP: 0,
+    sellingPricePerCase: scenario.sellingPricePerCase,
+  }, settings);
+}
+
+export function computeBulkProduct(
+  shared: BulkSharedSettings,
+  product: BulkProductRow,
+  settings?: CostingSettings,
+): FoodCostingResult {
+  return computeFoodCosting({
+    productName: product.productName,
+    supplier: product.supplier,
+    costPerTonneUSD: product.costPerTonneUSD,
+    caseWeightKg: product.caseWeightKg,
+    casesPerContainer: product.casesPerContainer,
+    productCategory: product.productCategory,
+    clearanceType: shared.clearanceType,
+    exchangeRateUSDGBP: shared.exchangeRateUSDGBP,
+    freightCostUSD: product.freightCostUSD,
+    agentPort: shared.agentPort,
+    transportCostGBP: shared.transportCostGBP,
+    handballing: shared.handballing,
+    handballingCostGBP: shared.handballingCostGBP,
+    insuranceAuto: shared.insuranceAuto,
+    insuranceManualGBP: shared.insuranceManualGBP,
+    addition1Label: shared.addition1Label,
+    addition1GBP: shared.addition1GBP,
+    addition2Label: shared.addition2Label,
+    addition2GBP: shared.addition2GBP,
+    sellingPricePerCase: product.sellingPricePerCase,
+  }, settings);
 }
