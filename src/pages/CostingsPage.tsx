@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   Save, Trash2, FolderOpen, RotateCcw, MessageCircle, X,
-  Package, Layers, BarChart2, Settings, Loader, Send, Bot, User,
+  Package, Layers, BarChart2, Settings, Loader, Send, Sparkles, User,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { FoodCostingInputs, FoodCostingResult, SavedCosting, AgentPortKey, CostingSettings } from '../types/costing';
@@ -24,7 +24,6 @@ function loadSettings(): CostingSettings {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as CostingSettings;
-      // Merge with current defaults so new categories/agents are always included
       return {
         dutyRates: { ...DUTY_RATES, ...parsed.dutyRates },
         agentPortRates: { ...AGENT_PORT_RATES, ...parsed.agentPortRates },
@@ -84,13 +83,13 @@ function SavedPanel({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)' }}
+      style={{ background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(6px)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-md rounded-2xl overflow-hidden"
-        style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(22,163,74,0.2)', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
+        style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 24px 64px rgba(0,0,0,0.18)' }}>
         <div className="flex items-center justify-between px-5 py-4"
-          style={{ background: 'linear-gradient(135deg, #14532d, #15803d)', borderBottom: '1px solid rgba(22,163,74,0.2)' }}>
+          style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', borderBottom: '1px solid rgba(79,70,229,0.2)' }}>
           <div className="flex items-center gap-2.5">
             <FolderOpen size={14} className="text-white/80" />
             <span className="text-sm font-bold uppercase tracking-tight text-white">Saved Calculations</span>
@@ -101,28 +100,28 @@ function SavedPanel({
             <X size={16} />
           </button>
         </div>
-        <div className="p-4 max-h-96 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(22,163,74,0.2) transparent' }}>
+        <div className="p-4 max-h-96 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#e2e8f0 transparent' }}>
           {loading ? (
-            <div className="flex justify-center py-8"><Loader size={18} className="animate-spin" style={{ color: 'rgba(20,83,45,0.3)' }} /></div>
+            <div className="flex justify-center py-8"><Loader size={18} className="animate-spin" style={{ color: '#94a3b8' }} /></div>
           ) : list.length === 0 ? (
             <div className="text-center py-8">
-              <Package size={28} className="mx-auto mb-3" style={{ color: 'rgba(20,83,45,0.15)' }} />
-              <p className="font-mono text-xs uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.3)' }}>No saved calculations yet</p>
+              <Package size={28} className="mx-auto mb-3" style={{ color: '#cbd5e1' }} />
+              <p className="font-mono text-xs uppercase tracking-widest" style={{ color: '#94a3b8' }}>No saved calculations yet</p>
             </div>
           ) : (
             <div className="space-y-2">
               {list.map(s => (
                 <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                  style={{ background: 'rgba(255,255,255,0.8)', border: s.id === currentId ? '1.5px solid rgba(22,163,74,0.4)' : '1px solid rgba(22,163,74,0.12)' }}>
+                  style={{ background: '#f8fafc', border: s.id === currentId ? '1.5px solid rgba(79,70,229,0.4)' : '1px solid #e2e8f0' }}>
                   <button className="flex-1 text-left" onClick={() => { onLoad(s); onClose(); }}>
-                    <p className="font-bold text-sm" style={{ color: '#14532d' }}>{s.name}</p>
-                    <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.45)' }}>
+                    <p className="font-bold text-sm" style={{ color: '#0f172a' }}>{s.name}</p>
+                    <p className="font-mono text-[10px] mt-0.5" style={{ color: '#94a3b8' }}>
                       {s.inputs.productName || '—'} · {new Date(s.updated_at).toLocaleDateString('en-GB')}
                     </p>
                   </button>
-                  <button onClick={() => onDelete(s.id)} className="p-1.5 rounded-full" style={{ color: 'rgba(20,83,45,0.3)' }}
+                  <button onClick={() => onDelete(s.id)} className="p-1.5 rounded-full" style={{ color: '#cbd5e1' }}
                     onMouseEnter={e => (e.currentTarget.style.color = '#dc2626')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(20,83,45,0.3)')}>
+                    onMouseLeave={e => (e.currentTarget.style.color = '#cbd5e1')}>
                     <Trash2 size={12} />
                   </button>
                 </div>
@@ -135,7 +134,7 @@ function SavedPanel({
   );
 }
 
-// ── Chat panel ────────────────────────────────────────────────────────────────
+// ── Costings chat panel ───────────────────────────────────────────────────────
 
 function SimpleChatPanel({ inputs, result, onClose }: {
   inputs: FoodCostingInputs; result: FoodCostingResult; onClose: () => void;
@@ -204,46 +203,67 @@ Results: Cost/case: £${result.totalCostPerCase.toFixed(4)} | Cost/kg: £${resul
       style={{
         width: 380, maxWidth: 'calc(100vw - 2.5rem)',
         height: 'min(520px, calc(100vh - 120px))',
-        background: 'rgba(10,34,24,0.97)', backdropFilter: 'blur(24px)',
-        border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20,
-        boxShadow: '0 24px 64px rgba(0,0,0,0.4)', overflow: 'hidden',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: 20,
+        boxShadow: '-4px 0 24px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.10)',
+        overflow: 'hidden',
       }}
     >
-      <div className="shrink-0 flex items-center justify-between px-4 py-3"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)' }}>
-        <div>
-          <h4 className="font-bold text-xs uppercase tracking-widest text-white">Costings Advisor</h4>
-          <p className="font-mono text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>AI · costs · margins · duties</p>
+      {/* Header */}
+      <div className="shrink-0 flex items-center justify-between px-4 py-3.5"
+        style={{ borderBottom: '1px solid #f1f5f9' }}>
+        <div className="flex items-center gap-3">
+          <div className="relative flex items-center justify-center w-8 h-8 rounded-xl" style={{ background: '#eef2ff' }}>
+            <Sparkles size={15} style={{ color: '#4f46e5' }} />
+            <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border-2 border-white" />
+          </div>
+          <div>
+            <p className="font-semibold text-xs" style={{ color: '#0f172a' }}>Costings Advisor</p>
+            <p className="font-mono text-[9px] mt-0.5" style={{ color: '#94a3b8' }}>AI · costs · margins · duties</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
-          <span className="font-mono text-[9px] text-emerald-400">Live</span>
-        </div>
+        <button onClick={onClose} className="p-1 rounded-lg" style={{ color: '#94a3b8' }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#0f172a')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}>
+          <X size={15} />
+        </button>
       </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(22,163,74,0.2) transparent' }}>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0" style={{ scrollbarWidth: 'thin', scrollbarColor: '#e2e8f0 transparent' }}>
         {messages.length === 0 && (
-          <div className="flex items-start gap-2">
-            <div className="w-5 h-5 shrink-0 rounded-full flex items-center justify-center" style={{ background: 'rgba(22,163,74,0.3)' }}>
-              <Bot size={10} className="text-white" />
+          <div className="flex items-end gap-2">
+            <div className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center" style={{ background: '#eef2ff', border: '1px solid #e0e7ff' }}>
+              <Sparkles size={11} style={{ color: '#4f46e5' }} />
             </div>
-            <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
+            <div className="max-w-[82%] px-3 py-2 text-xs leading-relaxed" style={{
+              background: '#f8fafc', border: '1px solid #e2e8f0',
+              borderRadius: '14px 14px 14px 4px', color: '#334155',
+            }}>
               Hi {firstName || 'there'}. I can see your current costing. Ask me about margins, duty rates, route comparisons, or how to improve your landed cost.
-            </p>
+            </div>
           </div>
         )}
         {messages.map((msg, i) => {
           const isUser = msg.role === 'user';
           return (
-            <div key={i} className={`flex items-start gap-2 ${isUser ? 'flex-row-reverse' : ''}`}>
-              <div className="w-5 h-5 shrink-0 rounded-full flex items-center justify-center"
-                style={{ background: isUser ? 'rgba(255,255,255,0.15)' : 'rgba(22,163,74,0.3)' }}>
-                {isUser ? <User size={9} className="text-white" /> : <Bot size={9} className="text-white" />}
+            <div key={i} className={`flex items-end gap-2 ${isUser ? 'flex-row-reverse' : ''}`}>
+              <div className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center"
+                style={{
+                  background: isUser ? '#4f46e5' : '#eef2ff',
+                  border: isUser ? '1px solid #4338ca' : '1px solid #e0e7ff',
+                }}>
+                {isUser
+                  ? <User size={10} style={{ color: '#fff' }} />
+                  : <Sparkles size={10} style={{ color: '#4f46e5' }} />}
               </div>
-              <div className="flex-1 px-3 py-2 text-xs leading-relaxed" style={{
-                borderRadius: 12,
-                background: isUser ? 'rgba(22,163,74,0.15)' : 'rgba(255,255,255,0.07)',
-                border: isUser ? '1px solid rgba(22,163,74,0.25)' : '1px solid rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.85)',
+              <div className="max-w-[82%] px-3 py-2 text-xs leading-relaxed" style={{
+                borderRadius: isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                background: isUser ? '#4f46e5' : '#f8fafc',
+                border: isUser ? '1px solid #4338ca' : '1px solid #e2e8f0',
+                color: isUser ? '#fff' : '#334155',
+                boxShadow: isUser ? '0 2px 8px rgba(79,70,229,0.18)' : 'none',
               }}>
                 {msg.content}
               </div>
@@ -251,28 +271,34 @@ Results: Cost/case: £${result.totalCostPerCase.toFixed(4)} | Cost/kg: £${resul
           );
         })}
         {loading && (
-          <div className="flex items-start gap-2">
-            <div className="w-5 h-5 shrink-0 rounded-full flex items-center justify-center" style={{ background: 'rgba(22,163,74,0.3)' }}>
-              <Bot size={9} className="text-white" />
+          <div className="flex items-end gap-2">
+            <div className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center" style={{ background: '#eef2ff', border: '1px solid #e0e7ff' }}>
+              <Sparkles size={10} style={{ color: '#4f46e5' }} />
             </div>
-            <div className="px-3 py-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <Loader size={11} className="animate-spin" style={{ color: 'rgba(255,255,255,0.4)' }} />
+            <div className="px-3 py-2.5 rounded-2xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '14px 14px 14px 4px' }}>
+              <div className="flex gap-1.5 items-center">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: `${i * 120}ms` }} />
+                ))}
+              </div>
             </div>
           </div>
         )}
         <div ref={endRef} />
       </div>
-      <div className="shrink-0 p-3 flex gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+
+      {/* Input */}
+      <div className="shrink-0 p-3 flex gap-2" style={{ borderTop: '1px solid #f1f5f9' }}>
         <textarea
           ref={taRef} value={inputText} onChange={e => setInputText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
           placeholder="Ask about costs, margins, duties…" rows={2} disabled={loading}
           className="flex-1 px-3 py-2 text-xs font-mono focus:outline-none resize-none disabled:opacity-50"
-          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, color: '#fff' }}
+          style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, color: '#0f172a' }}
         />
         <button onClick={send} disabled={loading || !inputText.trim()}
           className="w-9 shrink-0 flex items-center justify-center rounded-xl transition-all disabled:opacity-40"
-          style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)' }}>
+          style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', boxShadow: '0 2px 8px rgba(79,70,229,0.25)' }}>
           <Send size={13} className="text-white" />
         </button>
       </div>
@@ -310,7 +336,6 @@ export function CostingsPage() {
 
   function updateSettings(s: CostingSettings) {
     setSettings(s);
-    // Merge new settings with existing ones from localStorage to preserve all keys
     const merged: CostingSettings = {
       dutyRates: { ...DUTY_RATES, ...s.dutyRates },
       agentPortRates: { ...AGENT_PORT_RATES, ...s.agentPortRates },
@@ -383,13 +408,18 @@ export function CostingsPage() {
       {/* Header */}
       <div
         className="shrink-0"
-        style={{ background: 'linear-gradient(135deg, rgba(20,83,45,0.97), rgba(15,70,34,0.95))', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(22,163,74,0.25)' }}
+        style={{
+          background: 'rgba(255,255,255,0.97)',
+          backdropFilter: 'blur(24px)',
+          borderBottom: '1px solid #e2e8f0',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+        }}
       >
         {/* Title row */}
         <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h2 className="font-black text-sm uppercase tracking-widest text-white">Food Import Costing</h2>
-            <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <h2 className="font-black text-sm uppercase tracking-widest" style={{ color: '#0f172a' }}>Food Import Costing</h2>
+            <p className="font-mono text-[10px] mt-0.5" style={{ color: '#94a3b8' }}>
               Live cost-per-case · duty lookup · route comparison
             </p>
           </div>
@@ -399,14 +429,14 @@ export function CostingsPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => { setShowSaved(true); if (!showSaved) loadList(); }}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all hover:bg-slate-50"
+                style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 100, color: '#334155', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                 <FolderOpen size={12} /> Saved
               </button>
               <button
                 onClick={handleReset}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all hover:bg-slate-50"
+                style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 100, color: '#334155', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                 <RotateCcw size={12} /> Reset
               </button>
               <input
@@ -414,12 +444,12 @@ export function CostingsPage() {
                 onKeyDown={e => e.key === 'Enter' && handleSave()}
                 placeholder="Calculation name…"
                 className="px-3 py-2 text-xs font-mono focus:outline-none w-40"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, color: '#fff' }}
+                style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, color: '#0f172a' }}
               />
               <button
                 onClick={handleSave} disabled={saving}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
-                style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 100, color: '#15803d' }}>
+                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
+                style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', borderRadius: 100, color: '#fff', boxShadow: '0 2px 8px rgba(79,70,229,0.28)' }}>
                 {saving ? <Loader size={12} className="animate-spin" /> : <Save size={12} />}
                 Save
               </button>
@@ -427,7 +457,7 @@ export function CostingsPage() {
           )}
         </div>
         {saveError && activeTab === 'main' && (
-          <p className="px-4 pb-2 font-mono text-[10px] text-red-300">{saveError}</p>
+          <p className="px-4 pb-2 font-mono text-[10px]" style={{ color: '#e11d48' }}>{saveError}</p>
         )}
 
         {/* Tab bar */}
@@ -441,9 +471,9 @@ export function CostingsPage() {
                 className="flex items-center gap-1.5 px-3.5 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all"
                 style={{
                   borderRadius: '10px 10px 0 0',
-                  background: active ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.08)',
-                  color: active ? '#15803d' : 'rgba(255,255,255,0.6)',
-                  borderBottom: active ? '2px solid #16a34a' : '2px solid transparent',
+                  background: active ? 'rgba(79,70,229,0.08)' : 'transparent',
+                  color: active ? '#4f46e5' : '#94a3b8',
+                  borderBottom: active ? '2px solid #4f46e5' : '2px solid transparent',
                 }}
               >
                 <span style={{ opacity: active ? 1 : 0.7 }}>{tab.icon}</span>
@@ -485,7 +515,11 @@ export function CostingsPage() {
         id="costings-advisor-fab"
         onClick={() => setChatOpen(o => !o)}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 flex items-center justify-center transition-transform duration-200 hover:scale-105 active:scale-95"
-        style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', borderRadius: '100%', boxShadow: '0 4px 20px rgba(22,163,74,0.45)' }}
+        style={{
+          background: 'linear-gradient(135deg, #4f46e5, #4338ca)',
+          borderRadius: '100%',
+          boxShadow: '0 4px 20px rgba(79,70,229,0.45), 0 2px 8px rgba(0,0,0,0.12)',
+        }}
         aria-label={chatOpen ? 'Close Costings Advisor' : 'Open Costings Advisor'}
       >
         {chatOpen ? <X size={22} style={{ color: '#fff' }} /> : <MessageCircle size={22} style={{ color: '#fff' }} />}

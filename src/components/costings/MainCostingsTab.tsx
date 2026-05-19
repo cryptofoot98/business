@@ -14,21 +14,21 @@ function ResultsPanel({ inputs, result }: { inputs: FoodCostingInputs; result: F
   const gc = gmColor(result.gmPercent);
 
   const bars: { label: string; value: number; color: string }[] = [
-    { label: 'Product cost',  value: result.productCostPerCase,   color: '#16a34a' },
-    { label: 'Freight',       value: result.freightPerCase,        color: '#15803d' },
-    { label: 'Duty',          value: result.dutyPerCase,           color: '#ca8a04' },
+    { label: 'Product cost',  value: result.productCostPerCase,   color: '#4f46e5' },
+    { label: 'Freight',       value: result.freightPerCase,        color: '#6366f1' },
+    { label: 'Duty',          value: result.dutyPerCase,           color: '#f59e0b' },
     { label: 'Port clearance',value: result.portClearancePerCase,  color: '#0891b2' },
-    { label: 'Transport',     value: result.transportPerCase,      color: '#7c3aed' },
-    { label: 'Handballing',   value: result.handballingPerCase,    color: '#db2777' },
+    { label: 'Transport',     value: result.transportPerCase,      color: '#8b5cf6' },
+    { label: 'Handballing',   value: result.handballingPerCase,    color: '#ec4899' },
     { label: 'Insurance',     value: result.insurancePerCase,      color: '#059669' },
-    { label: inputs.addition1Label || 'Addition 1', value: result.addition1PerCase, color: '#6366f1' },
-    { label: inputs.addition2Label || 'Addition 2', value: result.addition2PerCase, color: '#8b5cf6' },
+    { label: inputs.addition1Label || 'Addition 1', value: result.addition1PerCase, color: '#14b8a6' },
+    { label: inputs.addition2Label || 'Addition 2', value: result.addition2PerCase, color: '#0d9488' },
   ].filter(b => b.value > 0);
 
   return (
     <div className="space-y-4">
       {/* Key metrics */}
-      <div style={{ background: 'linear-gradient(135deg, #14532d, #15803d)', borderRadius: 16, padding: '20px 20px 16px' }}>
+      <div style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', borderRadius: 16, padding: '20px 20px 16px' }}>
         <p className="font-mono text-[9px] uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>Cost per case</p>
         <span className="text-4xl font-black text-white">£{fmt2(result.totalCostPerCase)}</span>
         <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
@@ -49,10 +49,10 @@ function ResultsPanel({ inputs, result }: { inputs: FoodCostingInputs; result: F
 
       {/* GM card */}
       {inputs.sellingPricePerCase > 0 && (
-        <div style={{ background: 'rgba(255,255,255,0.8)', border: `1px solid ${gc}30`, borderRadius: 16, padding: '16px 20px' }}>
+        <div style={{ background: '#ffffff', border: `1px solid ${gc}30`, borderRadius: 16, padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(20,83,45,0.5)' }}>Gross Margin</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: '#94a3b8' }}>Gross Margin</p>
               <div className="flex items-center gap-2">
                 {result.gmPercent >= 0
                   ? <TrendingUp size={16} style={{ color: gc }} />
@@ -61,7 +61,7 @@ function ResultsPanel({ inputs, result }: { inputs: FoodCostingInputs; result: F
               </div>
             </div>
             <div className="text-right">
-              <p className="font-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(20,83,45,0.5)' }}>GP / case</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: '#94a3b8' }}>GP / case</p>
               <p className="font-bold text-lg" style={{ color: gc }}>
                 {result.gmGBPPerCase >= 0 ? '+' : ''}£{fmt2(result.gmGBPPerCase)}
               </p>
@@ -71,13 +71,13 @@ function ResultsPanel({ inputs, result }: { inputs: FoodCostingInputs; result: F
       )}
 
       {/* Cost breakdown */}
-      <div style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(22,163,74,0.15)', borderRadius: 16, overflow: 'hidden' }}>
-        <div className="px-4 py-3" style={{ background: 'rgba(22,163,74,0.07)', borderBottom: '1px solid rgba(22,163,74,0.12)' }}>
-          <p className="font-bold text-[10px] uppercase tracking-widest" style={{ color: '#15803d' }}>Cost breakdown / case</p>
+      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+        <div className="px-4 py-3" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+          <p className="font-bold text-[10px] uppercase tracking-widest" style={{ color: '#334155' }}>Cost breakdown / case</p>
         </div>
         <div className="p-4 space-y-2.5">
           {bars.length === 0 ? (
-            <p className="font-mono text-[10px] text-center py-4" style={{ color: 'rgba(20,83,45,0.35)' }}>Enter product details to see breakdown</p>
+            <p className="font-mono text-[10px] text-center py-4" style={{ color: '#cbd5e1' }}>Enter product details to see breakdown</p>
           ) : (
             bars.map(b => (
               <CostBar key={b.label} label={b.label} value={b.value} total={result.totalCostPerCase} color={b.color} />
@@ -97,14 +97,14 @@ function ResultsPanel({ inputs, result }: { inputs: FoodCostingInputs; result: F
               ...(result.addition1PerCase > 0 ? [{ label: inputs.addition1Label || 'Addition 1', value: result.addition1PerCase }] : []),
               ...(result.addition2PerCase > 0 ? [{ label: inputs.addition2Label || 'Addition 2', value: result.addition2PerCase }] : []),
             ].map(row => (
-              <div key={row.label} className="flex items-center justify-between py-1.5" style={{ borderBottom: '1px solid rgba(22,163,74,0.07)' }}>
-                <span className="font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.55)' }}>{row.label}</span>
-                <span className="font-mono text-[10px] font-bold" style={{ color: '#14532d' }}>£{row.value.toFixed(4)}</span>
+              <div key={row.label} className="flex items-center justify-between py-1.5" style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <span className="font-mono text-[10px]" style={{ color: '#64748b' }}>{row.label}</span>
+                <span className="font-mono text-[10px] font-bold" style={{ color: '#1e293b' }}>£{row.value.toFixed(4)}</span>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 mt-1">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wide" style={{ color: '#14532d' }}>Total cost / case</span>
-              <span className="font-mono text-sm font-black" style={{ color: '#14532d' }}>£{fmt2(result.totalCostPerCase)}</span>
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wide" style={{ color: '#334155' }}>Total cost / case</span>
+              <span className="font-mono text-sm font-black" style={{ color: '#0f172a' }}>£{fmt2(result.totalCostPerCase)}</span>
             </div>
           </div>
         )}
@@ -130,7 +130,7 @@ function RouteCompare({
 
   return (
     <div className="space-y-2">
-      <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.45)' }}>
+      <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>
         Compare all routes — enter transport (£/container) then click to select
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -144,50 +144,50 @@ function RouteCompare({
             <div
               key={key}
               style={{
-                background: isSelected ? 'linear-gradient(135deg, rgba(22,163,74,0.12), rgba(21,128,61,0.08))' : 'rgba(255,255,255,0.6)',
-                border: isSelected ? '1.5px solid rgba(22,163,74,0.45)' : '1px solid rgba(22,163,74,0.15)',
+                background: isSelected ? 'rgba(79,70,229,0.05)' : '#ffffff',
+                border: isSelected ? '1.5px solid rgba(79,70,229,0.35)' : '1px solid #e2e8f0',
                 borderRadius: 12,
                 overflow: 'hidden',
               }}
             >
-              <div className="px-3 py-2.5" style={{ borderBottom: '1px solid rgba(22,163,74,0.1)' }}>
+              <div className="px-3 py-2.5" style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-bold text-xs truncate" style={{ color: '#14532d' }}>{info.agent}</p>
-                    <p className="font-mono text-[9px] truncate" style={{ color: 'rgba(20,83,45,0.5)' }}>{info.port}</p>
+                    <p className="font-bold text-xs truncate" style={{ color: '#0f172a' }}>{info.agent}</p>
+                    <p className="font-mono text-[9px] truncate" style={{ color: '#94a3b8' }}>{info.port}</p>
                   </div>
                   {isSelected && (
                     <span className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full font-mono text-[8px] font-bold uppercase"
-                      style={{ background: 'rgba(22,163,74,0.2)', color: '#15803d', border: '1px solid rgba(22,163,74,0.3)' }}>
+                      style={{ background: 'rgba(79,70,229,0.1)', color: '#4f46e5', border: '1px solid rgba(79,70,229,0.2)' }}>
                       <Check size={8} /> Active
                     </span>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-1 mt-2 text-[9px] font-mono" style={{ color: 'rgba(20,83,45,0.45)' }}>
+                <div className="grid grid-cols-2 gap-1 mt-2 text-[9px] font-mono" style={{ color: '#94a3b8' }}>
                   <span>Health: £{info.healthExamGBP.toFixed(2)}</span>
                   <span>Port: £{info.portChargesGBP.toFixed(2)}</span>
                 </div>
               </div>
               <div className="px-3 py-2 flex items-center gap-2">
-                <span className="font-mono text-[9px] shrink-0" style={{ color: 'rgba(20,83,45,0.45)' }}>Transport £</span>
+                <span className="font-mono text-[9px] shrink-0" style={{ color: '#94a3b8' }}>Transport £</span>
                 <input
                   type="number" min={0} step={10}
                   value={routeTransports[key] ?? ''}
                   onChange={e => onTransportChange(key, parseFloat(e.target.value) || 0)}
                   className="flex-1 px-2 py-1 text-xs font-mono focus:outline-none rounded-lg min-w-0"
-                  style={{ background: 'rgba(255,255,255,0.8)', border: '1px solid rgba(22,163,74,0.2)', color: '#14532d' }}
+                  style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#0f172a' }}
                 />
               </div>
               <div className="px-3 pb-2.5 flex items-center justify-between gap-2">
                 <div>
-                  <span className="font-mono text-[9px]" style={{ color: 'rgba(20,83,45,0.45)' }}>Total / case: </span>
-                  <span className="font-mono text-xs font-black" style={{ color: '#14532d' }}>£{portResult.totalCostPerCase.toFixed(2)}</span>
+                  <span className="font-mono text-[9px]" style={{ color: '#94a3b8' }}>Total / case: </span>
+                  <span className="font-mono text-xs font-black" style={{ color: '#0f172a' }}>£{portResult.totalCostPerCase.toFixed(2)}</span>
                 </div>
                 {!isSelected && (
                   <button
                     onClick={() => onSelectRoute(key)}
                     className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide rounded-full"
-                    style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', color: '#fff' }}
+                    style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', color: '#fff' }}
                   >
                     Use
                   </button>
@@ -228,7 +228,7 @@ export function MainCostingsTab({
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] min-h-full">
 
         {/* ── Left: form ── */}
-        <div className="p-4 space-y-3 xl:overflow-y-auto" style={{ borderRight: '1px solid rgba(0,0,0,0.06)' }}>
+        <div className="p-4 space-y-3 xl:overflow-y-auto" style={{ borderRight: '1px solid #e2e8f0' }}>
 
           <Section title="Product & Rates" icon={<Package size={13} />}>
             <div className="grid grid-cols-2 gap-3">
@@ -261,11 +261,11 @@ export function MainCostingsTab({
             <Field label="Freight cost per container (USD)" note="Total ocean freight for 1 FCL">
               <NumInput value={inputs.freightCostUSD} onChange={v => onSet('freightCostUSD', v)} prefix="$" placeholder="3500.00" />
             </Field>
-            <div className="p-3 rounded-xl" style={{ background: 'rgba(22,163,74,0.05)', border: '1px solid rgba(22,163,74,0.12)' }}>
-              <p className="font-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: 'rgba(20,83,45,0.45)' }}>
+            <div className="p-3 rounded-xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <p className="font-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: '#94a3b8' }}>
                 Using rate: $1 = £{(1 / inputs.exchangeRateUSDGBP).toFixed(4)}
               </p>
-              <p className="font-mono text-[10px] font-bold" style={{ color: '#14532d' }}>
+              <p className="font-mono text-[10px] font-bold" style={{ color: '#1e293b' }}>
                 Freight per case: £{inputs.casesPerContainer > 0 && inputs.freightCostUSD > 0
                   ? (inputs.freightCostUSD / inputs.exchangeRateUSDGBP / inputs.casesPerContainer).toFixed(4)
                   : '—'}
@@ -288,11 +288,11 @@ export function MainCostingsTab({
                 />
               </Field>
             </div>
-            <div className="p-3 rounded-xl" style={{ background: 'rgba(22,163,74,0.05)', border: '1px solid rgba(22,163,74,0.12)' }}>
-              <p className="font-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: 'rgba(20,83,45,0.45)' }}>Applicable duty rate</p>
-              <p className="font-mono text-sm font-black" style={{ color: '#14532d' }}>{result.dutyRateLabel}</p>
+            <div className="p-3 rounded-xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <p className="font-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: '#94a3b8' }}>Applicable duty rate</p>
+              <p className="font-mono text-sm font-black" style={{ color: '#0f172a' }}>{result.dutyRateLabel}</p>
               {inputs.caseWeightKg > 0 && (
-                <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.5)' }}>
+                <p className="font-mono text-[10px] mt-0.5" style={{ color: '#64748b' }}>
                   = £{result.dutyPerCase.toFixed(4)}/case at {inputs.caseWeightKg}kg/case
                 </p>
               )}
@@ -320,27 +320,27 @@ export function MainCostingsTab({
             {(() => {
               const info = agentRates[inputs.agentPort];
               return (
-                <div className="p-3 rounded-xl" style={{ background: 'rgba(22,163,74,0.05)', border: '1px solid rgba(22,163,74,0.12)' }}>
+                <div className="p-3 rounded-xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                   <div className="grid grid-cols-3 gap-2">
                     <div>
-                      <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.45)' }}>Health exam</p>
-                      <p className="font-mono text-xs font-bold mt-0.5" style={{ color: '#14532d' }}>£{info.healthExamGBP.toFixed(2)}</p>
+                      <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>Health exam</p>
+                      <p className="font-mono text-xs font-bold mt-0.5" style={{ color: '#1e293b' }}>£{info.healthExamGBP.toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.45)' }}>Port charges</p>
-                      <p className="font-mono text-xs font-bold mt-0.5" style={{ color: '#14532d' }}>£{info.portChargesGBP.toFixed(2)}</p>
+                      <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>Port charges</p>
+                      <p className="font-mono text-xs font-bold mt-0.5" style={{ color: '#1e293b' }}>£{info.portChargesGBP.toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.45)' }}>Total</p>
-                      <p className="font-mono text-xs font-bold mt-0.5" style={{ color: '#14532d' }}>£{(info.healthExamGBP + info.portChargesGBP).toFixed(2)}</p>
+                      <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>Total</p>
+                      <p className="font-mono text-xs font-bold mt-0.5" style={{ color: '#1e293b' }}>£{(info.healthExamGBP + info.portChargesGBP).toFixed(2)}</p>
                     </div>
                   </div>
                 </div>
               );
             })()}
 
-            <div style={{ background: 'rgba(22,163,74,0.04)', border: '1px solid rgba(22,163,74,0.12)', borderRadius: 12, padding: '12px' }}>
-              <p className="font-bold text-[10px] uppercase tracking-widest mb-2.5" style={{ color: '#15803d' }}>Compare all routes</p>
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px' }}>
+              <p className="font-bold text-[10px] uppercase tracking-widest mb-2.5" style={{ color: '#334155' }}>Compare all routes</p>
               <RouteCompare
                 inputs={inputs} routeTransports={routeTransports} settings={settings}
                 onSelectRoute={onSelectRoute} onTransportChange={onRouteTransportChange}
@@ -349,11 +349,11 @@ export function MainCostingsTab({
           </Section>
 
           <Section title="Optional Costs" icon={<Shield size={13} />} defaultOpen={false}>
-            <div className="p-3 rounded-xl space-y-2" style={{ background: 'rgba(22,163,74,0.04)', border: '1px solid rgba(22,163,74,0.12)' }}>
+            <div className="p-3 rounded-xl space-y-2" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
               <label className="flex items-center gap-2.5 cursor-pointer">
                 <input type="checkbox" checked={inputs.handballing} onChange={e => onSet('handballing', e.target.checked)}
-                  className="w-3.5 h-3.5" style={{ accentColor: '#16a34a' }} />
-                <span className="font-mono text-xs font-bold" style={{ color: '#14532d' }}>Handballing (manual unloading)</span>
+                  className="w-3.5 h-3.5" style={{ accentColor: '#4f46e5' }} />
+                <span className="font-mono text-xs font-bold" style={{ color: '#334155' }}>Handballing (manual unloading)</span>
               </label>
               {inputs.handballing && (
                 <Field label="Handballing cost (£/container)">
@@ -362,12 +362,12 @@ export function MainCostingsTab({
               )}
             </div>
 
-            <div className="p-3 rounded-xl space-y-2" style={{ background: 'rgba(22,163,74,0.04)', border: '1px solid rgba(22,163,74,0.12)' }}>
-              <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.45)' }}>Insurance</p>
+            <div className="p-3 rounded-xl space-y-2" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>Insurance</p>
               <label className="flex items-center gap-2.5 cursor-pointer">
                 <input type="checkbox" checked={inputs.insuranceAuto} onChange={e => onSet('insuranceAuto', e.target.checked)}
-                  className="w-3.5 h-3.5" style={{ accentColor: '#16a34a' }} />
-                <span className="font-mono text-xs" style={{ color: '#14532d' }}>
+                  className="w-3.5 h-3.5" style={{ accentColor: '#4f46e5' }} />
+                <span className="font-mono text-xs" style={{ color: '#334155' }}>
                   Auto: £{insuranceDefault}/FCL flat rate
                 </span>
               </label>
@@ -406,9 +406,9 @@ export function MainCostingsTab({
                   { label: 'Margin',      value: `${result.gmPercent.toFixed(1)}%` },
                 ].map(cell => (
                   <div key={cell.label} className="p-2.5 text-center rounded-xl"
-                    style={{ background: 'rgba(22,163,74,0.06)', border: '1px solid rgba(22,163,74,0.12)' }}>
-                    <p className="font-mono text-[9px] uppercase tracking-wider" style={{ color: 'rgba(20,83,45,0.45)' }}>{cell.label}</p>
-                    <p className="font-mono font-black text-sm mt-1" style={{ color: result.gmPercent >= 0 ? '#14532d' : '#dc2626' }}>{cell.value}</p>
+                    style={{ background: 'rgba(79,70,229,0.05)', border: '1px solid rgba(79,70,229,0.12)' }}>
+                    <p className="font-mono text-[9px] uppercase tracking-wider" style={{ color: '#94a3b8' }}>{cell.label}</p>
+                    <p className="font-mono font-black text-sm mt-1" style={{ color: result.gmPercent >= 0 ? '#0f172a' : '#dc2626' }}>{cell.value}</p>
                   </div>
                 ))}
               </div>
@@ -417,7 +417,7 @@ export function MainCostingsTab({
         </div>
 
         {/* ── Right: results ── */}
-        <div className="p-4 xl:overflow-y-auto" style={{ background: 'rgba(240,249,240,0.4)' }}>
+        <div className="p-4 xl:overflow-y-auto" style={{ background: 'rgba(238,242,255,0.25)' }}>
           <div className="xl:sticky xl:top-4">
             <ResultsPanel inputs={inputs} result={result} />
           </div>
