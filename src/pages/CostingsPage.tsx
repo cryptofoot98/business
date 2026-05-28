@@ -1,14 +1,20 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
-  Save, Trash2, FolderOpen, RotateCcw, MessageCircle, X,
-  Package, Layers, BarChart2, Settings, Loader, Send, Bot, User,
+  Save, Trash2, FolderOpen, RotateCcw,
+  Package, Layers, BarChart2, Settings, Loader, X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { FoodCostingInputs, FoodCostingResult, SavedCosting, AgentPortKey, CostingSettings } from '../types/costing';
 import {
-  AGENT_PORT_RATES, INSURANCE_PER_FCL_GBP, DEFAULT_TRANSPORT_COSTS, DUTY_RATES,
+  CostingSettings,
+  CostingModelProduct, CostingModelContainer, CostingScenario, ScenarioSummary,
+  CostingModelPayload, CostingModelResults, SavedCosting,
+  isCostingModelPayload,
+} from '../types/costing';
+import {
+  AGENT_PORT_RATES, INSURANCE_PER_FCL_GBP, DUTY_RATES,
+  DEFAULT_LICENCE_COST_PER_KG, DEFAULT_TRANSPORT_COSTS,
 } from '../data/costingRates';
-import { computeFoodCosting } from '../utils/costingCalc';
+import { computeCostingModelScenario } from '../utils/costingCalc';
 import { saveCostingCalculation, fetchCostingCalculations, deleteCostingCalculation } from '../lib/costings';
 import { MainCostingsTab } from '../components/costings/MainCostingsTab';
 import { NpdCostingsTab } from '../components/costings/NpdCostingsTab';
@@ -24,7 +30,6 @@ function loadSettings(): CostingSettings {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as CostingSettings;
-      // Merge with current defaults so new categories/agents are always included
       return {
         dutyRates: { ...DUTY_RATES, ...parsed.dutyRates },
         agentPortRates: { ...AGENT_PORT_RATES, ...parsed.agentPortRates },
@@ -35,39 +40,51 @@ function loadSettings(): CostingSettings {
   return { dutyRates: DUTY_RATES, agentPortRates: AGENT_PORT_RATES, insurancePerFCL: INSURANCE_PER_FCL_GBP };
 }
 
-// ── Default main-tab state ────────────────────────────────────────────────────
+// ── Defaults ──────────────────────────────────────────────────────────────────
 
-const DEFAULT_ROUTE_TRANSPORTS = { ...DEFAULT_TRANSPORT_COSTS };
-
-const DEFAULT_INPUTS: FoodCostingInputs = {
-  productName: '',
-  supplier: '',
-  costPerTonneUSD: 0,
-  caseWeightKg: 0,
-  casesPerContainer: 0,
-  exchangeRateUSDGBP: 1.27,
-  freightCostUSD: 0,
+const DEFAULT_PRODUCT: CostingModelProduct = {
+  productCode: '',
+  description: '',
   productCategory: 'meat_lt57',
+  bagsPerCase: 0,
+  caseWeightKg: 0,
+  supplier: '',
+  priceUSDPerTonne: 0,
+};
+
+const DEFAULT_CONTAINER: CostingModelContainer = {
   clearanceType: 'licence',
-  agentPort: 'ewl_london_gateway',
-  transportCostGBP: DEFAULT_ROUTE_TRANSPORTS.ewl_london_gateway,
-  handballing: false,
-  handballingCostGBP: 300,
+  retail: false,
+  handball: false,
+  containerWeightKg: 0,
   insuranceAuto: true,
   insuranceManualGBP: 0,
-  addition1Label: 'Addition 1',
-  addition1GBP: 0,
-  addition2Label: 'Addition 2',
-  addition2GBP: 0,
-  sellingPricePerCase: 0,
 };
+
+function makeDefaultScenario(i: number): CostingScenario {
+  return {
+    label: `Scenario ${i + 1}`,
+    salesCurrency: 'GBP',
+    eurGbpRate: 1.16,
+    salesPricePerCase: 0,
+    exchangeRateUSDGBP: 1.27,
+    casesPerContainer: 0,
+    incoterms: 'FOB',
+    freightCostUSD: 0,
+    agentPort: 'ewl_london_gateway',
+    transportCostGBP: DEFAULT_TRANSPORT_COSTS.ewl_london_gateway,
+    licenceCostPerKgGBP: DEFAULT_LICENCE_COST_PER_KG,
+  };
+}
+
+const DEFAULT_SCENARIOS: CostingScenario[] = Array.from({ length: 5 }, (_, i) => makeDefaultScenario(i));
 
 // ── Tab definition ────────────────────────────────────────────────────────────
 
 type Tab = 'main' | 'npd' | 'bulk' | 'settings';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: 'main',     label: 'Main Costings',  icon: <Package size={12} /> },
+  { id: 'main',     label: 'Costing Model',  icon: <Package size={12} /> },
   { id: 'npd',      label: 'NPD Costings',   icon: <BarChart2 size={12} /> },
   { id: 'bulk',     label: 'Bulk Costings',  icon: <Layers size={12} /> },
   { id: 'settings', label: 'Workings',       icon: <Settings size={12} /> },
@@ -111,170 +128,32 @@ function SavedPanel({
             </div>
           ) : (
             <div className="space-y-2">
-              {list.map(s => (
-                <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                  style={{ background: 'rgba(255,255,255,0.8)', border: s.id === currentId ? '1.5px solid rgba(22,163,74,0.4)' : '1px solid rgba(22,163,74,0.12)' }}>
-                  <button className="flex-1 text-left" onClick={() => { onLoad(s); onClose(); }}>
-                    <p className="font-bold text-sm" style={{ color: '#14532d' }}>{s.name}</p>
-                    <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.45)' }}>
-                      {s.inputs.productName || '—'} · {new Date(s.updated_at).toLocaleDateString('en-GB')}
-                    </p>
-                  </button>
-                  <button onClick={() => onDelete(s.id)} className="p-1.5 rounded-full" style={{ color: 'rgba(20,83,45,0.3)' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = '#dc2626')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'rgba(20,83,45,0.3)')}>
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              ))}
+              {list.map(s => {
+                const isV2 = isCostingModelPayload(s.inputs);
+                const subtitle = isV2
+                  ? `${s.inputs.product.productCode || s.inputs.product.description || '—'} · ${s.inputs.scenarios.length} scenarios`
+                  : `${s.inputs.productName || '—'}`;
+                return (
+                  <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                    style={{ background: 'rgba(255,255,255,0.8)', border: s.id === currentId ? '1.5px solid rgba(22,163,74,0.4)' : '1px solid rgba(22,163,74,0.12)' }}>
+                    <button className="flex-1 text-left" onClick={() => { onLoad(s); onClose(); }}>
+                      <p className="font-bold text-sm" style={{ color: '#14532d' }}>{s.name}</p>
+                      <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.45)' }}>
+                        {subtitle} · {new Date(s.updated_at).toLocaleDateString('en-GB')}
+                        {!isV2 && <span className="ml-1.5 px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(202,138,4,0.15)', color: '#92400e' }}>legacy</span>}
+                      </p>
+                    </button>
+                    <button onClick={() => onDelete(s.id)} className="p-1.5 rounded-full" style={{ color: 'rgba(20,83,45,0.3)' }}
+                      onMouseEnter={e => (e.currentTarget.style.color = '#dc2626')}
+                      onMouseLeave={e => (e.currentTarget.style.color = 'rgba(20,83,45,0.3)')}>
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Chat panel ────────────────────────────────────────────────────────────────
-
-function SimpleChatPanel({ inputs, result, onClose }: {
-  inputs: FoodCostingInputs; result: FoodCostingResult; onClose: () => void;
-}) {
-  const { session, profile } = useAuth();
-  const firstName = profile?.full_name?.split(' ')[0] ?? '';
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
-  const [inputText, setInputText] = useState('');
-  const [loading, setLoading] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const taRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
-
-  useEffect(() => {
-    function outside(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        const fab = document.getElementById('costings-advisor-fab');
-        if (fab?.contains(e.target as Node)) return;
-        onClose();
-      }
-    }
-    document.addEventListener('mousedown', outside);
-    return () => document.removeEventListener('mousedown', outside);
-  }, [onClose]);
-
-  async function send() {
-    const content = inputText.trim();
-    if (!content || loading) return;
-    const next = [...messages, { role: 'user' as const, content }];
-    setMessages(next);
-    setInputText('');
-    setLoading(true);
-    try {
-      const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const ctx = `Current food import costing:
-Product: ${inputs.productName} (${inputs.supplier})
-Cost/tonne: $${inputs.costPerTonneUSD} | Case weight: ${inputs.caseWeightKg}kg | Cases/container: ${inputs.casesPerContainer}
-Exchange rate: $${inputs.exchangeRateUSDGBP}/£ | Freight: $${inputs.freightCostUSD}/FCL
-Category: ${inputs.productCategory} | Clearance: ${inputs.clearanceType}
-Route: ${AGENT_PORT_RATES[inputs.agentPort]?.label} | Transport: £${inputs.transportCostGBP}/FCL
-Results: Cost/case: £${result.totalCostPerCase.toFixed(4)} | Cost/kg: £${result.costPerKg.toFixed(4)} | GM: ${result.gmPercent.toFixed(1)}%`;
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/costing-chat`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ messages: next.map(m => ({ role: m.role, content: m.content })), context: ctx }),
-        }
-      );
-      const data = await resp.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.message ?? 'I could not get a response.' }]);
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' }]);
-    } finally {
-      setLoading(false);
-      setTimeout(() => taRef.current?.focus(), 50);
-    }
-  }
-
-  return (
-    <div
-      ref={panelRef}
-      className="fixed bottom-20 right-5 z-40 flex flex-col"
-      style={{
-        width: 380, maxWidth: 'calc(100vw - 2.5rem)',
-        height: 'min(520px, calc(100vh - 120px))',
-        background: 'rgba(10,34,24,0.97)', backdropFilter: 'blur(24px)',
-        border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20,
-        boxShadow: '0 24px 64px rgba(0,0,0,0.4)', overflow: 'hidden',
-      }}
-    >
-      <div className="shrink-0 flex items-center justify-between px-4 py-3"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)' }}>
-        <div>
-          <h4 className="font-bold text-xs uppercase tracking-widest text-white">Costings Advisor</h4>
-          <p className="font-mono text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>AI · costs · margins · duties</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
-          <span className="font-mono text-[9px] text-emerald-400">Live</span>
-        </div>
-      </div>
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(22,163,74,0.2) transparent' }}>
-        {messages.length === 0 && (
-          <div className="flex items-start gap-2">
-            <div className="w-5 h-5 shrink-0 rounded-full flex items-center justify-center" style={{ background: 'rgba(22,163,74,0.3)' }}>
-              <Bot size={10} className="text-white" />
-            </div>
-            <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.7)' }}>
-              Hi {firstName || 'there'}. I can see your current costing. Ask me about margins, duty rates, route comparisons, or how to improve your landed cost.
-            </p>
-          </div>
-        )}
-        {messages.map((msg, i) => {
-          const isUser = msg.role === 'user';
-          return (
-            <div key={i} className={`flex items-start gap-2 ${isUser ? 'flex-row-reverse' : ''}`}>
-              <div className="w-5 h-5 shrink-0 rounded-full flex items-center justify-center"
-                style={{ background: isUser ? 'rgba(255,255,255,0.15)' : 'rgba(22,163,74,0.3)' }}>
-                {isUser ? <User size={9} className="text-white" /> : <Bot size={9} className="text-white" />}
-              </div>
-              <div className="flex-1 px-3 py-2 text-xs leading-relaxed" style={{
-                borderRadius: 12,
-                background: isUser ? 'rgba(22,163,74,0.15)' : 'rgba(255,255,255,0.07)',
-                border: isUser ? '1px solid rgba(22,163,74,0.25)' : '1px solid rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.85)',
-              }}>
-                {msg.content}
-              </div>
-            </div>
-          );
-        })}
-        {loading && (
-          <div className="flex items-start gap-2">
-            <div className="w-5 h-5 shrink-0 rounded-full flex items-center justify-center" style={{ background: 'rgba(22,163,74,0.3)' }}>
-              <Bot size={9} className="text-white" />
-            </div>
-            <div className="px-3 py-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <Loader size={11} className="animate-spin" style={{ color: 'rgba(255,255,255,0.4)' }} />
-            </div>
-          </div>
-        )}
-        <div ref={endRef} />
-      </div>
-      <div className="shrink-0 p-3 flex gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-        <textarea
-          ref={taRef} value={inputText} onChange={e => setInputText(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-          placeholder="Ask about costs, margins, duties…" rows={2} disabled={loading}
-          className="flex-1 px-3 py-2 text-xs font-mono focus:outline-none resize-none disabled:opacity-50"
-          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, color: '#fff' }}
-        />
-        <button onClick={send} disabled={loading || !inputText.trim()}
-          className="w-9 shrink-0 flex items-center justify-center rounded-xl transition-all disabled:opacity-40"
-          style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)' }}>
-          <Send size={13} className="text-white" />
-        </button>
       </div>
     </div>
   );
@@ -288,9 +167,10 @@ export function CostingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('main');
   const [settings, setSettings] = useState<CostingSettings>(loadSettings);
 
-  // Main tab state
-  const [inputs, setInputs] = useState<FoodCostingInputs>(DEFAULT_INPUTS);
-  const [routeTransports, setRouteTransports] = useState<Record<AgentPortKey, number>>({ ...DEFAULT_ROUTE_TRANSPORTS });
+  // Main tab state — Costing Model triplet
+  const [product, setProduct]     = useState<CostingModelProduct>(DEFAULT_PRODUCT);
+  const [container, setContainer] = useState<CostingModelContainer>(DEFAULT_CONTAINER);
+  const [scenarios, setScenarios] = useState<CostingScenario[]>(DEFAULT_SCENARIOS);
 
   // Save/load state
   const [savedList, setSavedList] = useState<SavedCosting[]>([]);
@@ -300,17 +180,51 @@ export function CostingsPage() {
   const [saving, setSaving] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [chatOpen, setChatOpen] = useState(false);
 
-  const result = useMemo(() => computeFoodCosting(inputs, settings), [inputs, settings]);
+  const results: ScenarioSummary[] = useMemo(
+    () => scenarios.map(s => computeCostingModelScenario(product, container, s, settings)),
+    [product, container, scenarios, settings],
+  );
 
-  const set = useCallback(<K extends keyof FoodCostingInputs>(key: K, value: FoodCostingInputs[K]) => {
-    setInputs(prev => ({ ...prev, [key]: value }));
+  // Product code autocomplete — distinct codes from saved v2 entries
+  const productCodeSuggestions = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of savedList) {
+      if (isCostingModelPayload(s.inputs) && s.inputs.product.productCode) {
+        set.add(s.inputs.product.productCode);
+      }
+    }
+    return Array.from(set).sort();
+  }, [savedList]);
+
+  // ── Setters ────────────────────────────────────────────────────────────────
+  const setProductField = useCallback(<K extends keyof CostingModelProduct>(key: K, val: CostingModelProduct[K]) => {
+    setProduct(prev => ({ ...prev, [key]: val }));
   }, []);
 
+  const setContainerField = useCallback(<K extends keyof CostingModelContainer>(key: K, val: CostingModelContainer[K]) => {
+    setContainer(prev => ({ ...prev, [key]: val }));
+  }, []);
+
+  const setScenarioField = useCallback(<K extends keyof CostingScenario>(i: number, key: K, val: CostingScenario[K]) => {
+    setScenarios(prev => {
+      const next = [...prev];
+      next[i] = { ...next[i], [key]: val };
+      return next;
+    });
+  }, []);
+
+  const addScenario = useCallback(() => {
+    setScenarios(prev => prev.length >= 5 ? prev : [...prev, makeDefaultScenario(prev.length)]);
+  }, []);
+
+  const removeScenario = useCallback((i: number) => {
+    setScenarios(prev => prev.length <= 1 ? prev : prev.filter((_, idx) => idx !== i));
+  }, []);
+
+  // ── Settings ───────────────────────────────────────────────────────────────
   function updateSettings(s: CostingSettings) {
     setSettings(s);
-    // Merge new settings with existing ones from localStorage to preserve all keys
     const merged: CostingSettings = {
       dutyRates: { ...DUTY_RATES, ...s.dutyRates },
       agentPortRates: { ...AGENT_PORT_RATES, ...s.agentPortRates },
@@ -319,6 +233,7 @@ export function CostingsPage() {
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged)); } catch { /* ignore */ }
   }
 
+  // ── Save / load ────────────────────────────────────────────────────────────
   useEffect(() => { if (user) loadList(); }, [user]);
 
   async function loadList() {
@@ -332,7 +247,9 @@ export function CostingsPage() {
     if (!user || !saveName.trim()) { setSaveError('Enter a name first.'); return; }
     setSaving(true); setSaveError(null);
     try {
-      const saved = await saveCostingCalculation(user.id, saveName.trim(), inputs, result, currentId ?? undefined);
+      const payload: CostingModelPayload = { kind: 'model_v2', product, container, scenarios };
+      const resultsPayload: CostingModelResults = { kind: 'model_v2', scenarios: results };
+      const saved = await saveCostingCalculation(user.id, saveName.trim(), payload, resultsPayload, currentId ?? undefined);
       if (saved) {
         setCurrentId(saved.id);
         setSavedList(prev => {
@@ -346,10 +263,47 @@ export function CostingsPage() {
   }
 
   function handleLoad(s: SavedCosting) {
-    setInputs(s.inputs);
-    setCurrentId(s.id);
-    setSaveName(s.name);
-    setActiveTab('main');
+    if (isCostingModelPayload(s.inputs)) {
+      setProduct(s.inputs.product);
+      setContainer(s.inputs.container);
+      setScenarios(s.inputs.scenarios);
+      setCurrentId(s.id);
+      setSaveName(s.name);
+      setActiveTab('main');
+    } else {
+      // Legacy single-scenario entry — load what we can into Product Details + Scenario 1
+      const legacy = s.inputs;
+      setProduct({
+        productCode: '',
+        description: legacy.productName,
+        productCategory: legacy.productCategory,
+        bagsPerCase: 0,
+        caseWeightKg: legacy.caseWeightKg,
+        supplier: legacy.supplier,
+        priceUSDPerTonne: legacy.costPerTonneUSD,
+      });
+      setContainer({
+        clearanceType: legacy.clearanceType,
+        retail: false,
+        handball: legacy.handballing,
+        containerWeightKg: 0,
+        insuranceAuto: legacy.insuranceAuto,
+        insuranceManualGBP: legacy.insuranceManualGBP,
+      });
+      const s1: CostingScenario = {
+        ...makeDefaultScenario(0),
+        salesPricePerCase: legacy.sellingPricePerCase,
+        exchangeRateUSDGBP: legacy.exchangeRateUSDGBP,
+        casesPerContainer: legacy.casesPerContainer,
+        freightCostUSD: legacy.freightCostUSD,
+        agentPort: legacy.agentPort,
+        transportCostGBP: legacy.transportCostGBP,
+      };
+      setScenarios([s1, ...DEFAULT_SCENARIOS.slice(1, 5).map((_, i) => makeDefaultScenario(i + 1))]);
+      setCurrentId(null); // Don't overwrite the legacy record on next save
+      setSaveName(`${s.name} (migrated)`);
+      setActiveTab('main');
+    }
   }
 
   async function handleDelete(id: string) {
@@ -361,20 +315,12 @@ export function CostingsPage() {
   }
 
   function handleReset() {
-    setInputs(DEFAULT_INPUTS);
-    setRouteTransports({ ...DEFAULT_ROUTE_TRANSPORTS });
+    setProduct(DEFAULT_PRODUCT);
+    setContainer(DEFAULT_CONTAINER);
+    setScenarios(DEFAULT_SCENARIOS.map((_, i) => makeDefaultScenario(i)));
     setCurrentId(null);
     setSaveName('');
     setSaveError(null);
-  }
-
-  function handleSelectRoute(key: AgentPortKey) {
-    setInputs(prev => ({ ...prev, agentPort: key, transportCostGBP: routeTransports[key] ?? 0 }));
-  }
-
-  function handleRouteTransportChange(key: AgentPortKey, val: number) {
-    setRouteTransports(prev => ({ ...prev, [key]: val }));
-    if (inputs.agentPort === key) setInputs(prev => ({ ...prev, transportCostGBP: val }));
   }
 
   return (
@@ -385,16 +331,14 @@ export function CostingsPage() {
         className="shrink-0"
         style={{ background: 'linear-gradient(135deg, rgba(20,83,45,0.97), rgba(15,70,34,0.95))', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(22,163,74,0.25)' }}
       >
-        {/* Title row */}
         <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h2 className="font-black text-sm uppercase tracking-widest text-white">Food Import Costing</h2>
             <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              Live cost-per-case · duty lookup · route comparison
+              5-scenario costing model · spreadsheet-faithful
             </p>
           </div>
 
-          {/* Save controls — only relevant on Main tab */}
           {activeTab === 'main' && (
             <div className="flex items-center gap-2 flex-wrap">
               <button
@@ -430,7 +374,6 @@ export function CostingsPage() {
           <p className="px-4 pb-2 font-mono text-[10px] text-red-300">{saveError}</p>
         )}
 
-        {/* Tab bar */}
         <div className="flex px-4 gap-0.5">
           {TABS.map(tab => {
             const active = activeTab === tab.id;
@@ -458,13 +401,17 @@ export function CostingsPage() {
       <div className="flex-1 overflow-hidden flex flex-col">
         {activeTab === 'main' && (
           <MainCostingsTab
-            inputs={inputs}
-            result={result}
-            routeTransports={routeTransports}
+            product={product}
+            container={container}
+            scenarios={scenarios}
+            results={results}
             settings={settings}
-            onSet={set}
-            onSelectRoute={handleSelectRoute}
-            onRouteTransportChange={handleRouteTransportChange}
+            productCodeSuggestions={productCodeSuggestions}
+            onSetProduct={setProductField}
+            onSetContainer={setContainerField}
+            onSetScenario={setScenarioField}
+            onAddScenario={addScenario}
+            onRemoveScenario={removeScenario}
           />
         )}
         {activeTab === 'npd' && <NpdCostingsTab settings={settings} />}
@@ -479,21 +426,7 @@ export function CostingsPage() {
           onLoad={handleLoad} onDelete={handleDelete} onClose={() => setShowSaved(false)}
         />
       )}
-
-      {/* Chat FAB */}
-      <button
-        id="costings-advisor-fab"
-        onClick={() => setChatOpen(o => !o)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 flex items-center justify-center transition-transform duration-200 hover:scale-105 active:scale-95"
-        style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', borderRadius: '100%', boxShadow: '0 4px 20px rgba(22,163,74,0.45)' }}
-        aria-label={chatOpen ? 'Close Costings Advisor' : 'Open Costings Advisor'}
-      >
-        {chatOpen ? <X size={22} style={{ color: '#fff' }} /> : <MessageCircle size={22} style={{ color: '#fff' }} />}
-      </button>
-
-      {chatOpen && (
-        <SimpleChatPanel inputs={inputs} result={result} onClose={() => setChatOpen(false)} />
-      )}
     </div>
   );
 }
+

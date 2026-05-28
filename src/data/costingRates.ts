@@ -74,6 +74,37 @@ export const AGENT_PORT_RATES: Record<AgentPortKey, AgentPortInfo> = {
 
 export const INSURANCE_PER_FCL_GBP = 200;
 
+// ── Costing Model (spreadsheet-faithful) constants ────────────────────────────
+
+// Per-agent fixed clearance fee — Workings $N$2:$O$7
+export const AGENT_CLEARANCE_FEES: Record<string, number> = {
+  AGT: 471,
+  EWL: 815,
+  'FAR LOGISTICS': 1125,
+  Seafrigo: 734,
+};
+// Agents that trigger the per-port-charges lookup (Costing Model F26 conditional)
+export const AGENTS_USING_PORT_CHARGES = new Set(['AGT', 'EWL', 'FAR LOGISTICS', 'Seafrigo']);
+
+// UK destination charge per tonne of (case weight + bag handling) — F26 formula constant
+export const DESTINATION_CHARGE_PER_TONNE_GBP = 10.29;
+
+// Fixed container-level surcharges (Costing Model H26 / I26)
+export const RETAIL_NO_FIXED_GBP = 475 + 150 + 770;             // 1395 — when Retail = No
+export const HANDBALL_FIXED_GBP  = (8.95 + 1.95 + 7.95) * 35;   // 625.25 — when Handball = Yes
+
+// Bao Bun additional duty £/100kg of container weight — F11/K26 path
+export const BAO_BUN_ADDITIONAL_DUTY_PER_100KG = 17;
+
+// Auto insurance = % of product cost — F12 formula
+export const INSURANCE_RATE_OF_PRODUCT_COST = 0.0025; // 0.25%
+
+// Categories excluded from the per-kg licence surcharge — G26 conditional
+export const LICENCE_EXCLUDED_CATEGORIES: ProductCategory[] = ['veg', 'spring_roll', 'onion_bhaji'];
+
+// Default licence cost £/kg seeded across new scenarios — Q17:Q21
+export const DEFAULT_LICENCE_COST_PER_KG = 0.4;
+
 export const DEFAULT_TRANSPORT_COSTS: Record<AgentPortKey, number> = {
   agt_felixstowe: 650,
   ewl_london_gateway: 550,

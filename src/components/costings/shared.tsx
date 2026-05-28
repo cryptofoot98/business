@@ -171,27 +171,50 @@ export function Field({ label, note, children }: { label: string; note?: string;
 
 // ── Collapsible section ───────────────────────────────────────────────────────
 
-export function Section({ title, icon, children, defaultOpen = true }: {
-  title: string; icon?: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean;
+export type SectionAccent = 'green' | 'blue' | 'amber' | 'violet';
+
+interface AccentPalette {
+  from: string;       // gradient start (open header)
+  to: string;         // gradient end   (open header)
+  closedTint: string; // header bg when closed
+  closedIcon: string; // icon colour when closed
+  closedText: string; // title colour when closed
+  border: string;     // card border
+}
+
+export const SECTION_ACCENTS: Record<SectionAccent, AccentPalette> = {
+  green:  { from: '#16a34a', to: '#15803d', closedTint: 'rgba(22,163,74,0.06)',  closedIcon: '#16a34a', closedText: '#15803d', border: 'rgba(22,163,74,0.18)' },
+  blue:   { from: '#2563eb', to: '#1d4ed8', closedTint: 'rgba(37,99,235,0.06)',  closedIcon: '#2563eb', closedText: '#1d4ed8', border: 'rgba(37,99,235,0.20)' },
+  amber:  { from: '#d97706', to: '#b45309', closedTint: 'rgba(217,119,6,0.07)',  closedIcon: '#d97706', closedText: '#b45309', border: 'rgba(217,119,6,0.22)' },
+  violet: { from: '#7c3aed', to: '#6d28d9', closedTint: 'rgba(124,58,237,0.06)', closedIcon: '#7c3aed', closedText: '#6d28d9', border: 'rgba(124,58,237,0.20)' },
+};
+
+export function Section({ title, icon, children, defaultOpen = true, accent = 'green' }: {
+  title: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  accent?: SectionAccent;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const a = SECTION_ACCENTS[accent];
   return (
-    <div style={{ background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(20px)', border: '1px solid rgba(22,163,74,0.18)', borderRadius: 16, overflow: 'hidden' }}>
+    <div style={{ background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(20px)', border: `1px solid ${a.border}`, borderRadius: 16, overflow: 'hidden' }}>
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-4 py-3 transition-colors"
         style={{
-          background: open ? 'linear-gradient(135deg, #16a34a, #15803d)' : 'rgba(22,163,74,0.06)',
-          borderBottom: open ? '1px solid rgba(22,163,74,0.25)' : 'none',
+          background: open ? `linear-gradient(135deg, ${a.from}, ${a.to})` : a.closedTint,
+          borderBottom: open ? `1px solid ${a.border}` : 'none',
         }}
       >
         <div className="flex items-center gap-2">
-          {icon && <span style={{ color: open ? 'rgba(255,255,255,0.8)' : '#16a34a' }}>{icon}</span>}
-          <span className="font-bold text-xs uppercase tracking-widest" style={{ color: open ? '#fff' : '#15803d' }}>{title}</span>
+          {icon && <span style={{ color: open ? 'rgba(255,255,255,0.85)' : a.closedIcon }}>{icon}</span>}
+          <span className="font-bold text-xs uppercase tracking-widest" style={{ color: open ? '#fff' : a.closedText }}>{title}</span>
         </div>
         {open
-          ? <ChevronUp size={13} style={{ color: open ? 'rgba(255,255,255,0.7)' : 'rgba(20,83,45,0.4)' }} />
-          : <ChevronDown size={13} style={{ color: 'rgba(20,83,45,0.4)' }} />}
+          ? <ChevronUp size={13} style={{ color: 'rgba(255,255,255,0.7)' }} />
+          : <ChevronDown size={13} style={{ color: 'rgba(0,0,0,0.35)' }} />}
       </button>
       {open && <div className="p-4 space-y-3">{children}</div>}
     </div>

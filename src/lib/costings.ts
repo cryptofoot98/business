@@ -1,11 +1,14 @@
 import { supabase } from './supabase';
-import { FoodCostingInputs, FoodCostingResult, SavedCosting } from '../types/costing';
+import {
+  FoodCostingInputs, FoodCostingResult, SavedCosting,
+  CostingModelPayload, CostingModelResults,
+} from '../types/costing';
 
 export async function saveCostingCalculation(
   userId: string,
   name: string,
-  inputs: FoodCostingInputs,
-  results: FoodCostingResult,
+  inputs: FoodCostingInputs | CostingModelPayload,
+  results: FoodCostingResult | CostingModelResults,
   existingId?: string
 ): Promise<SavedCosting | null> {
   const payload = {
