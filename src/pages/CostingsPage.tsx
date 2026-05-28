@@ -28,6 +28,8 @@ import { BulkCostingsTab } from '../components/costings/BulkCostingsTab';
 import { SettingsTab } from '../components/costings/SettingsTab';
 import { ImportControlTab } from '../components/importcontrol/ImportControlTab';
 import { ProductsTab } from '../components/products/ProductsTab';
+import { ChatFAB } from '../components/chat/ChatFAB';
+import { CostingsChatPanel } from '../components/chat/CostingsChatPanel';
 
 // ── Settings persistence ──────────────────────────────────────────────────────
 
@@ -239,6 +241,9 @@ export function CostingsPage() {
   const [icSaving, setIcSaving] = useState(false);
   const [icSaveName, setIcSaveName] = useState('');
   const [icSaveError, setIcSaveError] = useState<string | null>(null);
+
+  // Costings AI chat — separate from the container chat
+  const [chatOpen, setChatOpen] = useState(false);
 
   const results: ScenarioSummary[] = useMemo(
     () => scenarios.map(s => computeCostingModelScenario(product, container, s, settings)),
@@ -703,6 +708,21 @@ export function CostingsPage() {
           list={icSavedList} currentId={icCurrentId}
           onLoad={handleIcLoad} onDelete={handleIcDelete} onClose={() => setIcShowSaved(false)}
         />
+      )}
+
+      {/* Costings AI advisor — scoped to /costings */}
+      {user && (
+        <>
+          <CostingsChatPanel
+            open={chatOpen}
+            product={product}
+            container={container}
+            scenarios={scenarios}
+            results={results}
+            onClose={() => setChatOpen(false)}
+          />
+          <ChatFAB open={chatOpen} onClick={() => setChatOpen(o => !o)} />
+        </>
       )}
     </div>
   );

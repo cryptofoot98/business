@@ -590,6 +590,21 @@ function MainApp() {
             />
           </div>
         </aside>
+
+        {/* Container AI chat — scoped to /container so the panel never appears on /costings */}
+        {user && session && (
+          <>
+            <ChatPanel
+              open={chatOpen}
+              userId={user.id}
+              session={session.access_token}
+              firstName={firstName}
+              context={chatContext}
+              onApplyAction={handleAIAction}
+            />
+            <ChatFAB open={chatOpen} onClick={() => setChatOpen(o => !o)} />
+          </>
+        )}
       </div>
   );
 
@@ -628,19 +643,6 @@ function MainApp() {
         />
       )}
 
-      {user && session && (
-        <>
-          <ChatPanel
-            open={chatOpen}
-            userId={user.id}
-            session={session.access_token}
-            firstName={firstName}
-            context={chatContext}
-            onApplyAction={handleAIAction}
-          />
-          <ChatFAB open={chatOpen} onClick={() => setChatOpen(o => !o)} />
-        </>
-      )}
     </div>
   );
 }

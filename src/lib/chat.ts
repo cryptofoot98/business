@@ -192,3 +192,27 @@ export async function callAIChat(
     action: data.action ?? null,
   };
 }
+
+// ── Costings chat — hits the separate `costing-chat` edge function ───────────
+// The costing-chat function returns advisor text (it was originally written for
+// the legacy custom-fields model). We ignore any structured `action` field for
+// now and treat replies as plain advisory text.
+
+export async function callCostingChat(
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  session: string,
+  context: string,
+): Promise<string> {
+  const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_DATABASE_URL) as string;
+  const res = await fetch(`${supabaseUrl}/functions/v1/costing-chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session}`,
+    },
+    body: JSON.stringify({ messages, context }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  return data.message ?? 'Sorry, I could not get a response.';
+}
