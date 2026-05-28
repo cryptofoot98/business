@@ -133,18 +133,23 @@ export const CONTAINERS: ContainerType[] = [
     sizeLabel: '40ft HC',
     category: 'Reefer',
     vehicleClass: 'container',
-    innerLength: 1163,
-    innerWidth: 235,
-    innerHeight: 244,
+    // Calibrated to typical 40HC reefer internal dims (Star Cool / Carrier /
+    // Daikin). Previous values 1163×235×244 were closer to a standard-height
+    // 40ft than a HC — costing ~10% on the height stack. Real-world internal
+    // is ~1155 × 229 × 251 cm. Reefer clearances also re-checked against
+    // Star Cool spec sheets (top ≈ 8 cm, evaporator depth ≈ 22 cm).
+    innerLength: 1155,
+    innerWidth: 229,
+    innerHeight: 251,
     outerLength: 1219,
     outerWidth: 244,
     outerHeight: 290,
     maxPayload: 29500,
-    volume: 66.9,
+    volume: 66.4,
     teu: 2,
     reeferFloorCm: 0,
-    reeferTopCm: 15,
-    reeferEvaporatorDepthCm: 18,
+    reeferTopCm: 8,
+    reeferEvaporatorDepthCm: 22,
   },
   {
     id: '20ft-ot',
