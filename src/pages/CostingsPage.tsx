@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Save, Trash2, FolderOpen, RotateCcw, FileDown,
-  Package, Layers, BarChart2, Settings, Loader, X,
+  Package, Layers, BarChart2, Settings, Loader, X, Ship,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -11,18 +11,25 @@ import {
   isCostingModelPayload,
 } from '../types/costing';
 import {
+  ImportControl, ImportControlResults, ImportControlHeader, ImportControlClearance,
+  ImportControlCosts, ImportControlProduct, SavedImportControl,
+} from '../types/importControl';
+import {
   AGENT_PORT_RATES, INSURANCE_PER_FCL_GBP, DUTY_RATES,
   DEFAULT_LICENCE_COST_PER_KG, DEFAULT_TRANSPORT_COSTS,
 } from '../data/costingRates';
-import { computeCostingModelScenario } from '../utils/costingCalc';
+import { computeCostingModelScenario, computeImportControl } from '../utils/costingCalc';
 import { exportCostingPdf } from '../utils/costingPdf';
+import { exportImportControlPdf } from '../utils/importControlPdf';
 import { Product, NewProductInput } from '../types/product';
 import { fetchProducts, createProduct } from '../lib/products';
 import { saveCostingCalculation, fetchCostingCalculations, deleteCostingCalculation } from '../lib/costings';
+import { saveImportControl, fetchImportControls, deleteImportControl } from '../lib/importControls';
 import { MainCostingsTab } from '../components/costings/MainCostingsTab';
 import { NpdCostingsTab } from '../components/costings/NpdCostingsTab';
 import { BulkCostingsTab } from '../components/costings/BulkCostingsTab';
 import { SettingsTab } from '../components/costings/SettingsTab';
+import { ImportControlTab } from '../components/importcontrol/ImportControlTab';
 
 // ── Settings persistence ──────────────────────────────────────────────────────
 
@@ -82,14 +89,52 @@ function makeDefaultScenario(i: number): CostingScenario {
 
 const DEFAULT_SCENARIOS: CostingScenario[] = Array.from({ length: 5 }, (_, i) => makeDefaultScenario(i));
 
+// Import Control defaults
+const DEFAULT_IC_HEADER: ImportControlHeader = {
+  containerNumber: '', billOfLading: '', fobAgent: 'AGT',
+  loadNumber: '', purchaseOrderNo: '', cleared: false,
+  shippingCompany: '', transportCompany: '',
+  portOfArrival: 'Felixstowe', bulkPo: '', deliveryTo: '',
+  arrivalDate: '', collectionDateFromPort: '',
+  containerGrossWeightTonnes: 17, exchangeRateUSDGBP: 1.27,
+  discountedCostGBP: 0,
+};
+const DEFAULT_IC_CLEARANCE: ImportControlClearance = {
+  ewlCharges: 0, terminalFees: 0, documentFees: 0, customsClearance: 0,
+  freightBlendedAdjustment: 0, freeTimeStorageExtra: 0,
+  portExamination: 0, portHealth: 0,
+  oceanFreightGBP: 0, oceanFreightUSD: 0,
+  loLo: 0, demurrage: 0, vehicleDetention: 0, ukTransport: 0,
+};
+const DEFAULT_IC_COSTS: ImportControlCosts = {
+  dutyFromHMCustoms: 0, handball: 0, packagingCosts: 0,
+  insurancePerContainer: 0, thaiDutyOnPackaging: 0, bagWastageGL: 0,
+  licenceCost: 0, additionsLC: 0, additions2: 0, commissions: 0,
+};
+function makeDefaultIcProduct(): ImportControlProduct {
+  return {
+    productCode: '', productDescription: '',
+    caseCount: 0, caseWeight: 0, quantity: 0,
+    poCostUSD: 0, productCostUSD: 0, salesPricePerCase: 0,
+    catalogContainerFillKg: 0,
+  };
+}
+const DEFAULT_IMPORT_CONTROL: ImportControl = {
+  header: DEFAULT_IC_HEADER,
+  clearance: DEFAULT_IC_CLEARANCE,
+  costs: DEFAULT_IC_COSTS,
+  products: [makeDefaultIcProduct()],
+};
+
 // ── Tab definition ────────────────────────────────────────────────────────────
 
-type Tab = 'main' | 'npd' | 'bulk' | 'settings';
+type Tab = 'main' | 'npd' | 'bulk' | 'import_control' | 'settings';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: 'main',     label: 'Costing Model',  icon: <Package size={12} /> },
-  { id: 'npd',      label: 'NPD Costings',   icon: <BarChart2 size={12} /> },
-  { id: 'bulk',     label: 'Bulk Costings',  icon: <Layers size={12} /> },
+  { id: 'main',           label: 'Costing Model',   icon: <Package size={12} /> },
+  { id: 'npd',            label: 'NPD Costings',    icon: <BarChart2 size={12} /> },
+  { id: 'bulk',           label: 'Bulk Costings',   icon: <Layers size={12} /> },
+  { id: 'import_control', label: 'Import Control',  icon: <Ship size={12} /> },
   { id: 'settings', label: 'Workings',       icon: <Settings size={12} /> },
 ];
 
@@ -187,9 +232,23 @@ export function CostingsPage() {
   // Products catalog (shared across users — sourced from DataFeed)
   const [productCatalog, setProductCatalog] = useState<Product[]>([]);
 
+  // Import Control tab state
+  const [importControl, setImportControl] = useState<ImportControl>(DEFAULT_IMPORT_CONTROL);
+  const [icSavedList, setIcSavedList] = useState<SavedImportControl[]>([]);
+  const [icCurrentId, setIcCurrentId] = useState<string | null>(null);
+  const [icShowSaved, setIcShowSaved] = useState(false);
+  const [icSaving, setIcSaving] = useState(false);
+  const [icSaveName, setIcSaveName] = useState('');
+  const [icSaveError, setIcSaveError] = useState<string | null>(null);
+
   const results: ScenarioSummary[] = useMemo(
     () => scenarios.map(s => computeCostingModelScenario(product, container, s, settings)),
     [product, container, scenarios, settings],
+  );
+
+  const icResults: ImportControlResults = useMemo(
+    () => computeImportControl(importControl),
+    [importControl],
   );
 
   // ── Setters ────────────────────────────────────────────────────────────────
@@ -255,6 +314,46 @@ export function CostingsPage() {
     setProductCatalog(prev => [...prev, created].sort((a, b) => a.product_no.localeCompare(b.product_no)));
     return created;
   }, [user]);
+
+  // ── Import Control setters ────────────────────────────────────────────────
+  const setIcHeader = useCallback(<K extends keyof ImportControlHeader>(key: K, val: ImportControlHeader[K]) => {
+    setImportControl(prev => ({ ...prev, header: { ...prev.header, [key]: val } }));
+  }, []);
+  const setIcClearance = useCallback(<K extends keyof ImportControlClearance>(key: K, val: ImportControlClearance[K]) => {
+    setImportControl(prev => ({ ...prev, clearance: { ...prev.clearance, [key]: val } }));
+  }, []);
+  const setIcCosts = useCallback(<K extends keyof ImportControlCosts>(key: K, val: ImportControlCosts[K]) => {
+    setImportControl(prev => ({ ...prev, costs: { ...prev.costs, [key]: val } }));
+  }, []);
+  const setIcProduct = useCallback(<K extends keyof ImportControlProduct>(i: number, key: K, val: ImportControlProduct[K]) => {
+    setImportControl(prev => {
+      const next = [...prev.products];
+      next[i] = { ...next[i], [key]: val };
+      return { ...prev, products: next };
+    });
+  }, []);
+  const addIcProduct = useCallback(() => {
+    setImportControl(prev => prev.products.length >= 4 ? prev : { ...prev, products: [...prev.products, makeDefaultIcProduct()] });
+  }, []);
+  const removeIcProduct = useCallback((i: number) => {
+    setImportControl(prev => prev.products.length <= 1 ? prev : { ...prev, products: prev.products.filter((_, idx) => idx !== i) });
+  }, []);
+
+  const handleIcProductCatalogSelect = useCallback((i: number, p: Product) => {
+    setImportControl(prev => {
+      const next = [...prev.products];
+      const existing = next[i];
+      next[i] = {
+        ...existing,
+        productCode: p.product_no,
+        productDescription: p.description,
+        caseWeight: existing.caseWeight > 0 ? existing.caseWeight : p.net_weight_kg,
+        caseCount: existing.caseCount > 0 ? existing.caseCount : p.container_fill_cases,
+        catalogContainerFillKg: p.container_fill_kg || existing.catalogContainerFillKg,
+      };
+      return { ...prev, products: next };
+    });
+  }, []);
 
   // ── Save / load ────────────────────────────────────────────────────────────
   useEffect(() => { if (user) loadList(); }, [user]);
@@ -353,6 +452,60 @@ export function CostingsPage() {
     });
   }
 
+  // ── Import Control save / load / reset / PDF ─────────────────────────────
+  useEffect(() => { if (user) loadIcList(); }, [user]);
+
+  async function loadIcList() {
+    try { setIcSavedList(await fetchImportControls(user!.id)); }
+    catch (e) { console.error(e); }
+  }
+
+  async function handleIcSave() {
+    if (!user || !icSaveName.trim()) { setIcSaveError('Enter a name first.'); return; }
+    setIcSaving(true); setIcSaveError(null);
+    try {
+      const saved = await saveImportControl(user.id, icSaveName.trim(), importControl, icResults, icCurrentId ?? undefined);
+      if (saved) {
+        setIcCurrentId(saved.id);
+        setIcSavedList(prev => {
+          const idx = prev.findIndex(s => s.id === saved.id);
+          if (idx >= 0) { const n = [...prev]; n[idx] = saved; return n; }
+          return [saved, ...prev];
+        });
+      }
+    } catch (e) { setIcSaveError(e instanceof Error ? e.message : String(e)); }
+    finally { setIcSaving(false); }
+  }
+
+  function handleIcLoad(s: SavedImportControl) {
+    setImportControl(s.data);
+    setIcCurrentId(s.id);
+    setIcSaveName(s.name);
+    setActiveTab('import_control');
+  }
+
+  async function handleIcDelete(id: string) {
+    try {
+      await deleteImportControl(id);
+      setIcSavedList(prev => prev.filter(s => s.id !== id));
+      if (icCurrentId === id) setIcCurrentId(null);
+    } catch (e) { console.error(e); }
+  }
+
+  function handleIcReset() {
+    setImportControl(DEFAULT_IMPORT_CONTROL);
+    setIcCurrentId(null);
+    setIcSaveName('');
+    setIcSaveError(null);
+  }
+
+  function handleIcExportPdf() {
+    exportImportControlPdf({
+      name: icSaveName.trim() || importControl.header.containerNumber || 'Import Control',
+      ic: importControl, results: icResults,
+    });
+  }
+
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'transparent' }}>
 
@@ -405,9 +558,49 @@ export function CostingsPage() {
               </button>
             </div>
           )}
+
+          {activeTab === 'import_control' && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => { setIcShowSaved(true); if (!icShowSaved) loadIcList(); }}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
+                <FolderOpen size={12} /> Saved
+              </button>
+              <button
+                onClick={handleIcReset}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
+                <RotateCcw size={12} /> Reset
+              </button>
+              <button
+                onClick={handleIcExportPdf}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
+                <FileDown size={12} /> PDF
+              </button>
+              <input
+                type="text" value={icSaveName} onChange={e => { setIcSaveName(e.target.value); setIcSaveError(null); }}
+                onKeyDown={e => e.key === 'Enter' && handleIcSave()}
+                placeholder="Container name…"
+                className="px-3 py-2 text-xs font-mono focus:outline-none w-40"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, color: '#fff' }}
+              />
+              <button
+                onClick={handleIcSave} disabled={icSaving}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
+                style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 100, color: '#15803d' }}>
+                {icSaving ? <Loader size={12} className="animate-spin" /> : <Save size={12} />}
+                Save
+              </button>
+            </div>
+          )}
         </div>
         {saveError && activeTab === 'main' && (
           <p className="px-4 pb-2 font-mono text-[10px] text-red-300">{saveError}</p>
+        )}
+        {icSaveError && activeTab === 'import_control' && (
+          <p className="px-4 pb-2 font-mono text-[10px] text-red-300">{icSaveError}</p>
         )}
 
         <div className="flex px-4 gap-0.5">
@@ -454,16 +647,95 @@ export function CostingsPage() {
         )}
         {activeTab === 'npd' && <NpdCostingsTab settings={settings} />}
         {activeTab === 'bulk' && <BulkCostingsTab settings={settings} />}
+        {activeTab === 'import_control' && (
+          <ImportControlTab
+            ic={importControl}
+            results={icResults}
+            productCatalog={productCatalog}
+            onSetHeader={setIcHeader}
+            onSetClearance={setIcClearance}
+            onSetCosts={setIcCosts}
+            onSetProduct={setIcProduct}
+            onAddProduct={addIcProduct}
+            onRemoveProduct={removeIcProduct}
+            onProductCatalogSelect={handleIcProductCatalogSelect}
+            onProductCatalogCreate={handleProductCatalogCreate}
+          />
+        )}
         {activeTab === 'settings' && <SettingsTab settings={settings} onUpdate={updateSettings} />}
       </div>
 
-      {/* Saved modal */}
+      {/* Saved modal — Costing Model */}
       {showSaved && (
         <SavedPanel
           list={savedList} loading={loadingList} currentId={currentId}
           onLoad={handleLoad} onDelete={handleDelete} onClose={() => setShowSaved(false)}
         />
       )}
+
+      {/* Saved modal — Import Control */}
+      {icShowSaved && (
+        <IcSavedPanel
+          list={icSavedList} currentId={icCurrentId}
+          onLoad={handleIcLoad} onDelete={handleIcDelete} onClose={() => setIcShowSaved(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Import Control saved-panel modal ─────────────────────────────────────────
+
+function IcSavedPanel({
+  list, currentId, onLoad, onDelete, onClose,
+}: {
+  list: SavedImportControl[]; currentId: string | null;
+  onLoad: (s: SavedImportControl) => void; onDelete: (id: string) => void; onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="w-full max-w-md rounded-2xl overflow-hidden"
+        style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(22,163,74,0.2)', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
+        <div className="flex items-center justify-between px-5 py-4"
+          style={{ background: 'linear-gradient(135deg, #14532d, #15803d)' }}>
+          <div className="flex items-center gap-2.5">
+            <Ship size={14} className="text-white/80" />
+            <span className="text-sm font-bold uppercase tracking-tight text-white">Saved Containers</span>
+          </div>
+          <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <X size={16} />
+          </button>
+        </div>
+        <div className="p-4 max-h-96 overflow-y-auto">
+          {list.length === 0 ? (
+            <div className="text-center py-8">
+              <Ship size={28} className="mx-auto mb-3" style={{ color: 'rgba(20,83,45,0.15)' }} />
+              <p className="text-xs uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.3)' }}>No saved containers yet</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {list.map(s => (
+                <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.8)', border: s.id === currentId ? '1.5px solid rgba(22,163,74,0.4)' : '1px solid rgba(22,163,74,0.12)' }}>
+                  <button className="flex-1 text-left" onClick={() => { onLoad(s); onClose(); }}>
+                    <p className="font-bold text-sm" style={{ color: '#14532d' }}>{s.name}</p>
+                    <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.45)' }}>
+                      {s.data?.header?.containerNumber || '—'} · {s.data?.products?.length ?? 0} products · {new Date(s.updated_at).toLocaleDateString('en-GB')}
+                    </p>
+                  </button>
+                  <button onClick={() => onDelete(s.id)} className="p-1.5 rounded-full" style={{ color: 'rgba(20,83,45,0.3)' }}>
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

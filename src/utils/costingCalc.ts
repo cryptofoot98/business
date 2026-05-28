@@ -222,6 +222,135 @@ export function computeCostingModelScenario(
   };
 }
 
+// ── Import Control — post-arrival container reconciliation ────────────────────
+// Replicates the Meadowvale Import Control Sheet. Formulas verified against the
+// worked example in the source PDF (page 1): Total Container Cost £62,178.37,
+// Container Weight 15.0255t, Total Cost of Extras £15,373.41, Price/kg £1.02,
+// product 1 cost/case £35.09 → margin 12.98%, product 2 £41.88 → 13.08%.
+
+import type {
+  ImportControl, ImportControlResults, ImportControlProductResult,
+} from '../types/importControl';
+
+export function computeImportControl(ic: ImportControl): ImportControlResults {
+  const fx = Math.max(ic.header.exchangeRateUSDGBP, 0.0001);
+
+  // Clearance subtotal (£ lines only — USD ocean freight is reference-only)
+  const c = ic.clearance;
+  const clearanceTotalGBP =
+    c.ewlCharges + c.terminalFees + c.documentFees + c.customsClearance +
+    c.freightBlendedAdjustment + c.freeTimeStorageExtra + c.portExamination +
+    c.portHealth + c.oceanFreightGBP + c.loLo + c.demurrage +
+    c.vehicleDetention + c.ukTransport;
+
+  // The "Port Clearance Charges" line on the left equals the clearance subtotal —
+  // every clearance line item rolls into it. (Empty fields contribute 0.)
+  const portClearanceCharges = clearanceTotalGBP;
+
+  // Per-product weight and product cost
+  const perProductWeightTonnes = ic.products.map(p =>
+    (p.caseCount * p.caseWeight) / 1000,
+  );
+  const containerWeightTonnes = perProductWeightTonnes.reduce((a, b) => a + b, 0);
+  const containerWeightKg = containerWeightTonnes * 1000;
+
+  const productCostsGBP = ic.products.map(p => p.productCostUSD / fx);
+  const productCostSterling = productCostsGBP.reduce((a, b) => a + b, 0);
+
+  // Other costs (left column)
+  const o = ic.costs;
+  const otherCostsTotal =
+    o.dutyFromHMCustoms + o.handball + o.packagingCosts + o.insurancePerContainer +
+    o.thaiDutyOnPackaging + o.bagWastageGL + o.licenceCost + o.additionsLC +
+    o.additions2 + o.commissions;
+
+  const totalContainerCost = productCostSterling + portClearanceCharges + otherCostsTotal;
+  const totalCostOfExtras = totalContainerCost - productCostSterling;
+
+  // % Container Fill — PDF rule (deduced from worked example): each product's
+  // loaded share of a notional full FCL of that SKU, summed. So if product A
+  // takes ~half a container (per its catalog Container Fill) and product B
+  // takes the other half, the total is ~100%. When the catalog fill isn't
+  // known we fall back to (delivered / ordered) tonnes.
+  const fillFromCatalog = ic.products.reduce((acc, p, i) => {
+    if (p.catalogContainerFillKg > 0) {
+      return acc + ((perProductWeightTonnes[i] * 1000) / p.catalogContainerFillKg) * 100;
+    }
+    return acc;
+  }, 0);
+  const hasCatalogFill = ic.products.some(p => p.catalogContainerFillKg > 0);
+  let percentageContainerFill: number;
+  if (hasCatalogFill) {
+    percentageContainerFill = fillFromCatalog;
+  } else {
+    const orderedWeightTonnes = ic.products.reduce(
+      (acc, p) => acc + (p.quantity * p.caseWeight) / 1000, 0,
+    );
+    percentageContainerFill = orderedWeightTonnes > 0
+      ? (containerWeightTonnes / orderedWeightTonnes) * 100
+      : 0;
+  }
+
+  // Total Cases (cases loaded, not ordered)
+  const totalCases = ic.products.reduce((acc, p) => acc + p.caseCount, 0);
+
+  // Price per Kilo = Total Cost of Extras / total kg loaded
+  // (verified £15,373.41 / 15,025.5 = £1.023/kg → matches PDF £1.02)
+  const pricePerKilo = containerWeightKg > 0
+    ? totalCostOfExtras / containerWeightKg
+    : 0;
+
+  // Per-product cost-per-case — extras allocated using the spreadsheet's split:
+  //   Duty (HM Customs) ── by product-cost share (value-based, like the duty itself)
+  //   All other extras  ── by case-weight share (tonnage-based logistics)
+  // Verified against the PDF worked example: this combination produces
+  // £35.0884 / case for product 1 and £41.8757 / case for product 2.
+  const dutyExtra      = o.dutyFromHMCustoms;
+  const nonDutyExtras  = totalCostOfExtras - dutyExtra;
+
+  let cumulative = 0;
+  const perProduct: ImportControlProductResult[] = ic.products.map((p, i) => {
+    const productCostGBP = productCostsGBP[i];
+    const totalWeightTonnes = perProductWeightTonnes[i];
+    const netPricePerCase = p.caseCount > 0 ? productCostGBP / p.caseCount : 0;
+
+    const costShare   = productCostSterling > 0 ? productCostGBP / productCostSterling : 0;
+    const weightShare = containerWeightKg > 0
+      ? (totalWeightTonnes * 1000) / containerWeightKg
+      : 0;
+    const extrasShareGBP = costShare * dutyExtra + weightShare * nonDutyExtras;
+    const costPerCase = p.caseCount > 0
+      ? netPricePerCase + extrasShareGBP / p.caseCount
+      : 0;
+    const totalProductValue = costPerCase * p.caseCount;
+    cumulative += totalProductValue;
+    const marginGBPPerCase = p.salesPricePerCase - costPerCase;
+    const marginPercent = p.salesPricePerCase > 0
+      ? (marginGBPPerCase / p.salesPricePerCase) * 100
+      : 0;
+    return {
+      productCostGBP, netPricePerCase, totalWeightTonnes,
+      extrasShareGBP, costPerCase, totalProductValue,
+      cumulativeTotal: cumulative,
+      marginGBPPerCase, marginPercent,
+    };
+  });
+
+  return {
+    clearanceTotalGBP,
+    portClearanceCharges,
+    productCostSterling,
+    totalContainerCost,
+    totalCases,
+    containerWeightTonnes,
+    containerWeightKg,
+    percentageContainerFill,
+    totalCostOfExtras,
+    pricePerKilo,
+    perProduct,
+  };
+}
+
 export function computeBulkProduct(
   shared: BulkSharedSettings,
   product: BulkProductRow,
