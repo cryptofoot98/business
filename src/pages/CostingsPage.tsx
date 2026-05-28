@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Save, Trash2, FolderOpen, RotateCcw, FileDown,
-  Package, Layers, BarChart2, Settings, Loader, X, Ship,
+  Package, Layers, BarChart2, Settings, Loader, X, Ship, Database,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -22,7 +22,7 @@ import { computeCostingModelScenario, computeImportControl } from '../utils/cost
 import { exportCostingPdf } from '../utils/costingPdf';
 import { exportImportControlPdf } from '../utils/importControlPdf';
 import { Product, NewProductInput } from '../types/product';
-import { fetchProducts, createProduct } from '../lib/products';
+import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../lib/products';
 import { saveCostingCalculation, fetchCostingCalculations, deleteCostingCalculation } from '../lib/costings';
 import { saveImportControl, fetchImportControls, deleteImportControl } from '../lib/importControls';
 import { MainCostingsTab } from '../components/costings/MainCostingsTab';
@@ -30,6 +30,7 @@ import { NpdCostingsTab } from '../components/costings/NpdCostingsTab';
 import { BulkCostingsTab } from '../components/costings/BulkCostingsTab';
 import { SettingsTab } from '../components/costings/SettingsTab';
 import { ImportControlTab } from '../components/importcontrol/ImportControlTab';
+import { ProductsTab } from '../components/products/ProductsTab';
 
 // ── Settings persistence ──────────────────────────────────────────────────────
 
@@ -128,14 +129,15 @@ const DEFAULT_IMPORT_CONTROL: ImportControl = {
 
 // ── Tab definition ────────────────────────────────────────────────────────────
 
-type Tab = 'main' | 'npd' | 'bulk' | 'import_control' | 'settings';
+type Tab = 'main' | 'npd' | 'bulk' | 'import_control' | 'products' | 'settings';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'main',           label: 'Costing Model',   icon: <Package size={12} /> },
   { id: 'npd',            label: 'NPD Costings',    icon: <BarChart2 size={12} /> },
   { id: 'bulk',           label: 'Bulk Costings',   icon: <Layers size={12} /> },
   { id: 'import_control', label: 'Import Control',  icon: <Ship size={12} /> },
-  { id: 'settings', label: 'Workings',       icon: <Settings size={12} /> },
+  { id: 'products',       label: 'Products',        icon: <Database size={12} /> },
+  { id: 'settings',       label: 'Workings',        icon: <Settings size={12} /> },
 ];
 
 // ── Saved panel modal ─────────────────────────────────────────────────────────
@@ -314,6 +316,18 @@ export function CostingsPage() {
     setProductCatalog(prev => [...prev, created].sort((a, b) => a.product_no.localeCompare(b.product_no)));
     return created;
   }, [user]);
+
+  const handleProductCatalogUpdate = useCallback(async (id: string, patch: Partial<NewProductInput>): Promise<Product> => {
+    const updated = await updateProduct(id, patch);
+    setProductCatalog(prev => prev.map(p => (p.id === id ? updated : p))
+      .sort((a, b) => a.product_no.localeCompare(b.product_no)));
+    return updated;
+  }, []);
+
+  const handleProductCatalogDelete = useCallback(async (id: string): Promise<void> => {
+    await deleteProduct(id);
+    setProductCatalog(prev => prev.filter(p => p.id !== id));
+  }, []);
 
   // ── Import Control setters ────────────────────────────────────────────────
   const setIcHeader = useCallback(<K extends keyof ImportControlHeader>(key: K, val: ImportControlHeader[K]) => {
@@ -660,6 +674,14 @@ export function CostingsPage() {
             onRemoveProduct={removeIcProduct}
             onProductCatalogSelect={handleIcProductCatalogSelect}
             onProductCatalogCreate={handleProductCatalogCreate}
+          />
+        )}
+        {activeTab === 'products' && (
+          <ProductsTab
+            products={productCatalog}
+            onCreate={handleProductCatalogCreate}
+            onUpdate={handleProductCatalogUpdate}
+            onDelete={handleProductCatalogDelete}
           />
         )}
         {activeTab === 'settings' && <SettingsTab settings={settings} onUpdate={updateSettings} />}
