@@ -20,7 +20,7 @@ type ViewMode = 'front' | 'side' | 'top' | '3d';
 
 const PAD = 28;
 const PAD_BOTTOM = 44;
-const BG = '#eef7ee';
+const BG = '#fffaf0';   // warm cream surface, matches design tokens
 const CONTAINER_BG = '#f8fdf8';
 const BLACK = '#1a1410';
 const WALL_STROKE = 2;

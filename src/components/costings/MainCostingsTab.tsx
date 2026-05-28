@@ -245,7 +245,7 @@ export function MainCostingsTab({
       </Section>
 
       {/* ─── 2. Container Details — AMBER ─── */}
-      <Section title="Container Details" icon={<ContainerIcon size={13} />} accent="amber">
+      <Section title="Container Details" icon={<Icon name="container" size={13} />} accent="amber">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Field label="Clearance Type">
             <SelectInputSm
