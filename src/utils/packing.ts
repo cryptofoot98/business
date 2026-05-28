@@ -378,8 +378,17 @@ function packBlockWithResidual(
         const nYLow = Math.floor(availableWidth / bW1);
         const countLow = Math.min(nXLow * nYLow * lowLayers, effectiveMax);
 
-        const nXHigh = Math.floor(availableLength / bL2);
-        const nYHigh = Math.floor(availableWidth / bW2);
+        // Stability constraint: upper layer footprint must NOT extend past the
+        // lower layer footprint, otherwise the upper cases would overhang into
+        // empty space. Previously this was unchecked and produced visually
+        // floating boxes in the 3D view.
+        const lowFootprintL = nXLow * bL1;
+        const lowFootprintW = nYLow * bW1;
+        const upperMaxL = Math.min(availableLength, lowFootprintL);
+        const upperMaxW = Math.min(availableWidth,  lowFootprintW);
+
+        const nXHigh = Math.floor(upperMaxL / bL2);
+        const nYHigh = Math.floor(upperMaxW / bW2);
         const nZHigh = Math.floor(highHeight / bH2);
         const countHigh = Math.min(nXHigh * nYHigh * nZHigh, Math.max(0, effectiveMax - countLow));
 
@@ -637,8 +646,232 @@ function packBlockWithResidual(
     }
   }
 
+  // ── Strategy 6 — Layer-based packing with intra-layer mixed orientations ────
+  // For each candidate layer-height bH, find every orientation pair (A, B) that
+  // shares that height. Pack each layer as a 2-zone or 4-zone L-shape mix of
+  // A and B footprints. Stack identical layers up to the container height with
+  // stack-limit checks.
+  //
+  // This is the closest deterministic approximation of how a human loader
+  // splits a layer (left columns one rotation, right columns another) — the
+  // pattern visible in the supplier's loading photos. Because every layer
+  // shares the same boundary, every case is supported by the case below it,
+  // so the resulting stack is physically stable.
+
+  interface LayerZone {
+    ori: Orientation;
+    nL: number;          // case count along length
+    nW: number;          // case count along width
+    offsetX: number;     // offset from origin within the layer
+    offsetY: number;
+  }
+  interface LayerPlan {
+    zones: LayerZone[];
+    casesPerLayer: number;
+  }
+
+  function bestSingleOrientationLayer(L: number, W: number, oris: Orientation[]): LayerPlan {
+    let bestCnt = 0;
+    let bestOri: Orientation = oris[0];
+    let bestNL = 0, bestNW = 0;
+    for (const o of oris) {
+      const [oL, oW] = o;
+      const nL = Math.floor(L / oL);
+      const nW = Math.floor(W / oW);
+      const cnt = nL * nW;
+      if (cnt > bestCnt) {
+        bestCnt = cnt; bestOri = o; bestNL = nL; bestNW = nW;
+      }
+    }
+    return {
+      zones: bestCnt > 0 ? [{ ori: bestOri, nL: bestNL, nW: bestNW, offsetX: 0, offsetY: 0 }] : [],
+      casesPerLayer: bestCnt,
+    };
+  }
+
+  function bestMixedLayer(L: number, W: number, oris: Orientation[]): LayerPlan {
+    let best = bestSingleOrientationLayer(L, W, oris);
+
+    // 2-zone width split: A occupies (L × mA*aW), B occupies (L × mB*bW)
+    for (let i = 0; i < oris.length; i++) {
+      for (let j = 0; j < oris.length; j++) {
+        if (i === j) continue;
+        const [aL, aW] = oris[i];
+        const [bL, bW] = oris[j];
+        const maxMA = Math.floor(W / aW);
+        for (let mA = 1; mA <= maxMA; mA++) {
+          const usedW = mA * aW;
+          const remW = W - usedW;
+          const mB = Math.floor(remW / bW);
+          if (mB === 0) continue;
+          const nLa = Math.floor(L / aL);
+          const nLb = Math.floor(L / bL);
+          const cnt = nLa * mA + nLb * mB;
+          if (cnt > best.casesPerLayer) {
+            best = {
+              casesPerLayer: cnt,
+              zones: [
+                { ori: oris[i], nL: nLa, nW: mA, offsetX: 0,      offsetY: 0      },
+                { ori: oris[j], nL: nLb, nW: mB, offsetX: 0,      offsetY: usedW  },
+              ],
+            };
+          }
+        }
+      }
+    }
+
+    // 2-zone length split: A occupies (nA*aL × W), B occupies (nB*bL × W)
+    for (let i = 0; i < oris.length; i++) {
+      for (let j = 0; j < oris.length; j++) {
+        if (i === j) continue;
+        const [aL, aW] = oris[i];
+        const [bL, bW] = oris[j];
+        const maxNA = Math.floor(L / aL);
+        for (let nA = 1; nA <= maxNA; nA++) {
+          const usedL = nA * aL;
+          const remL = L - usedL;
+          const nB = Math.floor(remL / bL);
+          if (nB === 0) continue;
+          const mWa = Math.floor(W / aW);
+          const mWb = Math.floor(W / bW);
+          const cnt = nA * mWa + nB * mWb;
+          if (cnt > best.casesPerLayer) {
+            best = {
+              casesPerLayer: cnt,
+              zones: [
+                { ori: oris[i], nL: nA, nW: mWa, offsetX: 0,     offsetY: 0 },
+                { ori: oris[j], nL: nB, nW: mWb, offsetX: usedL, offsetY: 0 },
+              ],
+            };
+          }
+        }
+      }
+    }
+
+    // 4-zone L-shape: main A in the (nA*aL × mA*aW) bottom-left, with B filling
+    // the back strip, side strip and corner. Each residual zone tries every
+    // height-matched orientation independently.
+    for (const oA of oris) {
+      const [aL, aW] = oA;
+      const nA_L = Math.floor(L / aL);
+      const nA_W = Math.floor(W / aW);
+      if (nA_L === 0 || nA_W === 0) continue;
+      const usedL = nA_L * aL;
+      const usedW = nA_W * aW;
+      const remL = L - usedL;
+      const remW = W - usedW;
+      if (remL === 0 && remW === 0) continue;          // no L-shape gap
+
+      // Inner helper: best count of any orientation fitting (lDim × wDim)
+      const bestRect = (lDim: number, wDim: number): { cnt: number; ori: Orientation; nL: number; nW: number } => {
+        let bestCnt = 0;
+        let bestOri: Orientation = oA;
+        let bestNL = 0, bestNW = 0;
+        if (lDim <= 0 || wDim <= 0) return { cnt: 0, ori: bestOri, nL: 0, nW: 0 };
+        for (const o of oris) {
+          const [oL, oW] = o;
+          const nL = Math.floor(lDim / oL);
+          const nW = Math.floor(wDim / oW);
+          const cnt = nL * nW;
+          if (cnt > bestCnt) {
+            bestCnt = cnt; bestOri = o; bestNL = nL; bestNW = nW;
+          }
+        }
+        return { cnt: bestCnt, ori: bestOri, nL: bestNL, nW: bestNW };
+      };
+
+      const back   = bestRect(remL, usedW);                  // back strip (behind main)
+      const side   = bestRect(usedL, remW);                  // side strip (next to main)
+      const corner = bestRect(remL, remW);                   // back-right corner
+      const cnt = nA_L * nA_W + back.cnt + side.cnt + corner.cnt;
+      if (cnt > best.casesPerLayer) {
+        best = {
+          casesPerLayer: cnt,
+          zones: [
+            { ori: oA,          nL: nA_L,    nW: nA_W,    offsetX: 0,     offsetY: 0 },
+            ...(back.cnt   > 0 ? [{ ori: back.ori,   nL: back.nL,   nW: back.nW,   offsetX: usedL, offsetY: 0     }] : []),
+            ...(side.cnt   > 0 ? [{ ori: side.ori,   nL: side.nL,   nW: side.nW,   offsetX: 0,     offsetY: usedW }] : []),
+            ...(corner.cnt > 0 ? [{ ori: corner.ori, nL: corner.nL, nW: corner.nW, offsetX: usedL, offsetY: usedW }] : []),
+          ],
+        };
+      }
+    }
+
+    return best;
+  }
+
+  // Group orientations by height — each height defines a layer thickness, and
+  // every orientation in the group has the same layer thickness so mixing them
+  // within a layer keeps the top flat and stable.
+  const heightGroups = new Map<number, Orientation[]>();
+  for (const o of orientations) {
+    const h = o[2];
+    if (!heightGroups.has(h)) heightGroups.set(h, []);
+    heightGroups.get(h)!.push(o);
+  }
+
+  let bestS6Count = 0;
+  let bestS6LayerH = 0;
+  let bestS6Plan: LayerPlan = { zones: [], casesPerLayer: 0 };
+  let bestS6Layers = 0;
+  let bestS6MainOri: Orientation = orientations[0] ?? [1, 1, 1];
+
+  for (const [layerH, oris] of heightGroups.entries()) {
+    const maxLayers = maxStackLayers === Infinity
+      ? Math.floor(availableHeight / layerH)
+      : Math.min(Math.floor(availableHeight / layerH), maxStackLayers);
+    if (maxLayers === 0) continue;
+
+    const layer = bestMixedLayer(availableLength, availableWidth, oris);
+    if (layer.casesPerLayer === 0) continue;
+
+    // Cap by effectiveMax and convert to number of full layers we can afford.
+    const desiredLayers = layer.casesPerLayer > 0
+      ? Math.min(maxLayers, Math.floor(effectiveMax / layer.casesPerLayer))
+      : maxLayers;
+    const total = desiredLayers * layer.casesPerLayer;
+    if (total > bestS6Count) {
+      bestS6Count = total;
+      bestS6LayerH = layerH;
+      bestS6Plan = layer;
+      bestS6Layers = desiredLayers;
+      bestS6MainOri = layer.zones[0]?.ori ?? orientations[0];
+    }
+  }
+
+  let bestS6Positions: Omit<PackedBox, 'productId'>[] = [];
+  if (generatePositions && bestS6Count > 0 && bestS6Plan.zones.length > 0) {
+    let budget = visualBudget;
+    outer:
+    for (let layerIdx = 0; layerIdx < bestS6Layers; layerIdx++) {
+      const z = layerIdx * bestS6LayerH;
+      for (const zone of bestS6Plan.zones) {
+        const [oL, oW] = zone.ori;
+        for (let ix = 0; ix < zone.nL; ix++) {
+          for (let iy = 0; iy < zone.nW; iy++) {
+            if (budget <= 0) break outer;
+            bestS6Positions.push({
+              x: originX + zone.offsetX + ix * oL,
+              y: originY + zone.offsetY + iy * oW,
+              z: originZ + z,
+              l: oL,
+              w: oW,
+              h: bestS6LayerH,
+            });
+            budget--;
+          }
+        }
+      }
+    }
+  }
+
   // Pick the best strategy
-  const best = Math.max(strategy1Count, bestHeightSplitCount, bestWidthSplitCount, bestLengthSplitCount);
+  const best = Math.max(strategy1Count, bestHeightSplitCount, bestWidthSplitCount, bestLengthSplitCount, bestS6Count);
+
+  if (best === bestS6Count && bestS6Count > 0) {
+    // For S6, return the winning layer orientation as the "main" for the legend
+    return { count: bestS6Count, positions: bestS6Positions, mainOrientation: bestS6MainOri };
+  }
 
   if (best === bestLengthSplitCount && bestLengthSplitCount >= bestWidthSplitCount && bestLengthSplitCount > strategy1Count && bestLengthSplitCount >= bestHeightSplitCount) {
     return { count: bestLengthSplitCount, positions: bestLengthSplitPositions, mainOrientation: bestLengthSplitOrientation, zones: bestLengthZones, zoneSplitAxis: 'length' };

@@ -216,6 +216,32 @@ V_container   = bodyLength × W × usableHeight   (cm³)`}
             </p>
           </section>
 
+          {/* ── Honesty on the performance ceiling ── */}
+          <section>
+            <SectionTitle
+              chip="🎯"
+              title="A note on the performance ceiling"
+              sub="Why we won't match a hand-packed container 1:1, and why the app is still useful."
+            />
+            <Card accent="amber">
+              <p className="text-xs leading-relaxed" style={{ color: '#78350f' }}>
+                3D bin-packing with rotations is NP-hard. Real container loaders mix
+                orientations within a single layer in patterns that combinatorial
+                algorithms can approximate but not perfectly reproduce in reasonable
+                time. Industry standard packing tools (TOPS Pro, CAPE PACK) achieve
+                roughly <span className="font-mono">94–96%</span> of a best-effort
+                hand-pack. This engine is designed to land in the same ballpark.
+              </p>
+              <p className="text-xs leading-relaxed mt-2" style={{ color: '#78350f' }}>
+                The remaining 3–6% comes from human-only optimisations: angling
+                cases at the back corner, using cardboard fillers, friction-bracing
+                against walls, accepting some operational risk an algorithm can't.
+                Treat catalog "container fill" numbers as targets — they assume the
+                best loader on a good day, and even your supplier hits ~99% of them.
+              </p>
+            </Card>
+          </section>
+
           {/* ── 1-product packing ── */}
           <section>
             <SectionTitle
@@ -274,6 +300,44 @@ best = argmax over all splits`}
               guess where to draw the line, it tries every meaningful boundary.
               The same logic applies if the better split is along the width axis.
             </p>
+          </section>
+
+          {/* ── Layer-based mixed-orientation packing ── */}
+          <section>
+            <SectionTitle
+              chip="🧩"
+              title="Step 4.5 — Layer-based mixed-orientation packing"
+              sub="The big one: per-layer 2-zone and 4-zone packing with rotated cases sitting next to each other."
+            />
+            <Formula>
+              {`For each layer thickness bH (from each orientation height):
+   group orientations with the same bH
+   for each pair (A, B) in the group:
+      best_per_layer = max(
+         pure A,
+         pure B,
+         length-split: (nA cols of A) + (nB cols of B), W shared,
+         width-split:  (mA rows of A) + (mB rows of B), L shared,
+         L-shape:      A main rect + B back strip + B side strip + B corner,
+      )
+   layers = min(⌊H / bH⌋, stackLimit)
+   total[bH] = layers × best_per_layer
+
+result = max over all bH`}
+            </Formula>
+            <Card accent="amber">
+              <p className="text-xs leading-relaxed" style={{ color: '#78350f' }}>
+                Crucially the boundary between A-orientation cases and B-orientation
+                cases is <span className="font-semibold">the same on every layer</span>,
+                so every upper case sits on top of a case below — never on empty
+                space. The stack is provably stable.
+              </p>
+              <p className="text-xs leading-relaxed mt-2" style={{ color: '#78350f' }}>
+                This is the strategy that captures the supplier pattern in your
+                loading photo: left-side cases in one rotation, right-side cases
+                rotated 90°, both spanning the full height.
+              </p>
+            </Card>
           </section>
 
           {/* ── 3+ product packing ── */}
