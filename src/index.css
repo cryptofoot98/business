@@ -4,9 +4,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+  --font-sans: 'Geist Variable', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  --font-mono: 'Geist Mono Variable', 'Geist Mono', 'SF Mono', 'Fira Code', 'Courier New', monospace;
   --font-heading: var(--font-sans);
+
+  /* Tabular figures for all monospace contexts — column alignment in cost tables */
+  --font-feature-settings: "tnum", "cv11";
 
   --radius-sm:   6px;
   --radius-md:   10px;
@@ -85,6 +88,15 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    font-feature-settings: "cv11";   /* Single-storey 'a' for cleaner small caps */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Use tabular figures everywhere monospace is requested — numbers line up in columns */
+  .font-mono, code, kbd, samp, pre {
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum", "zero";
   }
 
   * { box-sizing: border-box; }

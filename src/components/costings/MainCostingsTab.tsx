@@ -16,11 +16,35 @@ import {
 // ── Tunables ──────────────────────────────────────────────────────────────────
 
 const MAX_SCENARIOS = 5;
-const ROW_LABEL_WIDTH = 168;
-const COL_MIN_WIDTH  = 150;
+const ROW_LABEL_WIDTH = 180;
+const COL_MIN_WIDTH  = 156;
 
 const fmtGBP = (v: number) => v.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtGBP4 = (v: number) => v.toLocaleString('en-GB', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+
+// ── Scenario colour palette (one per scenario, up to 5) ──────────────────────
+// Distinct accents — violet / indigo / teal / amber / rose — applied to each
+// scenario column header so values are easy to track across the two tables.
+
+export interface ScenarioPaletteEntry {
+  name: string;
+  headerFrom: string;
+  headerTo: string;
+  headerText: string;
+  tint: string;          // subtle column background
+  border: string;        // column border accent
+  chip: string;          // small label chip background
+}
+
+export const SCENARIO_PALETTE: ScenarioPaletteEntry[] = [
+  { name: 'violet', headerFrom: '#7c3aed', headerTo: '#6d28d9', headerText: '#4c1d95', tint: 'rgba(124,58,237,0.05)', border: 'rgba(124,58,237,0.22)', chip: 'rgba(124,58,237,0.12)' },
+  { name: 'indigo', headerFrom: '#4f46e5', headerTo: '#4338ca', headerText: '#312e81', tint: 'rgba(79,70,229,0.05)',  border: 'rgba(79,70,229,0.22)',  chip: 'rgba(79,70,229,0.12)'  },
+  { name: 'teal',   headerFrom: '#0d9488', headerTo: '#0f766e', headerText: '#134e4a', tint: 'rgba(13,148,136,0.05)', border: 'rgba(13,148,136,0.22)', chip: 'rgba(13,148,136,0.12)' },
+  { name: 'amber',  headerFrom: '#f59e0b', headerTo: '#d97706', headerText: '#78350f', tint: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.28)', chip: 'rgba(245,158,11,0.14)' },
+  { name: 'rose',   headerFrom: '#e11d48', headerTo: '#be123c', headerText: '#881337', tint: 'rgba(225,29,72,0.05)',  border: 'rgba(225,29,72,0.22)',  chip: 'rgba(225,29,72,0.12)'  },
+];
+
+const paletteFor = (i: number) => SCENARIO_PALETTE[i % SCENARIO_PALETTE.length];
 
 // ── Yes / No segmented toggle ─────────────────────────────────────────────────
 
@@ -59,29 +83,33 @@ function SummaryRow({
   marginPercents?: number[];
 }) {
   return (
-    <tr style={{ borderTop: isTotal ? '2px solid rgba(22,163,74,0.25)' : '1px solid rgba(22,163,74,0.08)' }}>
+    <tr>
       <td
-        className="px-3 py-2 font-mono text-[10px] uppercase tracking-wider sticky left-0 z-[1]"
+        className="px-3 py-2 text-[11px] uppercase tracking-wider sticky left-0 z-[1]"
         style={{
-          background: isTotal ? 'rgba(22,163,74,0.10)' : 'rgba(22,163,74,0.04)',
-          color: isTotal ? '#14532d' : 'rgba(20,83,45,0.6)',
+          background: isTotal ? 'rgba(22,163,74,0.12)' : 'rgba(22,163,74,0.05)',
+          color: isTotal ? '#14532d' : 'rgba(20,83,45,0.65)',
           fontWeight: isTotal ? 800 : 600,
           width: ROW_LABEL_WIDTH,
           minWidth: ROW_LABEL_WIDTH,
+          borderBottom: isTotal ? '2px solid rgba(22,163,74,0.3)' : '1px solid rgba(22,163,74,0.12)',
+          borderRight: '1px solid rgba(22,163,74,0.18)',
         }}
       >
         {label}
       </td>
       {values.map((v, i) => {
-        const isBest = isMargin && i === bestIdx && marginPercents && marginPercents.some(p => p !== 0);
+        const p = paletteFor(i);
+        const isBest = isMargin && i === bestIdx && marginPercents && marginPercents.some(pp => pp !== 0);
         const colour = isMargin && marginPercents ? gmColor(marginPercents[i]) : (isTotal ? '#14532d' : '#15803d');
         return (
           <td
             key={i}
             className="px-3 py-2 text-right font-mono"
             style={{
-              background: isBest ? 'rgba(22,163,74,0.10)' : 'transparent',
-              borderLeft: '1px solid rgba(22,163,74,0.08)',
+              background: isBest ? 'rgba(22,163,74,0.14)' : p.tint,
+              borderBottom: isTotal ? '2px solid rgba(22,163,74,0.3)' : '1px solid rgba(22,163,74,0.12)',
+              borderRight: '1px solid rgba(22,163,74,0.10)',
               color: colour,
               fontWeight: isTotal || isMargin ? 800 : 600,
               fontSize: isTotal || isMargin ? 13 : 11,
@@ -99,15 +127,17 @@ function SummaryRow({
 
 function ScenarioRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <tr style={{ borderTop: '1px solid rgba(124,58,237,0.08)' }}>
+    <tr>
       <td
-        className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider sticky left-0 z-[1]"
+        className="px-3 py-1.5 text-[11px] uppercase tracking-wider sticky left-0 z-[1]"
         style={{
-          background: 'rgba(124,58,237,0.05)',
-          color: 'rgba(76,29,149,0.7)',
+          background: 'rgba(99,102,241,0.06)',
+          color: 'rgba(67,56,202,0.85)',
           fontWeight: 600,
           width: ROW_LABEL_WIDTH,
           minWidth: ROW_LABEL_WIDTH,
+          borderBottom: '1px solid rgba(99,102,241,0.18)',
+          borderRight: '1px solid rgba(99,102,241,0.22)',
         }}
       >
         {label}
@@ -163,14 +193,15 @@ export function MainCostingsTab({
         / Math.max(product.caseWeightKg * (scenarios[0]?.casesPerContainer || 0), 1)
     : 0;
 
-  const COL_STYLE: React.CSSProperties = {
-    minWidth: COL_MIN_WIDTH,
-    borderLeft: '1px solid rgba(124,58,237,0.12)',
-  };
-
-  const SUM_COL_STYLE: React.CSSProperties = {
-    minWidth: COL_MIN_WIDTH,
-    borderLeft: '1px solid rgba(22,163,74,0.10)',
+  // Per-column tint + gridlines for the scenario input table
+  const colStyle = (i: number): React.CSSProperties => {
+    const p = paletteFor(i);
+    return {
+      minWidth: COL_MIN_WIDTH,
+      background: p.tint,
+      borderRight: '1px solid rgba(99,102,241,0.15)',
+      borderBottom: '1px solid rgba(99,102,241,0.15)',
+    };
   };
 
   return (
@@ -287,53 +318,68 @@ export function MainCostingsTab({
         </div>
       </Section>
 
-      {/* ─── 3. Costing Scenarios — VIOLET ─── */}
+      {/* ─── 3. Costing Scenarios — colour-coded per column ─── */}
       <Section title={`Costing Scenarios (${scenarios.length}/${MAX_SCENARIOS})`} icon={<Columns3 size={13} />} accent="violet">
-        <div className="overflow-x-auto" style={{ borderRadius: 12, border: '1px solid rgba(124,58,237,0.18)' }}>
+        <div className="overflow-x-auto" style={{ borderRadius: 12, border: '1px solid rgba(99,102,241,0.22)' }}>
           <table className="w-full text-xs" style={{ minWidth: ROW_LABEL_WIDTH + COL_MIN_WIDTH * scenarios.length, borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead>
               <tr>
                 <th
-                  className="px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-left sticky left-0 z-[2]"
-                  style={{ background: 'rgba(124,58,237,0.08)', color: '#6d28d9', width: ROW_LABEL_WIDTH, minWidth: ROW_LABEL_WIDTH }}
+                  className="px-3 py-2 text-[11px] uppercase tracking-widest text-left sticky left-0 z-[2]"
+                  style={{
+                    background: 'rgba(99,102,241,0.10)',
+                    color: '#3730a3',
+                    width: ROW_LABEL_WIDTH, minWidth: ROW_LABEL_WIDTH,
+                    fontWeight: 700,
+                    borderRight: '1px solid rgba(99,102,241,0.22)',
+                    borderBottom: '1px solid rgba(99,102,241,0.22)',
+                  }}
                 >
                   Field
                 </th>
-                {scenarios.map((s, i) => (
-                  <th
-                    key={i}
-                    className="px-2 py-2 text-left"
-                    style={{ background: 'rgba(124,58,237,0.08)', borderLeft: '1px solid rgba(124,58,237,0.15)', minWidth: COL_MIN_WIDTH }}
-                  >
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="text"
-                        value={s.label}
-                        onChange={e => onSetScenario(i, 'label', e.target.value)}
-                        className="flex-1 min-w-0 px-2 py-1 text-xs font-bold font-mono focus:outline-none"
-                        style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(124,58,237,0.25)', borderRadius: 6, color: '#4c1d95' }}
-                      />
-                      {scenarios.length > 1 && (
-                        <button
-                          onClick={() => onRemoveScenario(i)}
-                          className="p-1 rounded transition-colors"
-                          style={{ color: 'rgba(124,58,237,0.55)' }}
-                          onMouseEnter={e => (e.currentTarget.style.color = '#dc2626')}
-                          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(124,58,237,0.55)')}
-                          title="Remove scenario"
-                        >
-                          <Trash2 size={11} />
-                        </button>
-                      )}
-                    </div>
-                  </th>
-                ))}
+                {scenarios.map((s, i) => {
+                  const p = paletteFor(i);
+                  return (
+                    <th
+                      key={i}
+                      className="px-2 py-2 text-left"
+                      style={{
+                        background: `linear-gradient(135deg, ${p.headerFrom}, ${p.headerTo})`,
+                        borderRight: '1px solid rgba(0,0,0,0.08)',
+                        borderBottom: `2px solid ${p.headerTo}`,
+                        minWidth: COL_MIN_WIDTH,
+                      }}
+                    >
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={s.label}
+                          onChange={e => onSetScenario(i, 'label', e.target.value)}
+                          className="flex-1 min-w-0 px-2 py-1 text-xs font-bold focus:outline-none"
+                          style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 6, color: p.headerText }}
+                        />
+                        {scenarios.length > 1 && (
+                          <button
+                            onClick={() => onRemoveScenario(i)}
+                            className="p-1 rounded transition-colors"
+                            style={{ color: 'rgba(255,255,255,0.75)' }}
+                            onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.75)')}
+                            title="Remove scenario"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
               <ScenarioRow label="Sales Currency">
                 {scenarios.map((s, i) => (
-                  <td key={i} className="px-2 py-1.5" style={COL_STYLE}>
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
                     <SelectInputSm
                       value={s.salesCurrency}
                       onChange={v => onSetScenario(i, 'salesCurrency', v as SalesCurrency)}
@@ -344,7 +390,7 @@ export function MainCostingsTab({
               </ScenarioRow>
               <ScenarioRow label="€ → £ Rate">
                 {scenarios.map((s, i) => (
-                  <td key={i} className="px-2 py-1.5" style={COL_STYLE}>
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
                     <NumInputSm
                       value={s.eurGbpRate}
                       onChange={v => onSetScenario(i, 'eurGbpRate', v)}
@@ -356,7 +402,7 @@ export function MainCostingsTab({
               </ScenarioRow>
               <ScenarioRow label="Sales Price / Case">
                 {scenarios.map((s, i) => (
-                  <td key={i} className="px-2 py-1.5" style={COL_STYLE}>
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
                     <NumInputSm
                       value={s.salesPricePerCase}
                       onChange={v => onSetScenario(i, 'salesPricePerCase', v)}
@@ -368,21 +414,21 @@ export function MainCostingsTab({
               </ScenarioRow>
               <ScenarioRow label="$ → £ Rate">
                 {scenarios.map((s, i) => (
-                  <td key={i} className="px-2 py-1.5" style={COL_STYLE}>
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
                     <NumInputSm value={s.exchangeRateUSDGBP} onChange={v => onSetScenario(i, 'exchangeRateUSDGBP', v)} step={0.001} placeholder="1.27" />
                   </td>
                 ))}
               </ScenarioRow>
               <ScenarioRow label="Cases / Container">
                 {scenarios.map((s, i) => (
-                  <td key={i} className="px-2 py-1.5" style={COL_STYLE}>
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
                     <NumInputSm value={s.casesPerContainer} onChange={v => onSetScenario(i, 'casesPerContainer', Math.max(0, Math.floor(v)))} step={1} placeholder="1500" />
                   </td>
                 ))}
               </ScenarioRow>
               <ScenarioRow label="Incoterms">
                 {scenarios.map((s, i) => (
-                  <td key={i} className="px-2 py-1.5" style={COL_STYLE}>
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
                     <SelectInputSm
                       value={s.incoterms}
                       onChange={v => onSetScenario(i, 'incoterms', v as Incoterms)}
@@ -393,28 +439,28 @@ export function MainCostingsTab({
               </ScenarioRow>
               <ScenarioRow label="Freight Cost $">
                 {scenarios.map((s, i) => (
-                  <td key={i} className="px-2 py-1.5" style={COL_STYLE}>
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
                     <NumInputSm value={s.freightCostUSD} onChange={v => onSetScenario(i, 'freightCostUSD', v)} prefix="$" step={50} placeholder="3500" />
                   </td>
                 ))}
               </ScenarioRow>
               <ScenarioRow label="Customs Agent / Port">
                 {scenarios.map((s, i) => (
-                  <td key={i} className="px-2 py-1.5" style={COL_STYLE}>
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
                     <SelectInputSm value={s.agentPort} onChange={v => onSetScenario(i, 'agentPort', v)} options={agentOptions} />
                   </td>
                 ))}
               </ScenarioRow>
               <ScenarioRow label="Transport £/Container">
                 {scenarios.map((s, i) => (
-                  <td key={i} className="px-2 py-1.5" style={COL_STYLE}>
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
                     <NumInputSm value={s.transportCostGBP} onChange={v => onSetScenario(i, 'transportCostGBP', v)} prefix="£" step={10} placeholder="550" />
                   </td>
                 ))}
               </ScenarioRow>
               <ScenarioRow label="Licence Cost £/kg">
                 {scenarios.map((s, i) => (
-                  <td key={i} className="px-2 py-1.5" style={COL_STYLE}>
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
                     <NumInputSm value={s.licenceCostPerKgGBP} onChange={v => onSetScenario(i, 'licenceCostPerKgGBP', v)} prefix="£" step={0.01} placeholder="0.40" />
                   </td>
                 ))}
@@ -440,36 +486,47 @@ export function MainCostingsTab({
         )}
       </Section>
 
-      {/* ─── 4. Summary — GREEN ─── */}
+      {/* ─── 4. Summary — colour-coded per column ─── */}
       <Section title="Summary" icon={<Trophy size={13} />} accent="green">
-        <div className="overflow-x-auto" style={{ borderRadius: 12, border: '1px solid rgba(22,163,74,0.18)' }}>
+        <div className="overflow-x-auto" style={{ borderRadius: 12, border: '1px solid rgba(22,163,74,0.22)' }}>
           <table className="w-full text-xs" style={{ minWidth: ROW_LABEL_WIDTH + COL_MIN_WIDTH * scenarios.length, borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead>
               <tr>
                 <th
-                  className="px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-left sticky left-0 z-[2]"
-                  style={{ background: 'rgba(22,163,74,0.10)', color: '#14532d', width: ROW_LABEL_WIDTH, minWidth: ROW_LABEL_WIDTH }}
+                  className="px-3 py-2 text-[11px] uppercase tracking-widest text-left sticky left-0 z-[2]"
+                  style={{
+                    background: 'rgba(22,163,74,0.12)',
+                    color: '#14532d',
+                    width: ROW_LABEL_WIDTH, minWidth: ROW_LABEL_WIDTH,
+                    fontWeight: 700,
+                    borderRight: '1px solid rgba(22,163,74,0.22)',
+                    borderBottom: '2px solid rgba(22,163,74,0.25)',
+                  }}
                 >
                   Costing Scenario
                 </th>
-                {scenarios.map((s, i) => (
-                  <th
-                    key={i}
-                    className="px-3 py-2 text-right font-mono text-xs"
-                    style={{
-                      background: i === bestIdx ? 'rgba(22,163,74,0.18)' : 'rgba(22,163,74,0.08)',
-                      borderLeft: '1px solid rgba(22,163,74,0.15)',
-                      color: '#14532d',
-                      minWidth: COL_MIN_WIDTH,
-                      fontWeight: 800,
-                    }}
-                  >
-                    <div className="flex items-center justify-end gap-1.5">
-                      {i === bestIdx && results[i].gmPercent > 0 && <Trophy size={10} style={{ color: '#ca8a04' }} />}
-                      {s.label}
-                    </div>
-                  </th>
-                ))}
+                {scenarios.map((s, i) => {
+                  const p = paletteFor(i);
+                  return (
+                    <th
+                      key={i}
+                      className="px-3 py-2 text-right text-xs"
+                      style={{
+                        background: `linear-gradient(135deg, ${p.headerFrom}, ${p.headerTo})`,
+                        borderRight: '1px solid rgba(0,0,0,0.08)',
+                        borderBottom: `2px solid ${p.headerTo}`,
+                        color: '#fff',
+                        minWidth: COL_MIN_WIDTH,
+                        fontWeight: 800,
+                      }}
+                    >
+                      <div className="flex items-center justify-end gap-1.5">
+                        {i === bestIdx && results[i].gmPercent > 0 && <Trophy size={10} style={{ color: '#fde68a' }} />}
+                        {s.label}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -498,9 +555,10 @@ export function MainCostingsTab({
           </table>
         </div>
 
-        {/* GM headline cards beneath the table */}
+        {/* GM headline cards beneath the table — colour-coded per scenario */}
         <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(scenarios.length, 5)}, minmax(0, 1fr))` }}>
           {results.map((r, i) => {
+            const p = paletteFor(i);
             const gc = gmColor(r.gmPercent);
             const isBest = i === bestIdx && r.gmPercent > 0;
             return (
@@ -508,17 +566,24 @@ export function MainCostingsTab({
                 key={i}
                 className="p-3 rounded-xl"
                 style={{
-                  background: isBest ? 'rgba(22,163,74,0.10)' : 'rgba(255,255,255,0.6)',
-                  border: `1.5px solid ${isBest ? 'rgba(22,163,74,0.45)' : 'rgba(22,163,74,0.15)'}`,
+                  background: p.tint,
+                  border: `1.5px solid ${isBest ? 'rgba(22,163,74,0.55)' : p.border}`,
+                  boxShadow: isBest ? '0 0 0 1px rgba(22,163,74,0.25)' : 'none',
                 }}
               >
-                <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.55)' }}>
-                  {scenarios[i]?.label ?? `Scenario ${i + 1}`}
-                </p>
-                <div className="flex items-center gap-1.5 mt-1">
+                <div className="flex items-center justify-between">
+                  <span
+                    className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider"
+                    style={{ background: p.chip, color: p.headerText, fontWeight: 700 }}
+                  >
+                    {scenarios[i]?.label ?? `Scenario ${i + 1}`}
+                  </span>
+                  {isBest && <Trophy size={11} style={{ color: '#ca8a04' }} />}
+                </div>
+                <div className="flex items-center gap-1.5 mt-2">
                   {r.gmPercent >= 0
-                    ? <TrendingUp size={12} style={{ color: gc }} />
-                    : <TrendingDown size={12} style={{ color: gc }} />}
+                    ? <TrendingUp size={13} style={{ color: gc }} />
+                    : <TrendingDown size={13} style={{ color: gc }} />}
                   <span className="text-xl font-black" style={{ color: gc }}>{r.gmPercent.toFixed(1)}%</span>
                 </div>
                 <p className="font-mono text-[10px] mt-1" style={{ color: 'rgba(20,83,45,0.6)' }}>

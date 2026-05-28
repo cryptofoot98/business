@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
-  Save, Trash2, FolderOpen, RotateCcw,
+  Save, Trash2, FolderOpen, RotateCcw, FileDown,
   Package, Layers, BarChart2, Settings, Loader, X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,6 +15,7 @@ import {
   DEFAULT_LICENCE_COST_PER_KG, DEFAULT_TRANSPORT_COSTS,
 } from '../data/costingRates';
 import { computeCostingModelScenario } from '../utils/costingCalc';
+import { exportCostingPdf } from '../utils/costingPdf';
 import { saveCostingCalculation, fetchCostingCalculations, deleteCostingCalculation } from '../lib/costings';
 import { MainCostingsTab } from '../components/costings/MainCostingsTab';
 import { NpdCostingsTab } from '../components/costings/NpdCostingsTab';
@@ -323,6 +324,13 @@ export function CostingsPage() {
     setSaveError(null);
   }
 
+  function handleExportPdf() {
+    exportCostingPdf({
+      name: saveName.trim() || product.productCode || product.description || 'Costing',
+      product, container, scenarios, results, settings,
+    });
+  }
+
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'transparent' }}>
 
@@ -352,6 +360,12 @@ export function CostingsPage() {
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
                 style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
                 <RotateCcw size={12} /> Reset
+              </button>
+              <button
+                onClick={handleExportPdf}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
+                <FileDown size={12} /> PDF
               </button>
               <input
                 type="text" value={saveName} onChange={e => { setSaveName(e.target.value); setSaveError(null); }}
