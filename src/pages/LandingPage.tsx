@@ -215,14 +215,7 @@ export function LandingPage({ onGetStarted }: Props) {
       >
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div style={{
-              background: 'rgba(245, 158, 11, 0.12)',
-              border: '1px solid rgba(245, 158, 11, 0.25)',
-              borderRadius: 10,
-              padding: 2,
-            }}>
-              <img src="/iO_smartcontainer.png" alt="iO Smart Container" className="w-8 h-8 rounded-lg object-cover" />
-            </div>
+            <img src="/business_logo.png" alt="iO Smart Container" className="w-10 h-10 object-contain shrink-0" />
             <div className="flex flex-col justify-center">
               <span className="font-bold text-base leading-none" style={{ color: '#1a1410' }}>iO Smart Container</span>
               <span className="hidden sm:block text-[10px] font-medium mt-0.5" style={{ color: 'rgba(90, 74, 61, 0.38)', letterSpacing: '0.12em' }}>by Eric Tavares</span>
@@ -611,7 +604,7 @@ export function LandingPage({ onGetStarted }: Props) {
       <footer className="py-10 px-6" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src="/iO_smartcontainer.png" alt="iO Smart Container" className="w-7 h-7 rounded-md object-cover" style={{ opacity: 0.85 }} />
+            <img src="/business_logo.png" alt="iO Smart Container" className="w-8 h-8 object-contain" style={{ opacity: 0.9 }} />
             <span className="font-bold text-sm" style={{ color: '#1a1410' }}>iO Smart Container</span>
           </div>
           <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: 'rgba(90, 74, 61, 0.28)' }}>

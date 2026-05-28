@@ -84,18 +84,11 @@ export function Header({
             <Icon name={sidebarOpen ? 'close' : 'menu'} size={16} />
           </button>
 
-          <div style={{
-            background: palette.surfaceSoft,
-            border: `1px solid rgba(245,158,11,0.20)`,
-            borderRadius: 12,
-            padding: 2,
-          }}>
-            <img
-              src="/iO_smartcontainer.png"
-              alt="iO Smart Container"
-              className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-md object-cover"
-            />
-          </div>
+          <img
+            src="/business_logo.png"
+            alt="iO Smart Container"
+            className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 object-contain"
+          />
           <div className="flex flex-col justify-center min-w-0">
             <h1 className="font-bold text-sm sm:text-base leading-none truncate" style={{ color: palette.ink }}>iO Smart Container</h1>
             <span className="hidden sm:block text-[9px] sm:text-[10px] leading-none mt-0.5 font-medium" style={{ color: palette.inkFaint, letterSpacing: '0.1em' }}>by Eric Tavares</span>

@@ -74,14 +74,7 @@ export function AuthPage() {
       >
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <div style={{
-            background: 'rgba(245, 158, 11, 0.1)',
-            border: '1px solid rgba(245, 158, 11, 0.25)',
-            borderRadius: 12,
-            padding: 3,
-          }}>
-            <img src="/iO_smartcontainer.png" alt="iO Smart Container" className="w-8 h-8 rounded-lg object-cover" />
-          </div>
+          <img src="/business_logo.png" alt="iO Smart Container" className="w-12 h-12 object-contain" />
           <span className="font-bold text-lg" style={{ color: '#1a1410' }}>Smart Container</span>
         </div>
 
