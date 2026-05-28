@@ -10,6 +10,8 @@ import { MultiContainerPlanner } from './components/MultiContainerPlanner';
 import { SavedLoadsPanel } from './components/SavedLoadsPanel';
 import { ChatFAB } from './components/chat/ChatFAB';
 import { ChatPanel } from './components/chat/ChatPanel';
+import { AlgorithmExplainer } from './components/AlgorithmExplainer';
+import { Icon } from './components/Icon';
 import { AuthPage } from './pages/AuthPage';
 import { LandingPage } from './pages/LandingPage';
 import { CostingsPage } from './pages/CostingsPage';
@@ -140,6 +142,7 @@ function MainApp() {
   const [sidebarOpen, setSidebarOpen] = useState(false);          // mobile open/close
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // desktop collapse to icon strip
   const [productMode, setProductMode] = useState<'single' | 'multi'>('single');
+  const [algoOpen, setAlgoOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
@@ -573,6 +576,25 @@ function MainApp() {
           }}
         >
           <div className="flex-1 overflow-y-auto p-4 scrollbar-brut">
+            {/* How-it-works pill — opens the algorithm explainer modal */}
+            <button
+              onClick={() => setAlgoOpen(true)}
+              className="w-full mb-3 flex items-center justify-between px-3 py-2 text-xs font-semibold transition-all"
+              style={{
+                background: 'linear-gradient(135deg, #fef3c7, #fed7aa)',
+                border: '1px solid rgba(245,158,11,0.25)',
+                borderRadius: 12,
+                color: '#78350f',
+              }}
+              title="See how the packing algorithm works (presentation-friendly)"
+            >
+              <span className="flex items-center gap-1.5">
+                <span style={{ fontSize: 14 }}>📐</span>
+                How it works
+              </span>
+              <Icon name="arrowright" size={11} />
+            </button>
+
             {multiContainerResult && (
               <div className="mb-4">
                 <MultiContainerPlanner
@@ -590,6 +612,9 @@ function MainApp() {
             />
           </div>
         </aside>
+
+        {/* Algorithm explainer modal */}
+        <AlgorithmExplainer open={algoOpen} onClose={() => setAlgoOpen(false)} />
 
         {/* Container AI chat — scoped to /container so the panel never appears on /costings */}
         {user && session && (

@@ -82,38 +82,48 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
 
   return (
     <>
-      <div className="fixed inset-0 z-40" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }} onClick={onClose} />
+      <div className="fixed inset-0 z-40" style={{ background: 'rgba(26,20,16,0.35)', backdropFilter: 'blur(4px)' }} onClick={onClose} />
 
       <div
-        className="fixed right-0 top-0 h-full w-full max-w-sm z-50 flex flex-col overflow-hidden"
+        className="fixed right-3 top-3 bottom-3 w-full max-w-sm z-50 flex flex-col overflow-hidden"
         style={{
-          background: 'linear-gradient(180deg, #0a2218 0%, #0d2d1e 100%)',
-          borderLeft: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '-20px 0 60px rgba(0,0,0,0.35)',
+          background: '#ffffff',
+          border: '1px solid rgba(26,20,16,0.06)',
+          borderRadius: 24,
+          boxShadow: '0 16px 48px rgba(26,20,16,0.14)',
         }}
       >
-        {/* Header */}
+        {/* Header — soft amber band, matches chat panel header */}
         <div
           className="flex items-center justify-between px-5 py-4 shrink-0"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)' }}
+          style={{
+            background: 'linear-gradient(135deg, #fef3c7, #fed7aa)',
+            borderBottom: '1px solid rgba(26,20,16,0.06)',
+          }}
         >
-          <div>
-            <h2 className="font-bold text-base uppercase tracking-tight text-white leading-none">Saved Loads</h2>
-            <p className="font-mono text-[9px] uppercase tracking-widest mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              {loads.length} load{loads.length !== 1 ? 's' : ''} saved
-            </p>
+          <div className="flex items-center gap-2 min-w-0">
+            <span style={{ fontSize: 16 }}>📁</span>
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-widest" style={{ color: '#78350f' }}>
+                Saved Loads
+              </h2>
+              <p className="text-[10px] mt-0.5" style={{ color: 'rgba(120,53,15,0.65)' }}>
+                {loads.length} load{loads.length !== 1 ? 's' : ''} saved
+              </p>
+            </div>
           </div>
-          <button onClick={onClose} className="p-1.5 transition-colors" style={{ color: 'rgba(255,255,255,0.4)' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-full transition-colors shrink-0"
+            style={{ color: 'rgba(120,53,15,0.6)', background: 'rgba(255,255,255,0.5)' }}
           >
-            <Icon name="close" size={18} />
+            <Icon name="close" size={14} />
           </button>
         </div>
 
         {/* Save section */}
-        <div className="p-4 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest mb-2.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
+        <div className="p-4 shrink-0" style={{ borderBottom: '1px solid rgba(26,20,16,0.06)', background: '#ffffff' }}>
+          <p className="text-[10px] font-semibold uppercase tracking-widest mb-2.5" style={{ color: 'rgba(90,74,61,0.55)' }}>
             Save current configuration
           </p>
           <div className="flex gap-2">
@@ -125,38 +135,52 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
               onKeyDown={e => e.key === 'Enter' && handleSave()}
               placeholder="e.g. Xmas Shipment 2025"
               maxLength={80}
-              className="flex-1 px-3 py-2.5 text-sm font-medium text-white placeholder:text-white/25 focus:outline-none rounded-xl transition-all"
+              className="flex-1 px-3 py-2.5 text-sm focus:outline-none transition-all"
               style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.14)',
+                background: '#fffaf0',
+                border: '1px solid rgba(26,20,16,0.08)',
+                borderRadius: 12,
+                color: '#1a1410',
               }}
-              onFocus={e => (e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.5)')}
-              onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)')}
+              onFocus={e => (e.currentTarget.style.borderColor = '#f59e0b')}
+              onBlur={e => (e.currentTarget.style.borderColor = 'rgba(26,20,16,0.08)')}
             />
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-3.5 py-2.5 text-white text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 shrink-0 transition-all rounded-xl"
-              style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 2px 10px rgba(245, 158, 11, 0.35)' }}
+              className="px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 shrink-0 transition-all disabled:opacity-40"
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                color: '#fff',
+                borderRadius: 12,
+                boxShadow: '0 6px 20px rgba(245, 158, 11, 0.30)',
+                border: '1px solid rgba(255,255,255,0.30)',
+              }}
             >
               {isSaving ? <Spinner size={13} /> : <Icon name="bookmarkplus" size={13} />}
               Save
             </button>
           </div>
-          {saveError && <p className="font-mono text-[10px] font-semibold mt-1.5" style={{ color: '#f87171' }}>{saveError}</p>}
+          {saveError && (
+            <p className="text-[10px] mt-1.5 font-semibold" style={{ color: '#dc2626' }}>{saveError}</p>
+          )}
         </div>
 
         {/* Load list */}
-        <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(245, 158, 11, 0.22) transparent' }}>
+        <div className="flex-1 overflow-y-auto" style={{ background: '#fffaf0' }}>
           {fetching ? (
             <div className="flex items-center justify-center py-10">
-              <Spinner size={18}  style={{ color: 'rgba(255,255,255,0.3)' }} />
+              <Spinner size={18} style={{ color: '#d97706' }} />
             </div>
           ) : loads.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-              <Icon name="folder" size={28} className="mb-3" style={{ color: 'rgba(255,255,255,0.12)' }} />
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.22)' }}>No saved loads yet</p>
-              <p className="font-mono text-[9px] mt-1" style={{ color: 'rgba(255,255,255,0.14)' }}>Configure a load above and save it</p>
+              <Icon name="folder" size={28} className="mb-3" style={{ color: 'rgba(90,74,61,0.25)' }} />
+              <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(90,74,61,0.55)' }}>
+                No saved loads yet
+              </p>
+              <p className="text-[10px] mt-1" style={{ color: 'rgba(90,74,61,0.4)' }}>
+                Configure a load above and save it
+              </p>
             </div>
           ) : (
             <div className="p-4 space-y-2.5">
@@ -167,8 +191,13 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                 return (
                   <div
                     key={load.id}
-                    className="rounded-2xl overflow-hidden"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}
+                    className="overflow-hidden"
+                    style={{
+                      background: '#ffffff',
+                      border: '1px solid rgba(26,20,16,0.06)',
+                      borderRadius: 16,
+                      boxShadow: '0 2px 8px rgba(26,20,16,0.04)',
+                    }}
                   >
                     <div className="px-3.5 pt-3 pb-2.5">
                       {isEditing ? (
@@ -180,34 +209,38 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                             onKeyDown={e => { if (e.key === 'Enter') handleRename(load.id); if (e.key === 'Escape') setEditingId(null); }}
                             autoFocus
                             maxLength={80}
-                            className="flex-1 px-2 py-1 text-sm font-medium text-white focus:outline-none rounded-lg"
-                            style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(245, 158, 11, 0.4)' }}
+                            className="flex-1 px-2 py-1 text-sm focus:outline-none"
+                            style={{ background: '#fffaf0', border: '1px solid #f59e0b', borderRadius: 8, color: '#1a1410' }}
                           />
-                          <button onClick={() => handleRename(load.id)} style={{ color: '#4ade80' }}>
-                            <Icon name="check" size={14} />
+                          <button onClick={() => handleRename(load.id)} className="p-1.5 rounded-full" style={{ color: '#10b981', background: 'rgba(16,185,129,0.10)' }}>
+                            <Icon name="check" size={12} />
                           </button>
-                          <button onClick={() => setEditingId(null)} style={{ color: 'rgba(255,255,255,0.3)' }}>
-                            <Icon name="close" size={14} />
+                          <button onClick={() => setEditingId(null)} className="p-1.5 rounded-full" style={{ color: 'rgba(90,74,61,0.5)', background: '#fffaf0' }}>
+                            <Icon name="close" size={12} />
                           </button>
                         </div>
                       ) : (
-                        <div className="flex items-start justify-between gap-2 mb-1.5">
-                          <span className="font-semibold text-sm text-white leading-tight flex-1">{load.name}</span>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <span className="font-semibold text-sm leading-tight flex-1" style={{ color: '#1a1410' }}>{load.name}</span>
                           <div className="flex items-center gap-1 shrink-0">
                             <button
                               onClick={() => { setEditingId(load.id); setEditName(load.name); }}
-                              style={{ color: 'rgba(255,255,255,0.22)', padding: 4 }}
-                              onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-                              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.22)')}
+                              className="p-1.5 rounded-full transition-colors"
+                              style={{ color: 'rgba(90,74,61,0.5)' }}
+                              onMouseEnter={e => { e.currentTarget.style.color = '#d97706'; e.currentTarget.style.background = '#fef3c7'; }}
+                              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(90,74,61,0.5)'; e.currentTarget.style.background = 'transparent'; }}
+                              title="Rename"
                             >
                               <Icon name="pencil" size={11} />
                             </button>
                             <button
                               onClick={() => handleDelete(load.id)}
                               disabled={isDeleting}
-                              style={{ color: 'rgba(255,255,255,0.22)', padding: 4 }}
-                              onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
-                              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.22)')}
+                              className="p-1.5 rounded-full transition-colors"
+                              style={{ color: 'rgba(90,74,61,0.5)' }}
+                              onMouseEnter={e => { e.currentTarget.style.color = '#dc2626'; e.currentTarget.style.background = 'rgba(220,38,38,0.08)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(90,74,61,0.5)'; e.currentTarget.style.background = 'transparent'; }}
+                              title="Delete"
                             >
                               {isDeleting ? <Spinner size={11} /> : <Icon name="trash" size={11} />}
                             </button>
@@ -217,43 +250,43 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
 
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span
-                          className="inline-flex items-center px-2 py-0.5 rounded-full font-mono text-[9px] font-semibold uppercase"
-                          style={{ background: 'rgba(245, 158, 11, 0.25)', border: '1px solid rgba(245, 158, 11, 0.35)', color: 'rgba(134,239,172,0.9)' }}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
+                          style={{ background: '#fef3c7', border: '1px solid rgba(245,158,11,0.28)', color: '#78350f' }}
                         >
                           {getContainerLabel(load.container_id)}
                         </span>
                         <span
-                          className="inline-flex items-center px-2 py-0.5 rounded-full font-mono text-[9px] font-semibold uppercase"
-                          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.45)' }}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
+                          style={{ background: '#fffaf0', border: '1px solid rgba(26,20,16,0.08)', color: 'rgba(90,74,61,0.75)' }}
                         >
                           {load.loading_mode}
                         </span>
                         <span
-                          className="inline-flex items-center px-2 py-0.5 rounded-full font-mono text-[9px] font-semibold uppercase"
-                          style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.45)' }}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
+                          style={{ background: '#fffaf0', border: '1px solid rgba(26,20,16,0.08)', color: 'rgba(90,74,61,0.75)' }}
                         >
                           {(load.products as { id: string }[]).length} product{(load.products as { id: string }[]).length !== 1 ? 's' : ''}
                         </span>
                       </div>
 
-                      <p className="font-mono text-[9px] mt-1.5" style={{ color: 'rgba(255,255,255,0.2)' }}>{timeAgo(load.updated_at)}</p>
+                      <p className="text-[10px] mt-2" style={{ color: 'rgba(90,74,61,0.45)' }}>{timeAgo(load.updated_at)}</p>
                     </div>
 
                     <button
                       onClick={() => { onLoadSelect(load); onClose(); }}
-                      className="w-full py-2.5 text-[10px] font-semibold uppercase tracking-wider text-center transition-all rounded-none"
+                      className="w-full py-2.5 text-[10px] font-semibold uppercase tracking-wider text-center transition-all"
                       style={{
-                        color: 'rgba(134,239,172,0.6)',
-                        background: 'rgba(245, 158, 11, 0.07)',
-                        borderTop: '1px solid rgba(245, 158, 11, 0.15)',
+                        color: '#d97706',
+                        background: '#fef3c7',
+                        borderTop: '1px solid rgba(245,158,11,0.20)',
                       }}
                       onMouseEnter={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(245, 158, 11, 0.18)';
-                        (e.currentTarget as HTMLButtonElement).style.color = 'rgba(134,239,172,1)';
+                        (e.currentTarget as HTMLButtonElement).style.background = '#fed7aa';
+                        (e.currentTarget as HTMLButtonElement).style.color = '#b45309';
                       }}
                       onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(245, 158, 11, 0.07)';
-                        (e.currentTarget as HTMLButtonElement).style.color = 'rgba(134,239,172,0.6)';
+                        (e.currentTarget as HTMLButtonElement).style.background = '#fef3c7';
+                        (e.currentTarget as HTMLButtonElement).style.color = '#d97706';
                       }}
                     >
                       Load this configuration
