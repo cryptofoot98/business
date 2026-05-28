@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Header } from './components/Header';
 import { ContainerSelector } from './components/ContainerSelector';
 import { ProductForm } from './components/ProductForm';
@@ -353,32 +354,25 @@ function MainApp() {
 
   const activeProductColors = products.map(p => p.color);
 
-  const [activePage, setActivePage] = useState<'calculator' | 'costings'>('calculator');
+  // ── Routing ────────────────────────────────────────────────────────────────
+  // Derive activePage from the current URL so the Header can light up the
+  // correct tab. The Routes block below renders the actual page content.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const activePage: 'calculator' | 'costings' =
+    location.pathname.startsWith('/costings') ? 'costings' : 'calculator';
 
-  return (
-    <div
-      className="flex flex-col h-screen overflow-hidden"
-      style={{ color: '#1a1410' }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      <Header
-        unit={unit}
-        onUnitChange={setUnit}
-        onOpenSaves={() => setSavesOpen(true)}
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={() => setSidebarOpen(o => !o)}
-        activePage={activePage}
-        onNavigate={setActivePage}
-      />
+  const navigateTo = useCallback(
+    (page: 'calculator' | 'costings') => {
+      navigate(page === 'costings' ? '/costings' : '/container');
+    },
+    [navigate],
+  );
 
-      {activePage === 'costings' && (
-        <div className="flex-1 overflow-hidden">
-          <CostingsPage />
-        </div>
-      )}
-
-      {activePage === 'calculator' && <div className="flex flex-1 overflow-hidden relative px-2 sm:px-3 pb-3 gap-3">
+  // The calculator screen content (kept inline to preserve shared state +
+  // chat context). The Routes block below mounts it at /container.
+  const calculatorContent = (
+    <div className="flex flex-1 overflow-hidden relative px-2 sm:px-3 pb-3 gap-3">
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black/40 z-20 lg:hidden"
@@ -596,7 +590,32 @@ function MainApp() {
             />
           </div>
         </aside>
-      </div>}
+      </div>
+  );
+
+  return (
+    <div
+      className="flex flex-col h-screen overflow-hidden"
+      style={{ color: '#1a1410' }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <Header
+        unit={unit}
+        onUnitChange={setUnit}
+        onOpenSaves={() => setSavesOpen(true)}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen(o => !o)}
+        activePage={activePage}
+        onNavigate={navigateTo}
+      />
+
+      <Routes>
+        <Route path="/" element={<Navigate to="/container" replace />} />
+        <Route path="/container" element={calculatorContent} />
+        <Route path="/costings" element={<div className="flex-1 overflow-hidden"><CostingsPage /></div>} />
+        <Route path="*" element={<Navigate to="/container" replace />} />
+      </Routes>
 
       {user && (
         <SavedLoadsPanel

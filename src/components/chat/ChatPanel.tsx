@@ -109,79 +109,99 @@ export function ChatPanel({ open, userId, session, firstName, context, onApplyAc
 
   return (
     <div
-      className={`fixed bottom-0 right-0 z-40 flex flex-col transition-all duration-300 ease-in-out ${
+      className={`fixed z-40 flex flex-col transition-all duration-300 ease-in-out ${
         open ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-4 opacity-0 pointer-events-none'
       }`}
       style={{
-        width: '420px',
-        height: 'calc(100vh - 64px)',
-        bottom: '0',
-        right: '0',
+        width: 'min(420px, calc(100vw - 32px))',
+        height: 'min(640px, calc(100vh - 140px))',
+        bottom: 96,
+        right: 24,
       }}
     >
       <div
-        className="flex flex-col h-full border-l-2 border-t-2 border-brut-hdr-dark"
-        style={{ backgroundColor: '#091520' }}
+        className="flex flex-col h-full overflow-hidden"
+        style={{
+          background: '#ffffff',
+          border: '1px solid rgba(26,20,16,0.06)',
+          borderRadius: 24,
+          boxShadow: '0 16px 48px rgba(26,20,16,0.14)',
+        }}
       >
+        {/* Header band — soft amber tint */}
         <div
-          className="flex items-center justify-between px-5 py-4 border-b-2 border-brut-hdr-dark shrink-0"
-          style={{ backgroundColor: '#0e1a14' }}
+          className="flex items-center justify-between px-5 py-4 shrink-0"
+          style={{
+            background: 'linear-gradient(135deg, #fef3c7, #fed7aa)',
+            borderBottom: '1px solid rgba(26,20,16,0.06)',
+          }}
         >
-          <div className="flex flex-col gap-0.5">
-            <div className="flex items-center gap-2.5">
-              <div className="w-2 h-2 rounded-full bg-brut-hdr" />
-              <span className="font-mono text-xs font-bold uppercase tracking-widest text-white/70">
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <div className="flex items-center gap-2">
+              <span style={{ fontSize: 14 }}>🤖</span>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#78350f' }}>
                 AI Loading Advisor
               </span>
             </div>
-            <span className="font-mono text-[9px] text-white/30 ml-4.5 tracking-wide">{contextSummary}</span>
+            <span className="text-[10px] mt-0.5 truncate" style={{ color: 'rgba(120,53,15,0.65)' }}>{contextSummary}</span>
           </div>
           <button
             onClick={handleClear}
-            className="text-white/40 hover:text-white/70 transition-colors"
+            className="p-1.5 rounded-full transition-colors shrink-0"
+            style={{ color: 'rgba(120,53,15,0.6)', background: 'rgba(255,255,255,0.5)' }}
             title="Clear conversation"
           >
-            <Icon name="trash" size={14} />
+            <Icon name="trash" size={13} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-brut">
-          {messages.map(msg => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
+        {/* Message stream */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" style={{ background: '#fffaf0' }}>
+          {messages.map(msg => {
+            const isUser = msg.role === 'user';
+            return (
               <div
-                className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'bg-brut-hdr text-white border-2 border-brut-hdr-dark'
-                    : 'bg-white/10 text-white/90 border-2 border-white/10'
-                }`}
-                style={{
-                  boxShadow: msg.role === 'user'
-                    ? '2px 2px 0px rgba(0,0,0,0.4)'
-                    : '2px 2px 0px rgba(0,0,0,0.2)',
-                }}
+                key={msg.id}
+                className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
               >
-                {msg.content}
-                {msg.action && msg.action.type !== 'suggest_only' && (
-                  <div className="mt-2 pt-2 border-t border-white/15 font-mono text-[9px] text-white/40 uppercase tracking-wider">
-                    {msg.action.type === 'setup' && 'Applied: full setup'}
-                    {msg.action.type === 'update_product' && `Applied: product ${(msg.action.product_index ?? 0) + 1} updated`}
-                    {msg.action.type === 'update_container' && 'Applied: container changed'}
-                  </div>
-                )}
+                <div
+                  className="max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed"
+                  style={{
+                    background: isUser ? 'linear-gradient(135deg, #f59e0b, #d97706)' : '#ffffff',
+                    color: isUser ? '#fff' : '#1a1410',
+                    borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                    border: isUser ? 'none' : '1px solid rgba(26,20,16,0.06)',
+                    boxShadow: isUser ? '0 4px 12px rgba(245,158,11,0.20)' : '0 2px 8px rgba(26,20,16,0.04)',
+                  }}
+                >
+                  {msg.content}
+                  {msg.action && msg.action.type !== 'suggest_only' && (
+                    <div className="mt-2 pt-2 text-[10px] uppercase tracking-wider" style={{
+                      borderTop: `1px solid ${isUser ? 'rgba(255,255,255,0.25)' : 'rgba(26,20,16,0.08)'}`,
+                      color: isUser ? 'rgba(255,255,255,0.85)' : 'rgba(90,74,61,0.7)',
+                    }}>
+                      {msg.action.type === 'setup' && '✓ Applied — full setup'}
+                      {msg.action.type === 'update_product' && `✓ Applied — product ${(msg.action.product_index ?? 0) + 1}`}
+                      {msg.action.type === 'update_container' && '✓ Applied — container changed'}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {loading && (
             <div className="flex justify-start">
               <div
-                className="px-4 py-3 bg-white/10 border-2 border-white/10"
-                style={{ boxShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}
+                className="px-3.5 py-2.5"
+                style={{
+                  background: '#ffffff',
+                  borderRadius: '16px 16px 16px 4px',
+                  border: '1px solid rgba(26,20,16,0.06)',
+                  boxShadow: '0 2px 8px rgba(26,20,16,0.04)',
+                }}
               >
-                <Spinner size={14} style={{ color: 'rgba(255,255,255,0.5)' }} />
+                <Spinner size={14} style={{ color: '#d97706' }} />
               </div>
             </div>
           )}
@@ -189,36 +209,49 @@ export function ChatPanel({ open, userId, session, firstName, context, onApplyAc
           <div ref={bottomRef} />
         </div>
 
+        {/* Composer */}
         <div
-          className="shrink-0 border-t-2 border-brut-hdr-dark p-4"
-          style={{ backgroundColor: '#0e1a14' }}
+          className="shrink-0 p-3"
+          style={{
+            background: '#ffffff',
+            borderTop: '1px solid rgba(26,20,16,0.06)',
+          }}
         >
-          <div className="flex gap-3 items-end">
+          <div className="flex gap-2 items-end">
             <textarea
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               rows={1}
-              placeholder="Ask about fit, optimization, weight, dimensions..."
-              className="flex-1 resize-none bg-white/8 border-2 border-white/15 text-white text-sm px-4 py-3 placeholder-white/30 outline-none focus:border-brut-hdr transition-colors leading-relaxed"
+              placeholder="Ask about fit, optimization, weight…"
+              className="flex-1 resize-none text-sm px-3 py-2.5 outline-none transition-colors leading-relaxed"
               style={{
-                minHeight: '46px',
-                maxHeight: '120px',
-                backgroundColor: 'rgba(255,255,255,0.06)',
+                minHeight: 42,
+                maxHeight: 120,
+                background: '#fffaf0',
+                border: '1px solid rgba(26,20,16,0.08)',
+                borderRadius: 16,
+                color: '#1a1410',
               }}
             />
             <button
               onClick={send}
               disabled={!input.trim() || loading}
-              className="w-11 h-11 bg-brut-hdr flex items-center justify-center border-2 border-brut-hdr-dark transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-              style={{ boxShadow: '2px 2px 0px #0d0d0d' }}
+              className="w-10 h-10 flex items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                color: '#fff',
+                borderRadius: 9999,
+                boxShadow: '0 6px 20px rgba(245,158,11,0.30)',
+                border: '1px solid rgba(255,255,255,0.30)',
+              }}
             >
-              <Icon name="send" size={15} style={{ color: '#fff' }} />
+              <Icon name="send" size={14} style={{ color: '#fff' }} />
             </button>
           </div>
-          <p className="mt-2 font-mono text-[9px] text-white/25 tracking-wider">
-            ENTER to send · SHIFT+ENTER for new line
+          <p className="mt-2 text-[9px] tracking-wider" style={{ color: 'rgba(90,74,61,0.45)' }}>
+            ENTER to send · SHIFT+ENTER new line
           </p>
         </div>
       </div>

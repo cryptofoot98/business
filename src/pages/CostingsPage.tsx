@@ -520,10 +520,15 @@ export function CostingsPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'transparent' }}>
 
-      {/* Header */}
+      {/* Header — warm orange gradient strip with title + actions + tab bar */}
       <div
-        className="shrink-0"
-        style={{ background: 'linear-gradient(135deg, rgba(90, 74, 61, 0.97), rgba(15,70,34,0.95))', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(245, 158, 11, 0.25)' }}
+        className="shrink-0 mx-3 mt-3 overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #c2410c 100%)',
+          borderRadius: 24,
+          boxShadow: '0 10px 30px rgba(217,119,6,0.25), 0 4px 12px rgba(0,0,0,0.06)',
+          border: '1px solid rgba(255,255,255,0.20)',
+        }}
       >
         <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-3 flex-wrap">
           <div>
