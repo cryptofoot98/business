@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
-import {
-  Package, Container as ContainerIcon, Columns3, Trophy, Plus, Trash2, TrendingUp, TrendingDown,
-} from 'lucide-react';
+import { Icon } from '../Icon';
 import {
   NumInputSm, SelectInputSm, TextInputSm, Field, Section, gmColor,
 } from './shared';
@@ -39,7 +37,7 @@ export interface ScenarioPaletteEntry {
 }
 
 export const SCENARIO_PALETTE: ScenarioPaletteEntry[] = [
-  { name: 'violet', headerFrom: '#7c3aed', headerTo: '#6d28d9', headerText: '#4c1d95', tint: 'rgba(124,58,237,0.05)', border: 'rgba(124,58,237,0.22)', chip: 'rgba(124,58,237,0.12)' },
+  { name: 'violet', headerFrom: '#7c3aed', headerTo: '#6d28d9', headerText: '#4c1d95', tint: 'rgba(168, 85, 247, 0.05)', border: 'rgba(168, 85, 247, 0.22)', chip: 'rgba(168, 85, 247, 0.12)' },
   { name: 'indigo', headerFrom: '#4f46e5', headerTo: '#4338ca', headerText: '#312e81', tint: 'rgba(79,70,229,0.05)',  border: 'rgba(79,70,229,0.22)',  chip: 'rgba(79,70,229,0.12)'  },
   { name: 'teal',   headerFrom: '#0d9488', headerTo: '#0f766e', headerText: '#134e4a', tint: 'rgba(13,148,136,0.05)', border: 'rgba(13,148,136,0.22)', chip: 'rgba(13,148,136,0.12)' },
   { name: 'amber',  headerFrom: '#f59e0b', headerTo: '#d97706', headerText: '#78350f', tint: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.28)', chip: 'rgba(245,158,11,0.14)' },
@@ -89,13 +87,13 @@ function SummaryRow({
       <td
         className="px-3 py-2 text-[11px] uppercase tracking-wider sticky left-0 z-[1]"
         style={{
-          background: isTotal ? 'rgba(22,163,74,0.12)' : 'rgba(22,163,74,0.05)',
-          color: isTotal ? '#14532d' : 'rgba(20,83,45,0.65)',
+          background: isTotal ? 'rgba(245, 158, 11, 0.12)' : 'rgba(245, 158, 11, 0.05)',
+          color: isTotal ? '#1a1410' : 'rgba(90, 74, 61, 0.65)',
           fontWeight: isTotal ? 800 : 600,
           width: ROW_LABEL_WIDTH,
           minWidth: ROW_LABEL_WIDTH,
-          borderBottom: isTotal ? '2px solid rgba(22,163,74,0.3)' : '1px solid rgba(22,163,74,0.12)',
-          borderRight: '1px solid rgba(22,163,74,0.18)',
+          borderBottom: isTotal ? '2px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(245, 158, 11, 0.12)',
+          borderRight: '1px solid rgba(245, 158, 11, 0.18)',
         }}
       >
         {label}
@@ -103,15 +101,15 @@ function SummaryRow({
       {values.map((v, i) => {
         const p = paletteFor(i);
         const isBest = isMargin && i === bestIdx && marginPercents && marginPercents.some(pp => pp !== 0);
-        const colour = isMargin && marginPercents ? gmColor(marginPercents[i]) : (isTotal ? '#14532d' : '#15803d');
+        const colour = isMargin && marginPercents ? gmColor(marginPercents[i]) : (isTotal ? '#1a1410' : '#d97706');
         return (
           <td
             key={i}
             className="px-3 py-2 text-right font-mono"
             style={{
-              background: isBest ? 'rgba(22,163,74,0.14)' : p.tint,
-              borderBottom: isTotal ? '2px solid rgba(22,163,74,0.3)' : '1px solid rgba(22,163,74,0.12)',
-              borderRight: '1px solid rgba(22,163,74,0.10)',
+              background: isBest ? 'rgba(245, 158, 11, 0.14)' : p.tint,
+              borderBottom: isTotal ? '2px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(245, 158, 11, 0.12)',
+              borderRight: '1px solid rgba(245, 158, 11, 0.10)',
               color: colour,
               fontWeight: isTotal || isMargin ? 800 : 600,
               fontSize: isTotal || isMargin ? 13 : 11,
@@ -213,7 +211,7 @@ export function MainCostingsTab({
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
       {/* ─── 1. Product Details — BLUE ─── */}
-      <Section title="Product Details" icon={<Package size={13} />} accent="blue">
+      <Section title="Product Details" icon={<Icon name="package" size={13} />} accent="blue">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Field label="Product Code" note={`${productCatalog.length} products in catalog — type to search or create new`}>
             <ProductCombobox
@@ -315,7 +313,7 @@ export function MainCostingsTab({
       </Section>
 
       {/* ─── 3. Costing Scenarios — colour-coded per column ─── */}
-      <Section title={`Costing Scenarios (${scenarios.length}/${MAX_SCENARIOS})`} icon={<Columns3 size={13} />} accent="violet">
+      <Section title={`Costing Scenarios (${scenarios.length}/${MAX_SCENARIOS})`} icon={<Icon name="columns" size={13} />} accent="violet">
         <div className="overflow-x-auto" style={{ borderRadius: 12, border: '1px solid rgba(99,102,241,0.22)' }}>
           <table className="w-full text-xs" style={{ minWidth: ROW_LABEL_WIDTH + COL_MIN_WIDTH * scenarios.length, borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead>
@@ -363,7 +361,7 @@ export function MainCostingsTab({
                             onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.75)')}
                             title="Remove scenario"
                           >
-                            <Trash2 size={11} />
+                            <Icon name="trash" size={11} />
                           </button>
                         )}
                       </div>
@@ -470,33 +468,33 @@ export function MainCostingsTab({
             onClick={onAddScenario}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors"
             style={{
-              background: 'rgba(124,58,237,0.10)',
+              background: 'rgba(168, 85, 247, 0.10)',
               color: '#6d28d9',
-              border: '1px solid rgba(124,58,237,0.25)',
+              border: '1px solid rgba(168, 85, 247, 0.25)',
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,58,237,0.18)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(124,58,237,0.10)')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(168, 85, 247, 0.18)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(168, 85, 247, 0.10)')}
           >
-            <Plus size={12} /> Add scenario
+            <Icon name="plus" size={12} /> Add scenario
           </button>
         )}
       </Section>
 
       {/* ─── 4. Summary — colour-coded per column ─── */}
-      <Section title="Summary" icon={<Trophy size={13} />} accent="green">
-        <div className="overflow-x-auto" style={{ borderRadius: 12, border: '1px solid rgba(22,163,74,0.22)' }}>
+      <Section title="Summary" icon={<Icon name="trophy" size={13} />} accent="green">
+        <div className="overflow-x-auto" style={{ borderRadius: 12, border: '1px solid rgba(245, 158, 11, 0.22)' }}>
           <table className="w-full text-xs" style={{ minWidth: ROW_LABEL_WIDTH + COL_MIN_WIDTH * scenarios.length, borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead>
               <tr>
                 <th
                   className="px-3 py-2 text-[11px] uppercase tracking-widest text-left sticky left-0 z-[2]"
                   style={{
-                    background: 'rgba(22,163,74,0.12)',
-                    color: '#14532d',
+                    background: 'rgba(245, 158, 11, 0.12)',
+                    color: '#1a1410',
                     width: ROW_LABEL_WIDTH, minWidth: ROW_LABEL_WIDTH,
                     fontWeight: 700,
-                    borderRight: '1px solid rgba(22,163,74,0.22)',
-                    borderBottom: '2px solid rgba(22,163,74,0.25)',
+                    borderRight: '1px solid rgba(245, 158, 11, 0.22)',
+                    borderBottom: '2px solid rgba(245, 158, 11, 0.25)',
                   }}
                 >
                   Costing Scenario
@@ -517,7 +515,7 @@ export function MainCostingsTab({
                       }}
                     >
                       <div className="flex items-center justify-end gap-1.5">
-                        {i === bestIdx && results[i].gmPercent > 0 && <Trophy size={10} style={{ color: '#fde68a' }} />}
+                        {i === bestIdx && results[i].gmPercent > 0 && <Icon name="trophy" size={10} style={{ color: '#fde68a' }} />}
                         {s.label}
                       </div>
                     </th>
@@ -563,8 +561,8 @@ export function MainCostingsTab({
                 className="p-3 rounded-xl"
                 style={{
                   background: p.tint,
-                  border: `1.5px solid ${isBest ? 'rgba(22,163,74,0.55)' : p.border}`,
-                  boxShadow: isBest ? '0 0 0 1px rgba(22,163,74,0.25)' : 'none',
+                  border: `1.5px solid ${isBest ? 'rgba(245, 158, 11, 0.55)' : p.border}`,
+                  boxShadow: isBest ? '0 0 0 1px rgba(245, 158, 11, 0.25)' : 'none',
                 }}
               >
                 <div className="flex items-center justify-between">
@@ -574,15 +572,15 @@ export function MainCostingsTab({
                   >
                     {scenarios[i]?.label ?? `Scenario ${i + 1}`}
                   </span>
-                  {isBest && <Trophy size={11} style={{ color: '#ca8a04' }} />}
+                  {isBest && <Icon name="trophy" size={11} style={{ color: '#ca8a04' }} />}
                 </div>
                 <div className="flex items-center gap-1.5 mt-2">
                   {r.gmPercent >= 0
-                    ? <TrendingUp size={13} style={{ color: gc }} />
-                    : <TrendingDown size={13} style={{ color: gc }} />}
+                    ? <Icon name="trendingup" size={13} style={{ color: gc }} />
+                    : <Icon name="trendingdown" size={13} style={{ color: gc }} />}
                   <span className="text-xl font-black" style={{ color: gc }}>{r.gmPercent.toFixed(1)}%</span>
                 </div>
-                <p className="font-mono text-[10px] mt-1" style={{ color: 'rgba(20,83,45,0.6)' }}>
+                <p className="font-mono text-[10px] mt-1" style={{ color: 'rgba(90, 74, 61, 0.6)' }}>
                   £{fmtGBP(r.costPerCaseGBP)}/case · £{fmtGBP4(r.costPerKgGBP)}/kg
                 </p>
               </div>

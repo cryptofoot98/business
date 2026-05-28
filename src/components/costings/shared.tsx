@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Icon } from '../Icon';
+import { palette, shadows, radii } from '../../data/designTokens';
+
+// ── Shared input styling tokens ──────────────────────────────────────────────
+
+const INPUT_BG       = palette.surface;
+const INPUT_BORDER   = 'rgba(26, 20, 16, 0.10)';
+const INPUT_INK      = palette.ink;
+const AFFIX_BG       = palette.surfaceTint;
+const AFFIX_TEXT     = palette.amberDeep;
+const AFFIX_BORDER   = 'rgba(245, 158, 11, 0.20)';
 
 // ── Numeric input with optional prefix/suffix ─────────────────────────────────
 
@@ -11,13 +21,13 @@ export function NumInput({
 }) {
   return (
     <div className="flex items-center overflow-hidden" style={{
-      background: 'rgba(255,255,255,0.85)',
-      border: '1px solid rgba(22,163,74,0.22)',
+      background: INPUT_BG,
+      border: `1px solid ${INPUT_BORDER}`,
       borderRadius: 12,
     }}>
       {prefix && (
         <span className="px-2.5 py-2.5 font-mono text-xs font-bold select-none shrink-0"
-          style={{ color: '#16a34a', background: 'rgba(22,163,74,0.08)', borderRight: '1px solid rgba(22,163,74,0.15)' }}>
+          style={{ color: AFFIX_TEXT, background: AFFIX_BG, borderRight: `1px solid ${AFFIX_BORDER}` }}>
           {prefix}
         </span>
       )}
@@ -25,11 +35,11 @@ export function NumInput({
         type="number" value={value || ''} min={min} step={step} placeholder={placeholder}
         onChange={e => onChange(parseFloat(e.target.value) || 0)}
         className="flex-1 px-3 py-2.5 bg-transparent text-sm font-mono focus:outline-none min-w-0"
-        style={{ color: '#14532d' }}
+        style={{ color: INPUT_INK }}
       />
       {suffix && (
         <span className="px-2.5 py-2.5 font-mono text-xs font-bold select-none shrink-0"
-          style={{ color: '#16a34a', background: 'rgba(22,163,74,0.08)', borderLeft: '1px solid rgba(22,163,74,0.15)' }}>
+          style={{ color: AFFIX_TEXT, background: AFFIX_BG, borderLeft: `1px solid ${AFFIX_BORDER}` }}>
           {suffix}
         </span>
       )}
@@ -46,14 +56,14 @@ export function NumInputSm({
 }) {
   return (
     <div className="flex items-center overflow-hidden" style={{
-      background: 'rgba(255,255,255,0.85)',
-      border: '1px solid rgba(22,163,74,0.2)',
+      background: INPUT_BG,
+      border: `1px solid ${INPUT_BORDER}`,
       borderRadius: 8,
       minWidth: 0,
     }}>
       {prefix && (
         <span className="px-1.5 py-1.5 font-mono text-[10px] font-bold select-none shrink-0"
-          style={{ color: '#16a34a', background: 'rgba(22,163,74,0.08)', borderRight: '1px solid rgba(22,163,74,0.12)' }}>
+          style={{ color: AFFIX_TEXT, background: AFFIX_BG, borderRight: `1px solid ${AFFIX_BORDER}` }}>
           {prefix}
         </span>
       )}
@@ -61,7 +71,7 @@ export function NumInputSm({
         type="number" value={value || ''} min={min} step={step} placeholder={placeholder}
         onChange={e => onChange(parseFloat(e.target.value) || 0)}
         className="flex-1 px-2 py-1.5 bg-transparent text-xs font-mono focus:outline-none min-w-0"
-        style={{ color: '#14532d', width: '100%' }}
+        style={{ color: INPUT_INK, width: '100%' }}
       />
     </div>
   );
@@ -78,12 +88,12 @@ export function TextInput({
     <input
       type="text" value={value} placeholder={placeholder}
       onChange={e => onChange(e.target.value)}
-      className="w-full px-3 py-2.5 text-sm font-mono focus:outline-none transition-colors"
+      className="w-full px-3 py-2.5 text-sm focus:outline-none transition-colors"
       style={{
-        background: 'rgba(255,255,255,0.85)',
-        border: '1px solid rgba(22,163,74,0.22)',
+        background: INPUT_BG,
+        border: `1px solid ${INPUT_BORDER}`,
         borderRadius: 12,
-        color: '#14532d',
+        color: INPUT_INK,
       }}
     />
   );
@@ -98,12 +108,12 @@ export function TextInputSm({
     <input
       type="text" value={value} placeholder={placeholder}
       onChange={e => onChange(e.target.value)}
-      className="w-full px-2 py-1.5 text-xs font-mono focus:outline-none"
+      className="w-full px-2 py-1.5 text-xs focus:outline-none"
       style={{
-        background: 'rgba(255,255,255,0.85)',
-        border: '1px solid rgba(22,163,74,0.2)',
+        background: INPUT_BG,
+        border: `1px solid ${INPUT_BORDER}`,
         borderRadius: 8,
-        color: '#14532d',
+        color: INPUT_INK,
       }}
     />
   );
@@ -120,12 +130,12 @@ export function SelectInput<T extends string>({
   return (
     <select
       value={value} onChange={e => onChange(e.target.value as T)}
-      className="w-full px-3 py-2.5 text-sm font-mono focus:outline-none appearance-none"
+      className="w-full px-3 py-2.5 text-sm focus:outline-none appearance-none"
       style={{
-        background: 'rgba(255,255,255,0.85)',
-        border: '1px solid rgba(22,163,74,0.22)',
+        background: INPUT_BG,
+        border: `1px solid ${INPUT_BORDER}`,
         borderRadius: 12,
-        color: '#14532d',
+        color: INPUT_INK,
       }}
     >
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -142,12 +152,12 @@ export function SelectInputSm<T extends string>({
   return (
     <select
       value={value} onChange={e => onChange(e.target.value as T)}
-      className="w-full px-2 py-1.5 text-xs font-mono focus:outline-none appearance-none"
+      className="w-full px-2 py-1.5 text-xs focus:outline-none appearance-none"
       style={{
-        background: 'rgba(255,255,255,0.85)',
-        border: '1px solid rgba(22,163,74,0.2)',
+        background: INPUT_BG,
+        border: `1px solid ${INPUT_BORDER}`,
         borderRadius: 8,
-        color: '#14532d',
+        color: INPUT_INK,
       }}
     >
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -160,18 +170,23 @@ export function SelectInputSm<T extends string>({
 export function Field({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block font-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: 'rgba(20,83,45,0.52)' }}>
+      <label className="block text-[10px] uppercase tracking-widest mb-1.5" style={{ color: palette.inkFaint, fontWeight: 600 }}>
         {label}
       </label>
       {children}
-      {note && <p className="font-mono text-[10px] mt-1" style={{ color: 'rgba(20,83,45,0.38)' }}>{note}</p>}
+      {note && <p className="text-[10px] mt-1" style={{ color: palette.inkFaint }}>{note}</p>}
     </div>
   );
 }
 
 // ── Collapsible section ───────────────────────────────────────────────────────
+// Accent palette names match designTokens.ts ACCENTS map. Legacy names
+// (green/blue/violet) are aliased to their replacements (emerald/sky/plum) so
+// existing call sites don't break — the new canonical names are preferred.
 
-export type SectionAccent = 'green' | 'blue' | 'amber' | 'violet';
+export type SectionAccent =
+  | 'emerald' | 'sky' | 'amber' | 'plum' | 'coral'
+  | 'green'   | 'blue' | 'violet';
 
 interface AccentPalette {
   from: string;       // gradient start (open header)
@@ -183,13 +198,18 @@ interface AccentPalette {
 }
 
 export const SECTION_ACCENTS: Record<SectionAccent, AccentPalette> = {
-  green:  { from: '#16a34a', to: '#15803d', closedTint: 'rgba(22,163,74,0.06)',  closedIcon: '#16a34a', closedText: '#15803d', border: 'rgba(22,163,74,0.18)' },
-  blue:   { from: '#2563eb', to: '#1d4ed8', closedTint: 'rgba(37,99,235,0.06)',  closedIcon: '#2563eb', closedText: '#1d4ed8', border: 'rgba(37,99,235,0.20)' },
-  amber:  { from: '#d97706', to: '#b45309', closedTint: 'rgba(217,119,6,0.07)',  closedIcon: '#d97706', closedText: '#b45309', border: 'rgba(217,119,6,0.22)' },
-  violet: { from: '#7c3aed', to: '#6d28d9', closedTint: 'rgba(124,58,237,0.06)', closedIcon: '#7c3aed', closedText: '#6d28d9', border: 'rgba(124,58,237,0.20)' },
+  emerald: { from: '#34d399', to: '#10b981', closedTint: 'rgba(52,211,153,0.10)', closedIcon: '#10b981', closedText: '#064e3b', border: 'rgba(52,211,153,0.22)' },
+  sky:     { from: '#60a5fa', to: '#3b82f6', closedTint: 'rgba(96,165,250,0.10)', closedIcon: '#3b82f6', closedText: '#1e3a8a', border: 'rgba(96,165,250,0.22)' },
+  amber:   { from: '#f59e0b', to: '#d97706', closedTint: 'rgba(245,158,11,0.10)', closedIcon: '#d97706', closedText: '#78350f', border: 'rgba(245,158,11,0.28)' },
+  plum:    { from: '#c084fc', to: '#a855f7', closedTint: 'rgba(192,132,252,0.10)', closedIcon: '#a855f7', closedText: '#581c87', border: 'rgba(192,132,252,0.24)' },
+  coral:   { from: '#e07856', to: '#b34232', closedTint: 'rgba(224,120,86,0.10)', closedIcon: '#b34232', closedText: '#7c2d12', border: 'rgba(224,120,86,0.22)' },
+  // Legacy aliases ─ keep prior call sites rendering without code-wide rename
+  green:   { from: '#34d399', to: '#10b981', closedTint: 'rgba(52,211,153,0.10)', closedIcon: '#10b981', closedText: '#064e3b', border: 'rgba(52,211,153,0.22)' },
+  blue:    { from: '#60a5fa', to: '#3b82f6', closedTint: 'rgba(96,165,250,0.10)', closedIcon: '#3b82f6', closedText: '#1e3a8a', border: 'rgba(96,165,250,0.22)' },
+  violet:  { from: '#c084fc', to: '#a855f7', closedTint: 'rgba(192,132,252,0.10)', closedIcon: '#a855f7', closedText: '#581c87', border: 'rgba(192,132,252,0.24)' },
 };
 
-export function Section({ title, icon, children, defaultOpen = true, accent = 'green' }: {
+export function Section({ title, icon, children, defaultOpen = true, accent = 'amber' }: {
   title: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
@@ -199,22 +219,26 @@ export function Section({ title, icon, children, defaultOpen = true, accent = 'g
   const [open, setOpen] = useState(defaultOpen);
   const a = SECTION_ACCENTS[accent];
   return (
-    <div style={{ background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(20px)', border: `1px solid ${a.border}`, borderRadius: 16, overflow: 'hidden' }}>
+    <div style={{
+      background: palette.surface,
+      border: '1px solid rgba(26,20,16,0.06)',
+      borderRadius: radii.section,
+      boxShadow: shadows.soft,
+      overflow: 'hidden',
+    }}>
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-4 py-3 transition-colors"
         style={{
           background: open ? `linear-gradient(135deg, ${a.from}, ${a.to})` : a.closedTint,
-          borderBottom: open ? `1px solid ${a.border}` : 'none',
+          borderBottom: open ? `1px solid ${a.border}` : '1px solid transparent',
         }}
       >
         <div className="flex items-center gap-2">
-          {icon && <span style={{ color: open ? 'rgba(255,255,255,0.85)' : a.closedIcon }}>{icon}</span>}
+          {icon && <span style={{ color: open ? 'rgba(255,255,255,0.92)' : a.closedIcon, display: 'inline-flex' }}>{icon}</span>}
           <span className="font-bold text-xs uppercase tracking-widest" style={{ color: open ? '#fff' : a.closedText }}>{title}</span>
         </div>
-        {open
-          ? <ChevronUp size={13} style={{ color: 'rgba(255,255,255,0.7)' }} />
-          : <ChevronDown size={13} style={{ color: 'rgba(0,0,0,0.35)' }} />}
+        <Icon name={open ? 'chevronup' : 'chevrondown'} size={12} style={{ color: open ? 'rgba(255,255,255,0.85)' : palette.inkFaint }} />
       </button>
       {open && <div className="p-4 space-y-3">{children}</div>}
     </div>
@@ -228,10 +252,10 @@ export function CostBar({ label, value, total, color }: { label: string; value: 
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <span className="font-mono text-[10px] uppercase tracking-wider" style={{ color: 'rgba(20,83,45,0.55)' }}>{label}</span>
-        <span className="font-mono text-xs font-bold" style={{ color: '#14532d' }}>£{value.toFixed(4)}</span>
+        <span className="font-mono text-[10px] uppercase tracking-wider" style={{ color: palette.inkMuted }}>{label}</span>
+        <span className="font-mono text-xs font-bold" style={{ color: palette.ink }}>£{value.toFixed(4)}</span>
       </div>
-      <div className="h-1.5 rounded-full" style={{ background: 'rgba(22,163,74,0.1)' }}>
+      <div className="h-1.5 rounded-full" style={{ background: palette.surfaceTint }}>
         <div className="h-full rounded-full transition-all duration-300" style={{ width: `${pct}%`, background: color }} />
       </div>
     </div>
@@ -239,9 +263,10 @@ export function CostBar({ label, value, total, color }: { label: string; value: 
 }
 
 // ── GM colour helper ──────────────────────────────────────────────────────────
+// Maps gross-margin % to a palette colour. ≥20 strong green, ≥10 amber, else coral.
 
 export function gmColor(pct: number): string {
-  if (pct >= 20) return '#16a34a';
-  if (pct >= 10) return '#ca8a04';
-  return '#dc2626';
+  if (pct >= 20) return palette.emeraldDeep;
+  if (pct >= 10) return palette.amberDeep;
+  return palette.coral;
 }

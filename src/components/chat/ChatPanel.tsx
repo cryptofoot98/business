@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, KeyboardEvent } from 'react';
-import { Send, Trash2, Loader } from 'lucide-react';
+import { Icon, Spinner } from '../Icon';
 import {
   AIChatAction,
   AIChatContext,
@@ -141,7 +141,7 @@ export function ChatPanel({ open, userId, session, firstName, context, onApplyAc
             className="text-white/40 hover:text-white/70 transition-colors"
             title="Clear conversation"
           >
-            <Trash2 size={14} />
+            <Icon name="trash" size={14} />
           </button>
         </div>
 
@@ -181,7 +181,7 @@ export function ChatPanel({ open, userId, session, firstName, context, onApplyAc
                 className="px-4 py-3 bg-white/10 border-2 border-white/10"
                 style={{ boxShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}
               >
-                <Loader size={14} className="animate-spin text-white/50" />
+                <Spinner size={14} style={{ color: 'rgba(255,255,255,0.5)' }} />
               </div>
             </div>
           )}
@@ -214,7 +214,7 @@ export function ChatPanel({ open, userId, session, firstName, context, onApplyAc
               className="w-11 h-11 bg-brut-hdr flex items-center justify-center border-2 border-brut-hdr-dark transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
               style={{ boxShadow: '2px 2px 0px #0d0d0d' }}
             >
-              <Send size={15} className="text-white" />
+              <Icon name="send" size={15} style={{ color: '#fff' }} />
             </button>
           </div>
           <p className="mt-2 font-mono text-[9px] text-white/25 tracking-wider">

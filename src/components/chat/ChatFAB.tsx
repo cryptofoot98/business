@@ -1,4 +1,5 @@
-import { MessageCircle, X } from 'lucide-react';
+import { Icon } from '../Icon';
+import { palette, shadows } from '../../data/designTokens';
 
 interface Props {
   open: boolean;
@@ -11,17 +12,14 @@ export function ChatFAB({ open, onClick }: Props) {
       onClick={onClick}
       className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
       style={{
-        background: 'linear-gradient(135deg, #16a34a, #15803d)',
-        boxShadow: '0 4px 20px rgba(22,163,74,0.45), 0 2px 8px rgba(0,0,0,0.15)',
-        border: '1px solid rgba(255,255,255,0.2)',
+        background: `linear-gradient(135deg, ${palette.amber}, ${palette.amberDeep})`,
+        boxShadow: shadows.amber,
+        border: '1px solid rgba(255,255,255,0.30)',
+        color: '#fff',
       }}
       aria-label={open ? 'Close AI assistant' : 'Open AI assistant'}
     >
-      {open ? (
-        <X size={22} className="text-white" />
-      ) : (
-        <MessageCircle size={22} className="text-white" />
-      )}
+      <Icon name={open ? 'close' : 'message'} size={22} style={{ color: '#fff' }} />
     </button>
   );
 }

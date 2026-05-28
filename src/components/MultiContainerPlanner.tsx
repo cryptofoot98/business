@@ -1,5 +1,5 @@
 import { MultiContainerResult } from '../types';
-import { Package } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface Props {
   result: MultiContainerResult;
@@ -16,7 +16,7 @@ export function MultiContainerPlanner({ result, selectedIndex, onSelectContainer
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(20,83,45,0.42)' }}>
+        <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(90, 74, 61, 0.42)' }}>
           Multi-Container Plan
         </p>
         <div className="flex items-center gap-4">
@@ -26,8 +26,8 @@ export function MultiContainerPlanner({ result, selectedIndex, onSelectContainer
             { val: formatWeight(result.totalGrossWeight), label: 'total weight' },
           ].map(({ val, label }) => (
             <div key={label} className="text-center">
-              <div className="font-mono text-base font-bold leading-none" style={{ color: '#14532d' }}>{val}</div>
-              <div className="font-mono text-[9px] uppercase font-medium mt-0.5" style={{ color: 'rgba(20,83,45,0.4)' }}>{label}</div>
+              <div className="font-mono text-base font-bold leading-none" style={{ color: '#1a1410' }}>{val}</div>
+              <div className="font-mono text-[9px] uppercase font-medium mt-0.5" style={{ color: 'rgba(90, 74, 61, 0.4)' }}>{label}</div>
             </div>
           ))}
         </div>
@@ -43,18 +43,18 @@ export function MultiContainerPlanner({ result, selectedIndex, onSelectContainer
               onClick={() => onSelectContainer(idx)}
               className="flex items-center gap-2.5 px-3.5 py-2.5 text-left transition-all"
               style={isSelected ? {
-                background: 'linear-gradient(135deg, #16a34a, #15803d)',
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
                 borderRadius: 12,
                 color: '#fff',
-                boxShadow: '0 3px 14px rgba(22,163,74,0.32)',
+                boxShadow: '0 3px 14px rgba(245, 158, 11, 0.32)',
               } : {
                 background: 'rgba(255,255,255,0.7)',
-                border: '1px solid rgba(22,163,74,0.15)',
+                border: '1px solid rgba(245, 158, 11, 0.15)',
                 borderRadius: 12,
-                color: '#14532d',
+                color: '#1a1410',
               }}
             >
-              <Package size={13} style={{ opacity: isSelected ? 0.9 : 0.45 }} />
+              <Icon name="package" size={13} style={{ opacity: isSelected ? 0.9 : 0.45 }} />
               <div>
                 <div className="text-xs font-semibold uppercase tracking-tight leading-none">
                   #{idx + 1}

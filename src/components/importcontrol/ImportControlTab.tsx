@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
-import {
-  Ship, Package, Receipt, Trophy, TrendingUp, TrendingDown, CheckCircle2, Plus, Trash2,
-} from 'lucide-react';
+import { Icon } from '../Icon';
 import {
   NumInputSm, TextInputSm, SelectInputSm, Field, Section, gmColor,
 } from '../costings/shared';
@@ -40,12 +38,12 @@ interface Props {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function StatTile({ label, value, sub, accent = '#15803d' }: { label: string; value: string; sub?: string; accent?: string }) {
+function StatTile({ label, value, sub, accent = '#d97706' }: { label: string; value: string; sub?: string; accent?: string }) {
   return (
     <div className="p-3 rounded-xl" style={{ background: `${accent}10`, border: `1px solid ${accent}33` }}>
       <p className="text-[10px] uppercase tracking-widest" style={{ color: `${accent}cc`, fontWeight: 600 }}>{label}</p>
       <p className="text-xl font-black mt-1" style={{ color: accent }}>{value}</p>
-      {sub && <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.55)' }}>{sub}</p>}
+      {sub && <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(90, 74, 61, 0.55)' }}>{sub}</p>}
     </div>
   );
 }
@@ -74,7 +72,7 @@ export function ImportControlTab({
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
       {/* ─── 1. Shipment Header — BLUE ─── */}
-      <Section title="Shipment Header" icon={<Ship size={13} />} accent="blue">
+      <Section title="Shipment Header" icon={<Icon name="ship" size={13} />} accent="blue">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Field label="Container Number">
             <TextInputSm value={ic.header.containerNumber} onChange={v => onSetHeader('containerNumber', v)} placeholder="MSDU9628847" />
@@ -94,12 +92,12 @@ export function ImportControlTab({
               onClick={() => onSetHeader('cleared', !ic.header.cleared)}
               className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-xl"
               style={{
-                background: ic.header.cleared ? 'linear-gradient(135deg, #16a34a, #15803d)' : 'rgba(0,0,0,0.05)',
+                background: ic.header.cleared ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'rgba(0,0,0,0.05)',
                 color: ic.header.cleared ? '#fff' : 'rgba(0,0,0,0.5)',
-                border: '1px solid ' + (ic.header.cleared ? 'rgba(22,163,74,0.4)' : 'rgba(0,0,0,0.12)'),
+                border: '1px solid ' + (ic.header.cleared ? 'rgba(245, 158, 11, 0.4)' : 'rgba(0,0,0,0.12)'),
               }}
             >
-              <CheckCircle2 size={12} /> {ic.header.cleared ? 'Cleared' : 'Pending'}
+              <Icon name="checkcircle" size={12} /> {ic.header.cleared ? 'Cleared' : 'Pending'}
             </button>
           </Field>
 
@@ -139,7 +137,7 @@ export function ImportControlTab({
               value={ic.header.arrivalDate}
               onChange={e => onSetHeader('arrivalDate', e.target.value)}
               className="w-full px-2 py-1.5 text-xs focus:outline-none"
-              style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: 8, color: '#1e3a8a' }}
+              style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(96, 165, 250, 0.22)', borderRadius: 8, color: '#1e3a8a' }}
             />
           </Field>
           <Field label="Collection Date from Port">
@@ -148,7 +146,7 @@ export function ImportControlTab({
               value={ic.header.collectionDateFromPort}
               onChange={e => onSetHeader('collectionDateFromPort', e.target.value)}
               className="w-full px-2 py-1.5 text-xs focus:outline-none"
-              style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: 8, color: '#1e3a8a' }}
+              style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(96, 165, 250, 0.22)', borderRadius: 8, color: '#1e3a8a' }}
             />
           </Field>
           <Field label="Container Gross Weight (tonnes)" note="Max allowed">
@@ -161,7 +159,7 @@ export function ImportControlTab({
       </Section>
 
       {/* ─── 2. Costs & Clearance — AMBER ─── */}
-      <Section title="Costs & Clearance Charges" icon={<Receipt size={13} />} accent="amber">
+      <Section title="Costs & Clearance Charges" icon={<Icon name="receipt" size={13} />} accent="amber">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
           {/* LEFT — Cost stack */}
@@ -223,12 +221,12 @@ export function ImportControlTab({
       </Section>
 
       {/* ─── 3. Products in Container — VIOLET ─── */}
-      <Section title={`Products in Container (${ic.products.length}/${MAX_PRODUCTS})`} icon={<Package size={13} />} accent="violet">
+      <Section title={`Products in Container (${ic.products.length}/${MAX_PRODUCTS})`} icon={<Icon name="package" size={13} />} accent="violet">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {ic.products.map((p, i) => {
             const r = results.perProduct[i];
             return (
-              <div key={i} className="p-3 rounded-xl space-y-2.5" style={{ background: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.20)' }}>
+              <div key={i} className="p-3 rounded-xl space-y-2.5" style={{ background: 'rgba(168, 85, 247, 0.04)', border: '1px solid rgba(168, 85, 247, 0.20)' }}>
                 <div className="flex items-center justify-between">
                   <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#6d28d9' }}>
                     {ordinal(i + 1)} Product
@@ -237,11 +235,11 @@ export function ImportControlTab({
                     <button
                       onClick={() => onRemoveProduct(i)}
                       className="p-1 rounded"
-                      style={{ color: 'rgba(124,58,237,0.55)' }}
+                      style={{ color: 'rgba(168, 85, 247, 0.55)' }}
                       onMouseEnter={e => (e.currentTarget.style.color = '#dc2626')}
-                      onMouseLeave={e => (e.currentTarget.style.color = 'rgba(124,58,237,0.55)')}
+                      onMouseLeave={e => (e.currentTarget.style.color = 'rgba(168, 85, 247, 0.55)')}
                     >
-                      <Trash2 size={11} />
+                      <Icon name="trash" size={11} />
                     </button>
                   )}
                 </div>
@@ -285,7 +283,7 @@ export function ImportControlTab({
 
                 {/* Read-outs */}
                 {r && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 pt-1 mt-1" style={{ borderTop: '1px dashed rgba(124,58,237,0.25)' }}>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 pt-1 mt-1" style={{ borderTop: '1px dashed rgba(168, 85, 247, 0.25)' }}>
                     <ReadOut label="Total Weight (t)"    value={r.totalWeightTonnes.toFixed(4)} />
                     <ReadOut label="Product Cost £"       value={`£${fmtGBP(r.productCostGBP)}`} />
                     <ReadOut label="Net Price / Case"     value={`£${fmt2(r.netPricePerCase)}`} />
@@ -293,12 +291,12 @@ export function ImportControlTab({
                   </div>
                 )}
                 {r && p.salesPricePerCase > 0 && (
-                  <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid rgba(124,58,237,0.18)' }}>
+                  <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid rgba(168, 85, 247, 0.18)' }}>
                     <span className="text-[10px] uppercase tracking-wider" style={{ color: 'rgba(76,29,149,0.6)' }}>Margin</span>
                     <div className="flex items-center gap-1.5">
                       {r.marginPercent >= 0
-                        ? <TrendingUp size={12} style={{ color: gmColor(r.marginPercent) }} />
-                        : <TrendingDown size={12} style={{ color: gmColor(r.marginPercent) }} />}
+                        ? <Icon name="trendingup" size={12} style={{ color: gmColor(r.marginPercent) }} />
+                        : <Icon name="trendingdown" size={12} style={{ color: gmColor(r.marginPercent) }} />}
                       <span className="text-base font-black font-mono" style={{ color: gmColor(r.marginPercent) }}>
                         {r.marginPercent.toFixed(2)}%
                       </span>
@@ -318,20 +316,20 @@ export function ImportControlTab({
             onClick={onAddProduct}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors"
             style={{
-              background: 'rgba(124,58,237,0.10)',
+              background: 'rgba(168, 85, 247, 0.10)',
               color: '#6d28d9',
-              border: '1px solid rgba(124,58,237,0.25)',
+              border: '1px solid rgba(168, 85, 247, 0.25)',
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,58,237,0.18)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(124,58,237,0.10)')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(168, 85, 247, 0.18)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(168, 85, 247, 0.10)')}
           >
-            <Plus size={12} /> Add product
+            <Icon name="plus" size={12} /> Add product
           </button>
         )}
       </Section>
 
       {/* ─── 4. Summary — GREEN ─── */}
-      <Section title="Summary" icon={<Trophy size={13} />} accent="green">
+      <Section title="Summary" icon={<Icon name="trophy" size={13} />} accent="green">
         {/* Top stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
           <StatTile label="Total Container Cost"     value={`£${fmtGBP(results.totalContainerCost)}`} />
@@ -342,44 +340,44 @@ export function ImportControlTab({
         </div>
 
         {/* Per-product table */}
-        <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid rgba(22,163,74,0.22)' }}>
+        <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid rgba(245, 158, 11, 0.22)' }}>
           <table className="w-full text-xs">
             <thead>
-              <tr style={{ background: 'rgba(22,163,74,0.10)' }}>
-                <th className="px-3 py-2 text-left text-[11px] uppercase tracking-widest" style={{ color: '#14532d', borderBottom: '1px solid rgba(22,163,74,0.22)' }}>Product</th>
-                <th className="px-3 py-2 text-right text-[11px] uppercase tracking-widest" style={{ color: '#14532d', borderBottom: '1px solid rgba(22,163,74,0.22)' }}>Case Price</th>
-                <th className="px-3 py-2 text-right text-[11px] uppercase tracking-widest" style={{ color: '#14532d', borderBottom: '1px solid rgba(22,163,74,0.22)' }}>Total Product Value</th>
-                <th className="px-3 py-2 text-right text-[11px] uppercase tracking-widest" style={{ color: '#14532d', borderBottom: '1px solid rgba(22,163,74,0.22)' }}>Cumulative Total</th>
-                <th className="px-3 py-2 text-right text-[11px] uppercase tracking-widest" style={{ color: '#14532d', borderBottom: '1px solid rgba(22,163,74,0.22)' }}>Sales Price</th>
-                <th className="px-3 py-2 text-right text-[11px] uppercase tracking-widest" style={{ color: '#14532d', borderBottom: '1px solid rgba(22,163,74,0.22)' }}>Margin</th>
+              <tr style={{ background: 'rgba(245, 158, 11, 0.10)' }}>
+                <th className="px-3 py-2 text-left text-[11px] uppercase tracking-widest" style={{ color: '#1a1410', borderBottom: '1px solid rgba(245, 158, 11, 0.22)' }}>Product</th>
+                <th className="px-3 py-2 text-right text-[11px] uppercase tracking-widest" style={{ color: '#1a1410', borderBottom: '1px solid rgba(245, 158, 11, 0.22)' }}>Case Price</th>
+                <th className="px-3 py-2 text-right text-[11px] uppercase tracking-widest" style={{ color: '#1a1410', borderBottom: '1px solid rgba(245, 158, 11, 0.22)' }}>Total Product Value</th>
+                <th className="px-3 py-2 text-right text-[11px] uppercase tracking-widest" style={{ color: '#1a1410', borderBottom: '1px solid rgba(245, 158, 11, 0.22)' }}>Cumulative Total</th>
+                <th className="px-3 py-2 text-right text-[11px] uppercase tracking-widest" style={{ color: '#1a1410', borderBottom: '1px solid rgba(245, 158, 11, 0.22)' }}>Sales Price</th>
+                <th className="px-3 py-2 text-right text-[11px] uppercase tracking-widest" style={{ color: '#1a1410', borderBottom: '1px solid rgba(245, 158, 11, 0.22)' }}>Margin</th>
               </tr>
             </thead>
             <tbody>
               {ic.products.map((p, i) => {
                 const r = results.perProduct[i];
                 return (
-                  <tr key={i} style={{ borderBottom: '1px solid rgba(22,163,74,0.10)' }}>
-                    <td className="px-3 py-2 text-[11px]" style={{ color: '#14532d', borderRight: '1px solid rgba(22,163,74,0.10)' }}>
+                  <tr key={i} style={{ borderBottom: '1px solid rgba(245, 158, 11, 0.10)' }}>
+                    <td className="px-3 py-2 text-[11px]" style={{ color: '#1a1410', borderRight: '1px solid rgba(245, 158, 11, 0.10)' }}>
                       <span className="font-bold font-mono">{p.productCode || '—'}</span>
-                      <span className="ml-2" style={{ color: 'rgba(20,83,45,0.55)' }}>{p.productDescription || ''}</span>
+                      <span className="ml-2" style={{ color: 'rgba(90, 74, 61, 0.55)' }}>{p.productDescription || ''}</span>
                     </td>
-                    <td className="px-3 py-2 text-right font-mono" style={{ color: '#14532d', borderRight: '1px solid rgba(22,163,74,0.10)' }}>£{fmtGBP4(r?.costPerCase ?? 0)}</td>
-                    <td className="px-3 py-2 text-right font-mono" style={{ color: '#14532d', borderRight: '1px solid rgba(22,163,74,0.10)' }}>£{fmtGBP(r?.totalProductValue ?? 0)}</td>
-                    <td className="px-3 py-2 text-right font-mono" style={{ color: '#14532d', borderRight: '1px solid rgba(22,163,74,0.10)' }}>£{fmtGBP(r?.cumulativeTotal ?? 0)}</td>
-                    <td className="px-3 py-2 text-right font-mono" style={{ color: '#14532d', borderRight: '1px solid rgba(22,163,74,0.10)' }}>{p.salesPricePerCase > 0 ? `£${fmtGBP(p.salesPricePerCase)}` : '—'}</td>
-                    <td className="px-3 py-2 text-right font-mono font-bold" style={{ color: r && p.salesPricePerCase > 0 ? gmColor(r.marginPercent) : 'rgba(20,83,45,0.4)' }}>
+                    <td className="px-3 py-2 text-right font-mono" style={{ color: '#1a1410', borderRight: '1px solid rgba(245, 158, 11, 0.10)' }}>£{fmtGBP4(r?.costPerCase ?? 0)}</td>
+                    <td className="px-3 py-2 text-right font-mono" style={{ color: '#1a1410', borderRight: '1px solid rgba(245, 158, 11, 0.10)' }}>£{fmtGBP(r?.totalProductValue ?? 0)}</td>
+                    <td className="px-3 py-2 text-right font-mono" style={{ color: '#1a1410', borderRight: '1px solid rgba(245, 158, 11, 0.10)' }}>£{fmtGBP(r?.cumulativeTotal ?? 0)}</td>
+                    <td className="px-3 py-2 text-right font-mono" style={{ color: '#1a1410', borderRight: '1px solid rgba(245, 158, 11, 0.10)' }}>{p.salesPricePerCase > 0 ? `£${fmtGBP(p.salesPricePerCase)}` : '—'}</td>
+                    <td className="px-3 py-2 text-right font-mono font-bold" style={{ color: r && p.salesPricePerCase > 0 ? gmColor(r.marginPercent) : 'rgba(90, 74, 61, 0.4)' }}>
                       {r && p.salesPricePerCase > 0 ? `${r.marginPercent.toFixed(2)}%` : '—'}
                     </td>
                   </tr>
                 );
               })}
-              <tr style={{ background: 'rgba(22,163,74,0.10)' }}>
-                <td className="px-3 py-2 text-[11px] font-black uppercase tracking-wider" style={{ color: '#14532d' }}>Total</td>
-                <td className="px-3 py-2 text-right font-mono" style={{ color: '#14532d' }}>—</td>
-                <td className="px-3 py-2 text-right font-mono font-black" style={{ color: '#14532d' }}>£{fmtGBP(results.totalContainerCost)}</td>
-                <td className="px-3 py-2 text-right font-mono" style={{ color: '#14532d' }}>—</td>
-                <td className="px-3 py-2 text-right font-mono" style={{ color: '#14532d' }}>—</td>
-                <td className="px-3 py-2 text-right font-mono" style={{ color: '#14532d' }}>—</td>
+              <tr style={{ background: 'rgba(245, 158, 11, 0.10)' }}>
+                <td className="px-3 py-2 text-[11px] font-black uppercase tracking-wider" style={{ color: '#1a1410' }}>Total</td>
+                <td className="px-3 py-2 text-right font-mono" style={{ color: '#1a1410' }}>—</td>
+                <td className="px-3 py-2 text-right font-mono font-black" style={{ color: '#1a1410' }}>£{fmtGBP(results.totalContainerCost)}</td>
+                <td className="px-3 py-2 text-right font-mono" style={{ color: '#1a1410' }}>—</td>
+                <td className="px-3 py-2 text-right font-mono" style={{ color: '#1a1410' }}>—</td>
+                <td className="px-3 py-2 text-right font-mono" style={{ color: '#1a1410' }}>—</td>
               </tr>
             </tbody>
           </table>
@@ -428,7 +426,7 @@ function CostInputRow({ label, value, onChange, prefix = '£' }: {
 
 function ReadOut({ label, value, emphasis }: { label: string; value: string; emphasis?: boolean }) {
   return (
-    <div className="p-1.5 rounded" style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(124,58,237,0.15)' }}>
+    <div className="p-1.5 rounded" style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(168, 85, 247, 0.15)' }}>
       <p className="text-[9px] uppercase tracking-wider" style={{ color: 'rgba(76,29,149,0.55)', fontWeight: 600 }}>{label}</p>
       <p className="font-mono text-[11px] font-bold mt-0.5" style={{ color: emphasis ? '#7c3aed' : '#4c1d95', fontSize: emphasis ? 12 : 11 }}>{value}</p>
     </div>

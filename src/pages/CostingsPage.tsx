@@ -1,8 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import {
-  Save, Trash2, FolderOpen, RotateCcw, FileDown,
-  Package, Layers, BarChart2, Settings, Loader, X, Ship, Database,
-} from 'lucide-react';
+import { Icon, Spinner } from '../components/Icon';
 import { useAuth } from '../contexts/AuthContext';
 import {
   CostingSettings,
@@ -132,12 +129,12 @@ const DEFAULT_IMPORT_CONTROL: ImportControl = {
 type Tab = 'main' | 'npd' | 'bulk' | 'import_control' | 'products' | 'settings';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: 'main',           label: 'Costing Model',   icon: <Package size={12} /> },
-  { id: 'npd',            label: 'NPD Costings',    icon: <BarChart2 size={12} /> },
-  { id: 'bulk',           label: 'Bulk Costings',   icon: <Layers size={12} /> },
-  { id: 'import_control', label: 'Import Control',  icon: <Ship size={12} /> },
-  { id: 'products',       label: 'Products',        icon: <Database size={12} /> },
-  { id: 'settings',       label: 'Workings',        icon: <Settings size={12} /> },
+  { id: 'main',           label: 'Costing Model',   icon: <Icon name="package" size={12} /> },
+  { id: 'npd',            label: 'NPD Costings',    icon: <Icon name="barchart" size={12} /> },
+  { id: 'bulk',           label: 'Bulk Costings',   icon: <Icon name="layers" size={12} /> },
+  { id: 'import_control', label: 'Import Control',  icon: <Icon name="ship" size={12} /> },
+  { id: 'products',       label: 'Products',        icon: <Icon name="database" size={12} /> },
+  { id: 'settings',       label: 'Workings',        icon: <Icon name="settings" size={12} /> },
 ];
 
 // ── Saved panel modal ─────────────────────────────────────────────────────────
@@ -155,26 +152,26 @@ function SavedPanel({
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-md rounded-2xl overflow-hidden"
-        style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(22,163,74,0.2)', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
+        style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(245, 158, 11, 0.2)', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
         <div className="flex items-center justify-between px-5 py-4"
-          style={{ background: 'linear-gradient(135deg, #14532d, #15803d)', borderBottom: '1px solid rgba(22,163,74,0.2)' }}>
+          style={{ background: 'linear-gradient(135deg, #1a1410, #d97706)', borderBottom: '1px solid rgba(245, 158, 11, 0.2)' }}>
           <div className="flex items-center gap-2.5">
-            <FolderOpen size={14} className="text-white/80" />
+            <Icon name="folder" size={14} className="text-white/80" />
             <span className="text-sm font-bold uppercase tracking-tight text-white">Saved Calculations</span>
           </div>
           <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.5)' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
             onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}>
-            <X size={16} />
+            <Icon name="close" size={16} />
           </button>
         </div>
-        <div className="p-4 max-h-96 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(22,163,74,0.2) transparent' }}>
+        <div className="p-4 max-h-96 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(245, 158, 11, 0.2) transparent' }}>
           {loading ? (
-            <div className="flex justify-center py-8"><Loader size={18} className="animate-spin" style={{ color: 'rgba(20,83,45,0.3)' }} /></div>
+            <div className="flex justify-center py-8"><Spinner size={18}  style={{ color: 'rgba(90, 74, 61, 0.3)' }} /></div>
           ) : list.length === 0 ? (
             <div className="text-center py-8">
-              <Package size={28} className="mx-auto mb-3" style={{ color: 'rgba(20,83,45,0.15)' }} />
-              <p className="font-mono text-xs uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.3)' }}>No saved calculations yet</p>
+              <Icon name="package" size={28} className="mx-auto mb-3" style={{ color: 'rgba(90, 74, 61, 0.15)' }} />
+              <p className="font-mono text-xs uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.3)' }}>No saved calculations yet</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -185,18 +182,18 @@ function SavedPanel({
                   : `${s.inputs.productName || '—'}`;
                 return (
                   <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                    style={{ background: 'rgba(255,255,255,0.8)', border: s.id === currentId ? '1.5px solid rgba(22,163,74,0.4)' : '1px solid rgba(22,163,74,0.12)' }}>
+                    style={{ background: 'rgba(255,255,255,0.8)', border: s.id === currentId ? '1.5px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(245, 158, 11, 0.12)' }}>
                     <button className="flex-1 text-left" onClick={() => { onLoad(s); onClose(); }}>
-                      <p className="font-bold text-sm" style={{ color: '#14532d' }}>{s.name}</p>
-                      <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.45)' }}>
+                      <p className="font-bold text-sm" style={{ color: '#1a1410' }}>{s.name}</p>
+                      <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(90, 74, 61, 0.45)' }}>
                         {subtitle} · {new Date(s.updated_at).toLocaleDateString('en-GB')}
                         {!isV2 && <span className="ml-1.5 px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(202,138,4,0.15)', color: '#92400e' }}>legacy</span>}
                       </p>
                     </button>
-                    <button onClick={() => onDelete(s.id)} className="p-1.5 rounded-full" style={{ color: 'rgba(20,83,45,0.3)' }}
+                    <button onClick={() => onDelete(s.id)} className="p-1.5 rounded-full" style={{ color: 'rgba(90, 74, 61, 0.3)' }}
                       onMouseEnter={e => (e.currentTarget.style.color = '#dc2626')}
-                      onMouseLeave={e => (e.currentTarget.style.color = 'rgba(20,83,45,0.3)')}>
-                      <Trash2 size={12} />
+                      onMouseLeave={e => (e.currentTarget.style.color = 'rgba(90, 74, 61, 0.3)')}>
+                      <Icon name="trash" size={12} />
                     </button>
                   </div>
                 );
@@ -526,7 +523,7 @@ export function CostingsPage() {
       {/* Header */}
       <div
         className="shrink-0"
-        style={{ background: 'linear-gradient(135deg, rgba(20,83,45,0.97), rgba(15,70,34,0.95))', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(22,163,74,0.25)' }}
+        style={{ background: 'linear-gradient(135deg, rgba(90, 74, 61, 0.97), rgba(15,70,34,0.95))', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(245, 158, 11, 0.25)' }}
       >
         <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-3 flex-wrap">
           <div>
@@ -542,19 +539,19 @@ export function CostingsPage() {
                 onClick={() => { setShowSaved(true); if (!showSaved) loadList(); }}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
                 style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
-                <FolderOpen size={12} /> Saved
+                <Icon name="folder" size={12} /> Saved
               </button>
               <button
                 onClick={handleReset}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
                 style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
-                <RotateCcw size={12} /> Reset
+                <Icon name="reset" size={12} /> Reset
               </button>
               <button
                 onClick={handleExportPdf}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
                 style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
-                <FileDown size={12} /> PDF
+                <Icon name="filedown" size={12} /> PDF
               </button>
               <input
                 type="text" value={saveName} onChange={e => { setSaveName(e.target.value); setSaveError(null); }}
@@ -566,8 +563,8 @@ export function CostingsPage() {
               <button
                 onClick={handleSave} disabled={saving}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
-                style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 100, color: '#15803d' }}>
-                {saving ? <Loader size={12} className="animate-spin" /> : <Save size={12} />}
+                style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 100, color: '#d97706' }}>
+                {saving ? <Spinner size={12} /> : <Icon name="save" size={12} />}
                 Save
               </button>
             </div>
@@ -579,19 +576,19 @@ export function CostingsPage() {
                 onClick={() => { setIcShowSaved(true); if (!icShowSaved) loadIcList(); }}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
                 style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
-                <FolderOpen size={12} /> Saved
+                <Icon name="folder" size={12} /> Saved
               </button>
               <button
                 onClick={handleIcReset}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
                 style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
-                <RotateCcw size={12} /> Reset
+                <Icon name="reset" size={12} /> Reset
               </button>
               <button
                 onClick={handleIcExportPdf}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
                 style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
-                <FileDown size={12} /> PDF
+                <Icon name="filedown" size={12} /> PDF
               </button>
               <input
                 type="text" value={icSaveName} onChange={e => { setIcSaveName(e.target.value); setIcSaveError(null); }}
@@ -603,8 +600,8 @@ export function CostingsPage() {
               <button
                 onClick={handleIcSave} disabled={icSaving}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
-                style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 100, color: '#15803d' }}>
-                {icSaving ? <Loader size={12} className="animate-spin" /> : <Save size={12} />}
+                style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 100, color: '#d97706' }}>
+                {icSaving ? <Spinner size={12} /> : <Icon name="save" size={12} />}
                 Save
               </button>
             </div>
@@ -628,8 +625,8 @@ export function CostingsPage() {
                 style={{
                   borderRadius: '10px 10px 0 0',
                   background: active ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.08)',
-                  color: active ? '#15803d' : 'rgba(255,255,255,0.6)',
-                  borderBottom: active ? '2px solid #16a34a' : '2px solid transparent',
+                  color: active ? '#d97706' : 'rgba(255,255,255,0.6)',
+                  borderBottom: active ? '2px solid #f59e0b' : '2px solid transparent',
                 }}
               >
                 <span style={{ opacity: active ? 1 : 0.7 }}>{tab.icon}</span>
@@ -721,36 +718,36 @@ function IcSavedPanel({
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-md rounded-2xl overflow-hidden"
-        style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(22,163,74,0.2)', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
+        style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(245, 158, 11, 0.2)', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
         <div className="flex items-center justify-between px-5 py-4"
-          style={{ background: 'linear-gradient(135deg, #14532d, #15803d)' }}>
+          style={{ background: 'linear-gradient(135deg, #1a1410, #d97706)' }}>
           <div className="flex items-center gap-2.5">
-            <Ship size={14} className="text-white/80" />
+            <Icon name="ship" size={14} className="text-white/80" />
             <span className="text-sm font-bold uppercase tracking-tight text-white">Saved Containers</span>
           </div>
           <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.5)' }}>
-            <X size={16} />
+            <Icon name="close" size={16} />
           </button>
         </div>
         <div className="p-4 max-h-96 overflow-y-auto">
           {list.length === 0 ? (
             <div className="text-center py-8">
-              <Ship size={28} className="mx-auto mb-3" style={{ color: 'rgba(20,83,45,0.15)' }} />
-              <p className="text-xs uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.3)' }}>No saved containers yet</p>
+              <Icon name="ship" size={28} className="mx-auto mb-3" style={{ color: 'rgba(90, 74, 61, 0.15)' }} />
+              <p className="text-xs uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.3)' }}>No saved containers yet</p>
             </div>
           ) : (
             <div className="space-y-2">
               {list.map(s => (
                 <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                  style={{ background: 'rgba(255,255,255,0.8)', border: s.id === currentId ? '1.5px solid rgba(22,163,74,0.4)' : '1px solid rgba(22,163,74,0.12)' }}>
+                  style={{ background: 'rgba(255,255,255,0.8)', border: s.id === currentId ? '1.5px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(245, 158, 11, 0.12)' }}>
                   <button className="flex-1 text-left" onClick={() => { onLoad(s); onClose(); }}>
-                    <p className="font-bold text-sm" style={{ color: '#14532d' }}>{s.name}</p>
-                    <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.45)' }}>
+                    <p className="font-bold text-sm" style={{ color: '#1a1410' }}>{s.name}</p>
+                    <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(90, 74, 61, 0.45)' }}>
                       {s.data?.header?.containerNumber || '—'} · {s.data?.products?.length ?? 0} products · {new Date(s.updated_at).toLocaleDateString('en-GB')}
                     </p>
                   </button>
-                  <button onClick={() => onDelete(s.id)} className="p-1.5 rounded-full" style={{ color: 'rgba(20,83,45,0.3)' }}>
-                    <Trash2 size={12} />
+                  <button onClick={() => onDelete(s.id)} className="p-1.5 rounded-full" style={{ color: 'rgba(90, 74, 61, 0.3)' }}>
+                    <Icon name="trash" size={12} />
                   </button>
                 </div>
               ))}

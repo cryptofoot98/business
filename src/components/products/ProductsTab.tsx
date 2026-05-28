@@ -1,7 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import {
-  Database, Search, Plus, Trash2, Save, X, Loader, Check, AlertTriangle, Pencil,
-} from 'lucide-react';
+import { Icon, Spinner } from '../Icon';
 import { Product, NewProductInput } from '../../types/product';
 import { Section } from '../costings/shared';
 
@@ -111,11 +109,11 @@ export function ProductsTab({ products, onCreate, onUpdate, onDelete }: Props) {
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-3">
 
-      <Section title={`Products Catalog (${products.length})`} icon={<Database size={13} />} accent="blue">
+      <Section title={`Products Catalog (${products.length})`} icon={<Icon name="database" size={13} />} accent="blue">
         {/* Search + Add row */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex-1 min-w-[240px] relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(30,58,138,0.45)' }} />
+            <Icon name="search" size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(30,58,138,0.45)' }} />
             <input
               type="text"
               value={query}
@@ -124,7 +122,7 @@ export function ProductsTab({ products, onCreate, onUpdate, onDelete }: Props) {
               className="w-full pl-9 pr-3 py-2 text-sm focus:outline-none"
               style={{
                 background: 'rgba(255,255,255,0.85)',
-                border: '1px solid rgba(37,99,235,0.22)',
+                border: '1px solid rgba(96, 165, 250, 0.22)',
                 borderRadius: 12,
                 color: '#1e3a8a',
               }}
@@ -141,23 +139,23 @@ export function ProductsTab({ products, onCreate, onUpdate, onDelete }: Props) {
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-xl disabled:opacity-40"
             style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', color: '#fff' }}
           >
-            <Plus size={12} /> New Product
+            <Icon name="plus" size={12} /> New Product
           </button>
         </div>
 
         {err && (
           <div className="flex items-start gap-2 p-2 rounded-xl" style={{ background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.25)' }}>
-            <AlertTriangle size={12} style={{ color: '#dc2626', marginTop: 2 }} />
+            <Icon name="alert" size={12} style={{ color: '#dc2626', marginTop: 2 }} />
             <p className="text-xs" style={{ color: '#991b1b' }}>{err}</p>
-            <button onClick={() => setErr(null)} className="ml-auto" style={{ color: 'rgba(127,29,29,0.6)' }}><X size={12} /></button>
+            <button onClick={() => setErr(null)} className="ml-auto" style={{ color: 'rgba(127,29,29,0.6)' }}><Icon name="close" size={12} /></button>
           </div>
         )}
 
         {/* Table */}
-        <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid rgba(37,99,235,0.22)' }}>
+        <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid rgba(96, 165, 250, 0.22)' }}>
           <table className="w-full text-xs" style={{ minWidth: 920, borderCollapse: 'separate', borderSpacing: 0 }}>
             <thead>
-              <tr style={{ background: 'rgba(37,99,235,0.10)' }}>
+              <tr style={{ background: 'rgba(96, 165, 250, 0.10)' }}>
                 <Th>Product No</Th>
                 <Th>Description</Th>
                 <Th align="right">Net Wt (kg)</Th>
@@ -169,17 +167,17 @@ export function ProductsTab({ products, onCreate, onUpdate, onDelete }: Props) {
             </thead>
             <tbody>
               {creating && (
-                <tr style={{ background: 'rgba(37,99,235,0.06)', borderBottom: '1px solid rgba(37,99,235,0.20)' }}>
+                <tr style={{ background: 'rgba(96, 165, 250, 0.06)', borderBottom: '1px solid rgba(96, 165, 250, 0.20)' }}>
                   <EditTd><EditText value={newDraft.product_no} onChange={v => setNewDraft({ ...newDraft, product_no: v })} placeholder="C99999" /></EditTd>
                   <EditTd><EditText value={newDraft.description} onChange={v => setNewDraft({ ...newDraft, description: v })} placeholder="Product name on packaging" /></EditTd>
                   <EditTd><EditNum value={newDraft.net_weight_kg} onChange={v => setNewDraft({ ...newDraft, net_weight_kg: v })} step={0.1} /></EditTd>
                   <EditTd><EditNum value={newDraft.container_fill_kg} onChange={v => setNewDraft({ ...newDraft, container_fill_kg: v })} /></EditTd>
                   <EditTd><EditNum value={newDraft.container_fill_cases} onChange={v => setNewDraft({ ...newDraft, container_fill_cases: Math.floor(v) })} step={1} /></EditTd>
                   <EditTd><EditNum value={newDraft.packs_per_case} onChange={v => setNewDraft({ ...newDraft, packs_per_case: Math.floor(v) })} step={1} /></EditTd>
-                  <td className="px-2 py-1.5 text-right" style={{ borderBottom: '1px solid rgba(37,99,235,0.15)' }}>
+                  <td className="px-2 py-1.5 text-right" style={{ borderBottom: '1px solid rgba(96, 165, 250, 0.15)' }}>
                     <div className="flex items-center justify-end gap-1">
-                      <IconBtn onClick={saveNew} tone="primary" busy={busy}><Check size={11} /></IconBtn>
-                      <IconBtn onClick={() => { setCreating(false); setErr(null); }}><X size={11} /></IconBtn>
+                      <IconBtn onClick={saveNew} tone="primary" busy={busy}><Icon name="check" size={11} /></IconBtn>
+                      <IconBtn onClick={() => { setCreating(false); setErr(null); }}><Icon name="close" size={11} /></IconBtn>
                     </div>
                   </td>
                 </tr>
@@ -188,7 +186,7 @@ export function ProductsTab({ products, onCreate, onUpdate, onDelete }: Props) {
               {filtered.length === 0 && !creating && (
                 <tr>
                   <td colSpan={7} className="px-3 py-8 text-center">
-                    <Database size={22} className="mx-auto mb-2" style={{ color: 'rgba(30,58,138,0.2)' }} />
+                    <Icon name="database" size={22} className="mx-auto mb-2" style={{ color: 'rgba(30,58,138,0.2)' }} />
                     <p className="text-xs" style={{ color: 'rgba(30,58,138,0.5)' }}>
                       {query ? 'No products match your search.' : 'Catalog is empty — click "New Product" to add one.'}
                     </p>
@@ -201,41 +199,41 @@ export function ProductsTab({ products, onCreate, onUpdate, onDelete }: Props) {
                 const isDeleting = pendingDelete === p.id;
                 if (isEditing) {
                   return (
-                    <tr key={p.id} style={{ background: 'rgba(37,99,235,0.06)', borderBottom: '1px solid rgba(37,99,235,0.20)' }}>
+                    <tr key={p.id} style={{ background: 'rgba(96, 165, 250, 0.06)', borderBottom: '1px solid rgba(96, 165, 250, 0.20)' }}>
                       <EditTd><EditText value={editDraft.product_no} onChange={v => setEditDraft({ ...editDraft, product_no: v })} /></EditTd>
                       <EditTd><EditText value={editDraft.description} onChange={v => setEditDraft({ ...editDraft, description: v })} /></EditTd>
                       <EditTd><EditNum value={editDraft.net_weight_kg} onChange={v => setEditDraft({ ...editDraft, net_weight_kg: v })} step={0.1} /></EditTd>
                       <EditTd><EditNum value={editDraft.container_fill_kg} onChange={v => setEditDraft({ ...editDraft, container_fill_kg: v })} /></EditTd>
                       <EditTd><EditNum value={editDraft.container_fill_cases} onChange={v => setEditDraft({ ...editDraft, container_fill_cases: Math.floor(v) })} step={1} /></EditTd>
                       <EditTd><EditNum value={editDraft.packs_per_case} onChange={v => setEditDraft({ ...editDraft, packs_per_case: Math.floor(v) })} step={1} /></EditTd>
-                      <td className="px-2 py-1.5 text-right" style={{ borderBottom: '1px solid rgba(37,99,235,0.15)' }}>
+                      <td className="px-2 py-1.5 text-right" style={{ borderBottom: '1px solid rgba(96, 165, 250, 0.15)' }}>
                         <div className="flex items-center justify-end gap-1">
-                          <IconBtn onClick={() => saveEdit(p.id)} tone="primary" busy={busy}><Save size={11} /></IconBtn>
-                          <IconBtn onClick={cancelEdit}><X size={11} /></IconBtn>
+                          <IconBtn onClick={() => saveEdit(p.id)} tone="primary" busy={busy}><Icon name="save" size={11} /></IconBtn>
+                          <IconBtn onClick={cancelEdit}><Icon name="close" size={11} /></IconBtn>
                         </div>
                       </td>
                     </tr>
                   );
                 }
                 return (
-                  <tr key={p.id} style={{ borderBottom: '1px solid rgba(37,99,235,0.10)' }}>
-                    <td className="px-3 py-1.5 font-mono font-bold" style={{ color: '#1e3a8a', borderRight: '1px solid rgba(37,99,235,0.08)' }}>{p.product_no}</td>
-                    <td className="px-3 py-1.5" style={{ color: 'rgba(30,58,138,0.85)', borderRight: '1px solid rgba(37,99,235,0.08)' }}>{p.description || '—'}</td>
-                    <td className="px-3 py-1.5 text-right font-mono" style={{ color: '#1e3a8a', borderRight: '1px solid rgba(37,99,235,0.08)' }}>{p.net_weight_kg}</td>
-                    <td className="px-3 py-1.5 text-right font-mono" style={{ color: '#1e3a8a', borderRight: '1px solid rgba(37,99,235,0.08)' }}>{p.container_fill_kg.toLocaleString('en-GB')}</td>
-                    <td className="px-3 py-1.5 text-right font-mono" style={{ color: '#1e3a8a', borderRight: '1px solid rgba(37,99,235,0.08)' }}>{p.container_fill_cases.toLocaleString('en-GB')}</td>
-                    <td className="px-3 py-1.5 text-right font-mono" style={{ color: '#1e3a8a', borderRight: '1px solid rgba(37,99,235,0.08)' }}>{p.packs_per_case}</td>
+                  <tr key={p.id} style={{ borderBottom: '1px solid rgba(96, 165, 250, 0.10)' }}>
+                    <td className="px-3 py-1.5 font-mono font-bold" style={{ color: '#1e3a8a', borderRight: '1px solid rgba(96, 165, 250, 0.08)' }}>{p.product_no}</td>
+                    <td className="px-3 py-1.5" style={{ color: 'rgba(30,58,138,0.85)', borderRight: '1px solid rgba(96, 165, 250, 0.08)' }}>{p.description || '—'}</td>
+                    <td className="px-3 py-1.5 text-right font-mono" style={{ color: '#1e3a8a', borderRight: '1px solid rgba(96, 165, 250, 0.08)' }}>{p.net_weight_kg}</td>
+                    <td className="px-3 py-1.5 text-right font-mono" style={{ color: '#1e3a8a', borderRight: '1px solid rgba(96, 165, 250, 0.08)' }}>{p.container_fill_kg.toLocaleString('en-GB')}</td>
+                    <td className="px-3 py-1.5 text-right font-mono" style={{ color: '#1e3a8a', borderRight: '1px solid rgba(96, 165, 250, 0.08)' }}>{p.container_fill_cases.toLocaleString('en-GB')}</td>
+                    <td className="px-3 py-1.5 text-right font-mono" style={{ color: '#1e3a8a', borderRight: '1px solid rgba(96, 165, 250, 0.08)' }}>{p.packs_per_case}</td>
                     <td className="px-2 py-1.5 text-right">
                       {isDeleting ? (
                         <div className="flex items-center justify-end gap-1">
                           <span className="text-[10px] font-mono mr-1" style={{ color: '#dc2626' }}>Delete?</span>
-                          <IconBtn onClick={() => confirmDelete(p.id)} tone="danger" busy={busy}><Check size={11} /></IconBtn>
-                          <IconBtn onClick={() => setPendingDelete(null)}><X size={11} /></IconBtn>
+                          <IconBtn onClick={() => confirmDelete(p.id)} tone="danger" busy={busy}><Icon name="check" size={11} /></IconBtn>
+                          <IconBtn onClick={() => setPendingDelete(null)}><Icon name="close" size={11} /></IconBtn>
                         </div>
                       ) : (
                         <div className="flex items-center justify-end gap-1">
-                          <IconBtn onClick={() => startEdit(p)}><Pencil size={11} /></IconBtn>
-                          <IconBtn onClick={() => setPendingDelete(p.id)} tone="danger"><Trash2 size={11} /></IconBtn>
+                          <IconBtn onClick={() => startEdit(p)}><Icon name="pencil" size={11} /></IconBtn>
+                          <IconBtn onClick={() => setPendingDelete(p.id)} tone="danger"><Icon name="trash" size={11} /></IconBtn>
                         </div>
                       )}
                     </td>
@@ -265,8 +263,8 @@ function Th({ children, align, width }: { children: React.ReactNode; align?: 'ri
         textAlign: align ?? 'left',
         color: '#1e3a8a',
         fontWeight: 700,
-        borderBottom: '1px solid rgba(37,99,235,0.22)',
-        borderRight: '1px solid rgba(37,99,235,0.10)',
+        borderBottom: '1px solid rgba(96, 165, 250, 0.22)',
+        borderRight: '1px solid rgba(96, 165, 250, 0.10)',
         width,
       }}
     >
@@ -277,7 +275,7 @@ function Th({ children, align, width }: { children: React.ReactNode; align?: 'ri
 
 function EditTd({ children }: { children: React.ReactNode }) {
   return (
-    <td className="px-1 py-1" style={{ borderBottom: '1px solid rgba(37,99,235,0.15)', borderRight: '1px solid rgba(37,99,235,0.10)' }}>
+    <td className="px-1 py-1" style={{ borderBottom: '1px solid rgba(96, 165, 250, 0.15)', borderRight: '1px solid rgba(96, 165, 250, 0.10)' }}>
       {children}
     </td>
   );
@@ -288,7 +286,7 @@ function EditText({ value, onChange, placeholder }: { value: string; onChange: (
     <input
       type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
       className="w-full px-2 py-1 text-xs focus:outline-none"
-      style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: 6, color: '#1e3a8a' }}
+      style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(96, 165, 250, 0.22)', borderRadius: 6, color: '#1e3a8a' }}
     />
   );
 }
@@ -299,7 +297,7 @@ function EditNum({ value, onChange, step = 0.01 }: { value: number; onChange: (v
       type="number" value={value || ''} onChange={e => onChange(parseFloat(e.target.value) || 0)}
       step={step} min={0}
       className="w-full px-2 py-1 text-right text-xs font-mono focus:outline-none"
-      style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: 6, color: '#1e3a8a' }}
+      style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(96, 165, 250, 0.22)', borderRadius: 6, color: '#1e3a8a' }}
     />
   );
 }
@@ -313,7 +311,7 @@ function IconBtn({
   busy?: boolean;
 }) {
   const palette =
-    tone === 'primary' ? { bg: 'linear-gradient(135deg, #2563eb, #1d4ed8)', color: '#fff', border: 'rgba(37,99,235,0.5)' }
+    tone === 'primary' ? { bg: 'linear-gradient(135deg, #2563eb, #1d4ed8)', color: '#fff', border: 'rgba(96, 165, 250, 0.5)' }
     : tone === 'danger' ? { bg: 'rgba(220,38,38,0.08)', color: '#dc2626', border: 'rgba(220,38,38,0.3)' }
     : { bg: 'rgba(30,58,138,0.06)', color: 'rgba(30,58,138,0.7)', border: 'rgba(30,58,138,0.18)' };
   return (
@@ -323,7 +321,7 @@ function IconBtn({
       className="p-1.5 rounded-md disabled:opacity-40"
       style={{ background: palette.bg, color: palette.color, border: `1px solid ${palette.border}` }}
     >
-      {busy && tone === 'primary' ? <Loader size={11} className="animate-spin" /> : children}
+      {busy && tone === 'primary' ? <Spinner size={11} /> : children}
     </button>
   );
 }

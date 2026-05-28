@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LoadingMode, PalletConfig, STANDARD_PALLETS } from '../types';
-import { PackageOpen, Layers3 } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface Props {
   mode: LoadingMode;
@@ -17,16 +17,16 @@ const pillWrap = {
 } as const;
 
 const pillActive = {
-  background: 'linear-gradient(135deg, #16a34a, #15803d)',
+  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
   borderRadius: 100,
   color: '#fff',
-  boxShadow: '0 2px 8px rgba(22,163,74,0.32)',
+  boxShadow: '0 2px 8px rgba(245, 158, 11, 0.32)',
 } as const;
 
 const pillIdle = {
   background: 'transparent',
   borderRadius: 100,
-  color: 'rgba(20,83,45,0.5)',
+  color: 'rgba(90, 74, 61, 0.5)',
 } as const;
 
 export function LoadingModeSelector({ mode, palletConfig, onModeChange, onPalletChange }: Props) {
@@ -56,7 +56,7 @@ export function LoadingModeSelector({ mode, palletConfig, onModeChange, onPallet
           className="flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all"
           style={mode === 'handload' ? pillActive : pillIdle}
         >
-          <PackageOpen size={13} strokeWidth={2} />
+          <Icon name="package" size={13} />
           Handload
         </button>
         <button
@@ -64,14 +64,14 @@ export function LoadingModeSelector({ mode, palletConfig, onModeChange, onPallet
           className="flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all"
           style={mode === 'pallet' ? pillActive : pillIdle}
         >
-          <Layers3 size={13} strokeWidth={2} />
+          <Icon name="layers" size={13} />
           Pallet
         </button>
       </div>
 
       {mode === 'handload' && (
-        <div className="px-3 py-2.5 rounded-xl" style={{ background: 'rgba(22,163,74,0.05)', border: '1px solid rgba(22,163,74,0.12)' }}>
-          <p className="font-mono text-[10px] leading-relaxed" style={{ color: 'rgba(20,83,45,0.5)' }}>
+        <div className="px-3 py-2.5 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.12)' }}>
+          <p className="font-mono text-[10px] leading-relaxed" style={{ color: 'rgba(90, 74, 61, 0.5)' }}>
             Boxes loaded directly into container. All 6 orientations tested for maximum fill.
           </p>
         </div>
@@ -79,7 +79,7 @@ export function LoadingModeSelector({ mode, palletConfig, onModeChange, onPallet
 
       {mode === 'pallet' && (
         <div className="space-y-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(20,83,45,0.42)' }}>Pallet type</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(90, 74, 61, 0.42)' }}>Pallet type</p>
           <div className="space-y-1.5">
             {STANDARD_PALLETS.map(pal => {
               const isActive = selectedStandardId === pal.id;
@@ -89,15 +89,15 @@ export function LoadingModeSelector({ mode, palletConfig, onModeChange, onPallet
                   onClick={() => handleStandardSelect(pal.id)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all"
                   style={isActive ? {
-                    background: 'linear-gradient(135deg, #16a34a, #15803d)',
+                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
                     borderRadius: 12,
                     color: '#fff',
-                    boxShadow: '0 3px 14px rgba(22,163,74,0.32)',
+                    boxShadow: '0 3px 14px rgba(245, 158, 11, 0.32)',
                   } : {
                     background: 'rgba(255,255,255,0.7)',
-                    border: '1px solid rgba(22,163,74,0.14)',
+                    border: '1px solid rgba(245, 158, 11, 0.14)',
                     borderRadius: 12,
-                    color: '#14532d',
+                    color: '#1a1410',
                   }}
                 >
                   <div className="flex-1">
@@ -116,8 +116,8 @@ export function LoadingModeSelector({ mode, palletConfig, onModeChange, onPallet
           </div>
 
           {isCustom && (
-            <div className="rounded-xl p-3 space-y-2.5" style={{ background: 'rgba(22,163,74,0.05)', border: '1px solid rgba(22,163,74,0.12)' }}>
-              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(20,83,45,0.42)' }}>Custom dimensions (cm)</p>
+            <div className="rounded-xl p-3 space-y-2.5" style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.12)' }}>
+              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(90, 74, 61, 0.42)' }}>Custom dimensions (cm)</p>
               {[
                 { key: 'length' as const,           label: 'Depth' },
                 { key: 'width' as const,            label: 'Width' },
@@ -126,7 +126,7 @@ export function LoadingModeSelector({ mode, palletConfig, onModeChange, onPallet
                 { key: 'maxStackWeightKg' as const, label: 'Max weight (kg)' },
               ].map(({ key, label }) => (
                 <div key={key} className="flex items-center gap-2">
-                  <label className="font-mono text-[10px] w-28 shrink-0" style={{ color: 'rgba(20,83,45,0.45)' }}>{label}</label>
+                  <label className="font-mono text-[10px] w-28 shrink-0" style={{ color: 'rgba(90, 74, 61, 0.45)' }}>{label}</label>
                   <input
                     type="number"
                     min={1}
@@ -136,9 +136,9 @@ export function LoadingModeSelector({ mode, palletConfig, onModeChange, onPallet
                     className="flex-1 px-2.5 py-1.5 text-sm font-medium focus:outline-none transition-all"
                     style={{
                       background: 'rgba(255,255,255,0.88)',
-                      border: '1px solid rgba(22,163,74,0.22)',
+                      border: '1px solid rgba(245, 158, 11, 0.22)',
                       borderRadius: 8,
-                      color: '#14532d',
+                      color: '#1a1410',
                     }}
                   />
                 </div>
@@ -147,7 +147,7 @@ export function LoadingModeSelector({ mode, palletConfig, onModeChange, onPallet
           )}
 
           {!isCustom && (
-            <div className="rounded-xl p-3" style={{ background: 'rgba(22,163,74,0.05)', border: '1px solid rgba(22,163,74,0.12)' }}>
+            <div className="rounded-xl p-3" style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.12)' }}>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
                 {[
                   ['L × W', `${palletConfig.length} × ${palletConfig.width} cm`],
@@ -156,8 +156,8 @@ export function LoadingModeSelector({ mode, palletConfig, onModeChange, onPallet
                   ['Max wt.', `${palletConfig.maxStackWeightKg.toLocaleString()} kg`],
                 ].map(([label, value]) => (
                   <>
-                    <span key={label + 'l'} className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'rgba(20,83,45,0.42)' }}>{label}</span>
-                    <span key={label + 'v'} className="font-mono text-xs font-semibold" style={{ color: '#14532d' }}>{value}</span>
+                    <span key={label + 'l'} className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'rgba(90, 74, 61, 0.42)' }}>{label}</span>
+                    <span key={label + 'v'} className="font-mono text-xs font-semibold" style={{ color: '#1a1410' }}>{value}</span>
                   </>
                 ))}
               </div>

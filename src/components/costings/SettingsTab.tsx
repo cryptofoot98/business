@@ -1,4 +1,4 @@
-import { RotateCcw, Info } from 'lucide-react';
+import { Icon } from '../Icon';
 import { CostingSettings, ProductCategory, ClearanceType, AgentPortKey } from '../../types/costing';
 import { PRODUCT_CATEGORIES, DUTY_RATES, AGENT_PORT_RATES, INSURANCE_PER_FCL_GBP } from '../../data/costingRates';
 
@@ -10,7 +10,7 @@ interface Props {
 function Th({ children }: { children: React.ReactNode }) {
   return (
     <th className="px-3 py-2 text-left font-mono text-[9px] uppercase tracking-widest whitespace-nowrap"
-      style={{ color: 'rgba(20,83,45,0.5)', background: 'rgba(22,163,74,0.05)', borderBottom: '1px solid rgba(22,163,74,0.12)' }}>
+      style={{ color: 'rgba(90, 74, 61, 0.5)', background: 'rgba(245, 158, 11, 0.05)', borderBottom: '1px solid rgba(245, 158, 11, 0.12)' }}>
       {children}
     </th>
   );
@@ -18,7 +18,7 @@ function Th({ children }: { children: React.ReactNode }) {
 
 function Td({ children }: { children: React.ReactNode }) {
   return (
-    <td className="px-3 py-2" style={{ borderBottom: '1px solid rgba(22,163,74,0.07)' }}>
+    <td className="px-3 py-2" style={{ borderBottom: '1px solid rgba(245, 158, 11, 0.07)' }}>
       {children}
     </td>
   );
@@ -31,11 +31,11 @@ function RateInput({
 }) {
   return (
     <div className="flex items-center overflow-hidden" style={{
-      background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 8, width: 110,
+      background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: 8, width: 110,
     }}>
       {prefix && (
         <span className="px-2 py-1.5 font-mono text-[10px] font-bold select-none shrink-0"
-          style={{ color: '#16a34a', background: 'rgba(22,163,74,0.08)', borderRight: '1px solid rgba(22,163,74,0.15)' }}>
+          style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.08)', borderRight: '1px solid rgba(245, 158, 11, 0.15)' }}>
           {prefix}
         </span>
       )}
@@ -43,7 +43,7 @@ function RateInput({
         type="number" value={value} min={0} step={0.001}
         onChange={e => onChange(parseFloat(e.target.value) || 0)}
         className="flex-1 px-2 py-1.5 bg-transparent text-xs font-mono focus:outline-none"
-        style={{ color: '#14532d', width: 70 }}
+        style={{ color: '#1a1410', width: 70 }}
       />
     </div>
   );
@@ -51,8 +51,8 @@ function RateInput({
 
 function SectionBox({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(22,163,74,0.18)', borderRadius: 16, overflow: 'hidden' }}>
-      <div className="px-4 py-3" style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', borderBottom: '1px solid rgba(22,163,74,0.2)' }}>
+    <div style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(245, 158, 11, 0.18)', borderRadius: 16, overflow: 'hidden' }}>
+      <div className="px-4 py-3" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', borderBottom: '1px solid rgba(245, 158, 11, 0.2)' }}>
         <p className="font-bold text-xs uppercase tracking-widest text-white">{title}</p>
         {note && <p className="font-mono text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>{note}</p>}
       </div>
@@ -117,9 +117,9 @@ export function SettingsTab({ settings, onUpdate }: Props) {
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
       {/* Info bar */}
-      <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: 'rgba(22,163,74,0.07)', border: '1px solid rgba(22,163,74,0.18)' }}>
-        <Info size={13} style={{ color: '#15803d', flexShrink: 0, marginTop: 1 }} />
-        <p className="font-mono text-[10px] leading-relaxed" style={{ color: 'rgba(20,83,45,0.7)' }}>
+      <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.07)', border: '1px solid rgba(245, 158, 11, 0.18)' }}>
+        <Icon name="info" size={13} style={{ color: '#d97706', flexShrink: 0, marginTop: 1 }} />
+        <p className="font-mono text-[10px] leading-relaxed" style={{ color: 'rgba(90, 74, 61, 0.7)' }}>
           Override the default duty rates, agent/port charges, and insurance amount here. Changes are saved automatically and apply to all tabs. Reset to factory defaults at any time.
         </p>
         <button
@@ -127,7 +127,7 @@ export function SettingsTab({ settings, onUpdate }: Props) {
           className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase rounded-full"
           style={{ background: 'rgba(220,38,38,0.1)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.25)' }}
         >
-          <RotateCcw size={10} /> Reset defaults
+          <Icon name="reset" size={10} /> Reset defaults
         </button>
       </div>
 
@@ -152,13 +152,13 @@ export function SettingsTab({ settings, onUpdate }: Props) {
                 return (
                   <tr key={cat}>
                     <Td>
-                      <span className="font-mono text-[10px] font-bold" style={{ color: '#14532d' }}>{label}</span>
+                      <span className="font-mono text-[10px] font-bold" style={{ color: '#1a1410' }}>{label}</span>
                     </Td>
                     <Td>
                       <select
                         value={lic.type} onChange={e => updateDutyType(cat, 'licence', e.target.value as 'per_kg' | 'per_tonne')}
                         className="px-2 py-1 text-[10px] font-mono focus:outline-none appearance-none"
-                        style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 6, color: '#14532d' }}>
+                        style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: 6, color: '#1a1410' }}>
                         <option value="per_kg">£/kg</option>
                         <option value="per_tonne">£/tonne</option>
                       </select>
@@ -170,7 +170,7 @@ export function SettingsTab({ settings, onUpdate }: Props) {
                       <select
                         value={full.type} onChange={e => updateDutyType(cat, 'full_duty', e.target.value as 'per_kg' | 'per_tonne')}
                         className="px-2 py-1 text-[10px] font-mono focus:outline-none appearance-none"
-                        style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 6, color: '#14532d' }}>
+                        style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: 6, color: '#1a1410' }}>
                         <option value="per_kg">£/kg</option>
                         <option value="per_tonne">£/tonne</option>
                       </select>
@@ -179,7 +179,7 @@ export function SettingsTab({ settings, onUpdate }: Props) {
                       <RateInput value={full.rate} onChange={v => updateDuty(cat, 'full_duty', v)} prefix="£" />
                     </Td>
                     <Td>
-                      <span className="font-mono text-[9px]" style={{ color: 'rgba(20,83,45,0.55)' }}>
+                      <span className="font-mono text-[9px]" style={{ color: 'rgba(90, 74, 61, 0.55)' }}>
                         {lic.type === 'per_kg' ? `£${lic.rate.toFixed(3)}/kg` : `£${lic.rate.toLocaleString()}/t`}
                         {' / '}
                         {full.type === 'per_kg' ? `£${full.rate.toFixed(3)}/kg` : `£${full.rate.toLocaleString()}/t`}
@@ -212,8 +212,8 @@ export function SettingsTab({ settings, onUpdate }: Props) {
                   <tr key={key}>
                     <Td>
                       <div>
-                        <p className="font-mono text-[10px] font-bold" style={{ color: '#14532d' }}>{info.agent}</p>
-                        <p className="font-mono text-[9px]" style={{ color: 'rgba(20,83,45,0.5)' }}>{info.port}</p>
+                        <p className="font-mono text-[10px] font-bold" style={{ color: '#1a1410' }}>{info.agent}</p>
+                        <p className="font-mono text-[9px]" style={{ color: 'rgba(90, 74, 61, 0.5)' }}>{info.port}</p>
                       </div>
                     </Td>
                     <Td>
@@ -223,7 +223,7 @@ export function SettingsTab({ settings, onUpdate }: Props) {
                       <RateInput value={info.portChargesGBP} onChange={v => updateAgent(key, 'portChargesGBP', v)} prefix="£" />
                     </Td>
                     <Td>
-                      <span className="font-mono text-xs font-bold" style={{ color: '#14532d' }}>
+                      <span className="font-mono text-xs font-bold" style={{ color: '#1a1410' }}>
                         £{(info.healthExamGBP + info.portChargesGBP).toFixed(2)}
                       </span>
                     </Td>
@@ -240,9 +240,9 @@ export function SettingsTab({ settings, onUpdate }: Props) {
         <div className="p-4">
           <div className="flex items-center gap-3">
             <RateInput value={settings.insurancePerFCL} onChange={updateInsurance} prefix="£" />
-            <span className="font-mono text-xs" style={{ color: 'rgba(20,83,45,0.55)' }}>per FCL container</span>
+            <span className="font-mono text-xs" style={{ color: 'rgba(90, 74, 61, 0.55)' }}>per FCL container</span>
           </div>
-          <p className="font-mono text-[9px] mt-2" style={{ color: 'rgba(20,83,45,0.4)' }}>
+          <p className="font-mono text-[9px] mt-2" style={{ color: 'rgba(90, 74, 61, 0.4)' }}>
             Default: £{INSURANCE_PER_FCL_GBP.toFixed(2)} — divided by cases per container to give cost per case.
           </p>
         </div>
@@ -255,17 +255,17 @@ export function SettingsTab({ settings, onUpdate }: Props) {
             {(Object.keys(settings.agentPortRates) as AgentPortKey[]).map(key => {
               const info = settings.agentPortRates[key];
               return (
-                <div key={key} className="p-3 rounded-xl" style={{ background: 'rgba(22,163,74,0.04)', border: '1px solid rgba(22,163,74,0.12)' }}>
-                  <p className="font-mono text-[9px] font-bold uppercase" style={{ color: 'rgba(20,83,45,0.6)' }}>{info.port}</p>
-                  <p className="font-mono text-[9px]" style={{ color: 'rgba(20,83,45,0.4)' }}>{info.agent}</p>
-                  <p className="font-mono text-xs font-bold mt-1" style={{ color: '#14532d' }}>
+                <div key={key} className="p-3 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.04)', border: '1px solid rgba(245, 158, 11, 0.12)' }}>
+                  <p className="font-mono text-[9px] font-bold uppercase" style={{ color: 'rgba(90, 74, 61, 0.6)' }}>{info.port}</p>
+                  <p className="font-mono text-[9px]" style={{ color: 'rgba(90, 74, 61, 0.4)' }}>{info.agent}</p>
+                  <p className="font-mono text-xs font-bold mt-1" style={{ color: '#1a1410' }}>
                     £{(info.healthExamGBP + info.portChargesGBP).toFixed(2)} clearance
                   </p>
                 </div>
               );
             })}
           </div>
-          <p className="font-mono text-[9px] mt-3" style={{ color: 'rgba(20,83,45,0.4)' }}>
+          <p className="font-mono text-[9px] mt-3" style={{ color: 'rgba(90, 74, 61, 0.4)' }}>
             Transport costs (port → warehouse) vary by destination and are entered per-calculation in the Import Route section.
           </p>
         </div>

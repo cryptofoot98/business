@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { ChevronDown, Plus, Loader, X } from 'lucide-react';
+import { Icon, Spinner } from '../Icon';
 import { Product, NewProductInput } from '../../types/product';
 
 interface Props {
@@ -129,7 +129,7 @@ export function ProductCombobox({
             style={{ color: 'rgba(30,58,138,0.4)' }}
             title="Clear"
           >
-            <X size={13} />
+            <Icon name="close" size={13} />
           </button>
         )}
         <button
@@ -137,7 +137,7 @@ export function ProductCombobox({
           className="px-2 py-2.5"
           style={{ color: accentColor }}
         >
-          <ChevronDown size={14} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 120ms' }} />
+          <Icon name="chevrondown" size={14} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 120ms' }} />
         </button>
       </div>
 
@@ -212,7 +212,7 @@ export function ProductCombobox({
                     color: accentColor,
                   }}
                 >
-                  <Plus size={12} />
+                  <Icon name="plus" size={12} />
                   <span className="text-xs font-bold">Create</span>
                   <span className="font-mono text-xs">"{query.trim()}"</span>
                 </button>
@@ -271,7 +271,7 @@ function CreateForm({
     <div className="p-3 space-y-2.5" style={{ background: 'rgba(245,247,255,0.5)' }}>
       <div className="flex items-center justify-between">
         <p className="text-xs font-bold" style={{ color: accentColor }}>Create "{productNo}"</p>
-        <button onClick={onCancel} style={{ color: 'rgba(30,58,138,0.4)' }}><X size={13} /></button>
+        <button onClick={onCancel} style={{ color: 'rgba(30,58,138,0.4)' }}><Icon name="close" size={13} /></button>
       </div>
       <div>
         <label className="text-[10px] font-mono uppercase tracking-wider" style={{ color: 'rgba(30,58,138,0.55)' }}>Description</label>
@@ -306,7 +306,7 @@ function CreateForm({
           className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg disabled:opacity-40 flex items-center gap-1.5"
           style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`, color: '#fff' }}
         >
-          {saving ? <Loader size={11} className="animate-spin" /> : <Plus size={11} />}
+          {saving ? <Spinner size={11} /> : <Icon name="plus" size={11} />}
           Save Product
         </button>
       </div>

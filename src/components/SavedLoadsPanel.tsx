@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { X, Trash2, FolderOpen, Loader, BookmarkPlus, Pencil, Check } from 'lucide-react';
+import { Icon, Spinner } from './Icon';
 import { SavedLoad, fetchLoads, deleteLoad, updateLoad } from '../lib/loads';
 import { CONTAINERS } from '../data/containers';
 
@@ -107,7 +107,7 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
             onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
             onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}
           >
-            <X size={18} strokeWidth={2} />
+            <Icon name="close" size={18} />
           </button>
         </div>
 
@@ -130,16 +130,16 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.14)',
               }}
-              onFocus={e => (e.currentTarget.style.borderColor = 'rgba(22,163,74,0.5)')}
+              onFocus={e => (e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.5)')}
               onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)')}
             />
             <button
               onClick={handleSave}
               disabled={isSaving}
               className="px-3.5 py-2.5 text-white text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 shrink-0 transition-all rounded-xl"
-              style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', boxShadow: '0 2px 10px rgba(22,163,74,0.35)' }}
+              style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 2px 10px rgba(245, 158, 11, 0.35)' }}
             >
-              {isSaving ? <Loader size={13} className="animate-spin" /> : <BookmarkPlus size={13} />}
+              {isSaving ? <Spinner size={13} /> : <Icon name="bookmarkplus" size={13} />}
               Save
             </button>
           </div>
@@ -147,14 +147,14 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
         </div>
 
         {/* Load list */}
-        <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(22,163,74,0.22) transparent' }}>
+        <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(245, 158, 11, 0.22) transparent' }}>
           {fetching ? (
             <div className="flex items-center justify-center py-10">
-              <Loader size={18} className="animate-spin" style={{ color: 'rgba(255,255,255,0.3)' }} />
+              <Spinner size={18}  style={{ color: 'rgba(255,255,255,0.3)' }} />
             </div>
           ) : loads.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-              <FolderOpen size={28} className="mb-3" style={{ color: 'rgba(255,255,255,0.12)' }} />
+              <Icon name="folder" size={28} className="mb-3" style={{ color: 'rgba(255,255,255,0.12)' }} />
               <p className="font-mono text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.22)' }}>No saved loads yet</p>
               <p className="font-mono text-[9px] mt-1" style={{ color: 'rgba(255,255,255,0.14)' }}>Configure a load above and save it</p>
             </div>
@@ -181,13 +181,13 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                             autoFocus
                             maxLength={80}
                             className="flex-1 px-2 py-1 text-sm font-medium text-white focus:outline-none rounded-lg"
-                            style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(22,163,74,0.4)' }}
+                            style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(245, 158, 11, 0.4)' }}
                           />
                           <button onClick={() => handleRename(load.id)} style={{ color: '#4ade80' }}>
-                            <Check size={14} />
+                            <Icon name="check" size={14} />
                           </button>
                           <button onClick={() => setEditingId(null)} style={{ color: 'rgba(255,255,255,0.3)' }}>
-                            <X size={14} />
+                            <Icon name="close" size={14} />
                           </button>
                         </div>
                       ) : (
@@ -200,7 +200,7 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                               onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
                               onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.22)')}
                             >
-                              <Pencil size={11} />
+                              <Icon name="pencil" size={11} />
                             </button>
                             <button
                               onClick={() => handleDelete(load.id)}
@@ -209,7 +209,7 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                               onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
                               onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.22)')}
                             >
-                              {isDeleting ? <Loader size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                              {isDeleting ? <Spinner size={11} /> : <Icon name="trash" size={11} />}
                             </button>
                           </div>
                         </div>
@@ -218,7 +218,7 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span
                           className="inline-flex items-center px-2 py-0.5 rounded-full font-mono text-[9px] font-semibold uppercase"
-                          style={{ background: 'rgba(22,163,74,0.25)', border: '1px solid rgba(22,163,74,0.35)', color: 'rgba(134,239,172,0.9)' }}
+                          style={{ background: 'rgba(245, 158, 11, 0.25)', border: '1px solid rgba(245, 158, 11, 0.35)', color: 'rgba(134,239,172,0.9)' }}
                         >
                           {getContainerLabel(load.container_id)}
                         </span>
@@ -244,15 +244,15 @@ export function SavedLoadsPanel({ open, onClose, userId, onLoadSelect, onSaveReq
                       className="w-full py-2.5 text-[10px] font-semibold uppercase tracking-wider text-center transition-all rounded-none"
                       style={{
                         color: 'rgba(134,239,172,0.6)',
-                        background: 'rgba(22,163,74,0.07)',
-                        borderTop: '1px solid rgba(22,163,74,0.15)',
+                        background: 'rgba(245, 158, 11, 0.07)',
+                        borderTop: '1px solid rgba(245, 158, 11, 0.15)',
                       }}
                       onMouseEnter={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(22,163,74,0.18)';
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(245, 158, 11, 0.18)';
                         (e.currentTarget as HTMLButtonElement).style.color = 'rgba(134,239,172,1)';
                       }}
                       onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(22,163,74,0.07)';
+                        (e.currentTarget as HTMLButtonElement).style.background = 'rgba(245, 158, 11, 0.07)';
                         (e.currentTarget as HTMLButtonElement).style.color = 'rgba(134,239,172,0.6)';
                       }}
                     >

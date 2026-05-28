@@ -100,8 +100,8 @@ export function NpdCostingsTab({ settings }: Props) {
       </Section>
 
       {/* Scenarios horizontal table */}
-      <div style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(22,163,74,0.18)', borderRadius: 16, overflow: 'hidden' }}>
-        <div className="px-4 py-3" style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', borderBottom: '1px solid rgba(22,163,74,0.25)' }}>
+      <div style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(245, 158, 11, 0.18)', borderRadius: 16, overflow: 'hidden' }}>
+        <div className="px-4 py-3" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', borderBottom: '1px solid rgba(245, 158, 11, 0.25)' }}>
           <p className="font-bold text-xs uppercase tracking-widest text-white">5-Scenario Comparison</p>
           <p className="font-mono text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>Each column is an independent import scenario for the same product</p>
         </div>
@@ -109,17 +109,17 @@ export function NpdCostingsTab({ settings }: Props) {
         <div className="overflow-x-auto">
           <table className="w-full text-xs" style={{ minWidth: 900 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(22,163,74,0.12)' }}>
+              <tr style={{ borderBottom: '1px solid rgba(245, 158, 11, 0.12)' }}>
                 <th className="text-left px-4 py-2 font-mono text-[10px] uppercase tracking-widest w-36 shrink-0"
-                  style={{ color: 'rgba(20,83,45,0.5)', background: 'rgba(22,163,74,0.04)' }}>Field</th>
+                  style={{ color: 'rgba(90, 74, 61, 0.5)', background: 'rgba(245, 158, 11, 0.04)' }}>Field</th>
                 {scenarios.map((s, i) => (
                   <th key={i} className={`${COL} px-3 py-2 text-left`}
-                    style={{ background: 'rgba(22,163,74,0.04)', borderLeft: '1px solid rgba(22,163,74,0.1)' }}>
+                    style={{ background: 'rgba(245, 158, 11, 0.04)', borderLeft: '1px solid rgba(245, 158, 11, 0.1)' }}>
                     <input
                       type="text" value={s.label}
                       onChange={e => setS(i, 'label', e.target.value)}
                       className="w-full px-2 py-1 text-xs font-bold font-mono focus:outline-none"
-                      style={{ background: 'transparent', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 6, color: '#14532d' }}
+                      style={{ background: 'transparent', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: 6, color: '#1a1410' }}
                     />
                   </th>
                 ))}
@@ -159,8 +159,8 @@ export function NpdCostingsTab({ settings }: Props) {
                 {scenarios.map((s, i) => (
                   <label key={i} className="flex items-center gap-1.5 cursor-pointer">
                     <input type="checkbox" checked={s.insuranceAuto} onChange={e => setS(i, 'insuranceAuto', e.target.checked)}
-                      className="w-3 h-3" style={{ accentColor: '#16a34a' }} />
-                    <span className="font-mono text-[10px]" style={{ color: '#14532d' }}>
+                      className="w-3 h-3" style={{ accentColor: '#f59e0b' }} />
+                    <span className="font-mono text-[10px]" style={{ color: '#1a1410' }}>
                       {s.insuranceAuto ? `£${settings.insurancePerFCL}/FCL` : 'Manual'}
                     </span>
                   </label>
@@ -172,8 +172,8 @@ export function NpdCostingsTab({ settings }: Props) {
                 {scenarios.map((s, i) => (
                   <label key={i} className="flex items-center gap-1.5 cursor-pointer">
                     <input type="checkbox" checked={s.handballing} onChange={e => setS(i, 'handballing', e.target.checked)}
-                      className="w-3 h-3" style={{ accentColor: '#16a34a' }} />
-                    <span className="font-mono text-[10px]" style={{ color: '#14532d' }}>
+                      className="w-3 h-3" style={{ accentColor: '#f59e0b' }} />
+                    <span className="font-mono text-[10px]" style={{ color: '#1a1410' }}>
                       {s.handballing ? `£${s.handballingCostGBP}` : 'No'}
                     </span>
                   </label>
@@ -189,36 +189,36 @@ export function NpdCostingsTab({ settings }: Props) {
 
               {/* ── Results divider ── */}
               <tr>
-                <td colSpan={SCENARIO_COUNT + 1} style={{ background: 'linear-gradient(135deg, rgba(22,163,74,0.08), rgba(21,128,61,0.06))', borderTop: '2px solid rgba(22,163,74,0.2)', borderBottom: '1px solid rgba(22,163,74,0.15)' }}>
-                  <p className="font-bold text-[10px] uppercase tracking-widest px-4 py-2" style={{ color: '#15803d' }}>Results</p>
+                <td colSpan={SCENARIO_COUNT + 1} style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(21,128,61,0.06))', borderTop: '2px solid rgba(245, 158, 11, 0.2)', borderBottom: '1px solid rgba(245, 158, 11, 0.15)' }}>
+                  <p className="font-bold text-[10px] uppercase tracking-widest px-4 py-2" style={{ color: '#d97706' }}>Results</p>
                 </td>
               </tr>
 
               {/* Duty rate */}
               <NpdRow label="Duty rate" shade>
                 {results.map((r, i) => (
-                  <span key={i} className="font-mono text-[10px] font-bold" style={{ color: '#14532d' }}>{r.dutyRateLabel}</span>
+                  <span key={i} className="font-mono text-[10px] font-bold" style={{ color: '#1a1410' }}>{r.dutyRateLabel}</span>
                 ))}
               </NpdRow>
 
               {/* Cost/case */}
               <NpdRow label="Cost / case" shade>
                 {results.map((r, i) => (
-                  <span key={i} className="font-mono text-sm font-black" style={{ color: '#14532d' }}>£{r.totalCostPerCase.toFixed(2)}</span>
+                  <span key={i} className="font-mono text-sm font-black" style={{ color: '#1a1410' }}>£{r.totalCostPerCase.toFixed(2)}</span>
                 ))}
               </NpdRow>
 
               {/* Cost/kg */}
               <NpdRow label="Cost / kg" shade>
                 {results.map((r, i) => (
-                  <span key={i} className="font-mono text-[10px] font-bold" style={{ color: '#14532d' }}>£{r.costPerKg.toFixed(4)}</span>
+                  <span key={i} className="font-mono text-[10px] font-bold" style={{ color: '#1a1410' }}>£{r.costPerKg.toFixed(4)}</span>
                 ))}
               </NpdRow>
 
               {/* Total / container */}
               <NpdRow label="Total / container" shade>
                 {results.map((r, i) => (
-                  <span key={i} className="font-mono text-[10px] font-bold" style={{ color: '#14532d' }}>
+                  <span key={i} className="font-mono text-[10px] font-bold" style={{ color: '#1a1410' }}>
                     £{r.totalCostPerContainer.toLocaleString('en-GB', { maximumFractionDigits: 0 })}
                   </span>
                 ))}
@@ -230,7 +230,7 @@ export function NpdCostingsTab({ settings }: Props) {
                   const hasPrice = scenarios[i].sellingPricePerCase > 0;
                   const gc = gmColor(r.gmPercent);
                   return (
-                    <span key={i} className="font-mono text-sm font-black" style={{ color: hasPrice ? gc : 'rgba(20,83,45,0.3)' }}>
+                    <span key={i} className="font-mono text-sm font-black" style={{ color: hasPrice ? gc : 'rgba(90, 74, 61, 0.3)' }}>
                       {hasPrice ? `${r.gmPercent.toFixed(1)}%` : '—'}
                     </span>
                   );
@@ -243,7 +243,7 @@ export function NpdCostingsTab({ settings }: Props) {
                   const hasPrice = scenarios[i].sellingPricePerCase > 0;
                   const gc = gmColor(r.gmPercent);
                   return (
-                    <span key={i} className="font-mono text-[10px] font-bold" style={{ color: hasPrice ? gc : 'rgba(20,83,45,0.3)' }}>
+                    <span key={i} className="font-mono text-[10px] font-bold" style={{ color: hasPrice ? gc : 'rgba(90, 74, 61, 0.3)' }}>
                       {hasPrice ? `${r.gmGBPPerCase >= 0 ? '+' : ''}£${r.gmGBPPerCase.toFixed(2)}` : '—'}
                     </span>
                   );
@@ -252,8 +252,8 @@ export function NpdCostingsTab({ settings }: Props) {
 
               {/* Breakdown rows */}
               <tr>
-                <td colSpan={SCENARIO_COUNT + 1} style={{ background: 'rgba(22,163,74,0.03)', borderTop: '1px solid rgba(22,163,74,0.1)', borderBottom: '1px solid rgba(22,163,74,0.1)' }}>
-                  <p className="font-mono text-[9px] uppercase tracking-widest px-4 py-1.5" style={{ color: 'rgba(20,83,45,0.45)' }}>Breakdown / case</p>
+                <td colSpan={SCENARIO_COUNT + 1} style={{ background: 'rgba(245, 158, 11, 0.03)', borderTop: '1px solid rgba(245, 158, 11, 0.1)', borderBottom: '1px solid rgba(245, 158, 11, 0.1)' }}>
+                  <p className="font-mono text-[9px] uppercase tracking-widest px-4 py-1.5" style={{ color: 'rgba(90, 74, 61, 0.45)' }}>Breakdown / case</p>
                 </td>
               </tr>
 
@@ -270,7 +270,7 @@ export function NpdCostingsTab({ settings }: Props) {
                   {results.map((r, i) => {
                     const val = r[key as keyof typeof r] as number;
                     return (
-                      <span key={i} className="font-mono text-[10px]" style={{ color: val > 0 ? '#14532d' : 'rgba(20,83,45,0.25)' }}>
+                      <span key={i} className="font-mono text-[10px]" style={{ color: val > 0 ? '#1a1410' : 'rgba(90, 74, 61, 0.25)' }}>
                         {val > 0 ? `£${val.toFixed(4)}` : '—'}
                       </span>
                     );
@@ -288,12 +288,12 @@ export function NpdCostingsTab({ settings }: Props) {
 function NpdRow({ label, children, shade }: { label: string; children: React.ReactNode; shade?: boolean }) {
   const cells = Array.isArray(children) ? children : [children];
   return (
-    <tr style={{ borderBottom: '1px solid rgba(22,163,74,0.07)', background: shade ? 'rgba(240,249,240,0.3)' : undefined }}>
-      <td className="px-4 py-2 font-mono text-[10px] whitespace-nowrap" style={{ color: 'rgba(20,83,45,0.55)', background: 'rgba(22,163,74,0.04)' }}>
+    <tr style={{ borderBottom: '1px solid rgba(245, 158, 11, 0.07)', background: shade ? 'rgba(240,249,240,0.3)' : undefined }}>
+      <td className="px-4 py-2 font-mono text-[10px] whitespace-nowrap" style={{ color: 'rgba(90, 74, 61, 0.55)', background: 'rgba(245, 158, 11, 0.04)' }}>
         {label}
       </td>
       {cells.map((cell, i) => (
-        <td key={i} className="px-3 py-2" style={{ borderLeft: '1px solid rgba(22,163,74,0.08)', minWidth: 170 }}>
+        <td key={i} className="px-3 py-2" style={{ borderLeft: '1px solid rgba(245, 158, 11, 0.08)', minWidth: 170 }}>
           {cell}
         </td>
       ))}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Plus, Package, Loader, X } from 'lucide-react';
+import { Icon, Spinner } from './Icon';
 import { SavedProduct, fetchSavedProducts, deleteSavedProduct } from '../lib/savedProducts';
 import { Product } from '../types';
 import { PRODUCT_COLORS } from '../utils/colors';
@@ -52,15 +52,15 @@ export function SavedProductsModal({ userId, onLoad, onClose }: Props) {
     >
       <div
         className="w-full max-w-md rounded-2xl overflow-hidden"
-        style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(22,163,74,0.18)', boxShadow: '0 20px 60px rgba(0,0,0,0.18), 0 4px 20px rgba(22,163,74,0.12)' }}
+        style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(245, 158, 11, 0.18)', boxShadow: '0 20px 60px rgba(0,0,0,0.18), 0 4px 20px rgba(245, 158, 11, 0.12)' }}
       >
         {/* Modal header */}
         <div
           className="flex items-center justify-between px-5 py-4"
-          style={{ background: 'linear-gradient(135deg, #14532d, #15803d)', borderBottom: '1px solid rgba(22,163,74,0.2)' }}
+          style={{ background: 'linear-gradient(135deg, #1a1410, #d97706)', borderBottom: '1px solid rgba(245, 158, 11, 0.2)' }}
         >
           <div className="flex items-center gap-2.5">
-            <Package size={15} className="text-white/80" />
+            <Icon name="package" size={15} className="text-white/80" />
             <span className="text-sm font-semibold uppercase tracking-tight text-white">Saved Products</span>
           </div>
           <button
@@ -70,21 +70,21 @@ export function SavedProductsModal({ userId, onLoad, onClose }: Props) {
             onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
             onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
           >
-            <X size={16} strokeWidth={2} />
+            <Icon name="close" size={16} />
           </button>
         </div>
 
         {/* Product list */}
-        <div className="p-4 max-h-96 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(22,163,74,0.22) transparent' }}>
+        <div className="p-4 max-h-96 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(245, 158, 11, 0.22) transparent' }}>
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader size={18} className="animate-spin" style={{ color: 'rgba(20,83,45,0.3)' }} />
+              <Spinner size={18}  style={{ color: 'rgba(90, 74, 61, 0.3)' }} />
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-8">
-              <Package size={28} className="mx-auto mb-3" style={{ color: 'rgba(20,83,45,0.15)' }} />
-              <p className="font-mono text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.3)' }}>No saved products yet</p>
-              <p className="font-mono text-[10px] mt-1.5" style={{ color: 'rgba(20,83,45,0.22)' }}>Use the bookmark icon on any product to save it</p>
+              <Icon name="package" size={28} className="mx-auto mb-3" style={{ color: 'rgba(90, 74, 61, 0.15)' }} />
+              <p className="font-mono text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.3)' }}>No saved products yet</p>
+              <p className="font-mono text-[10px] mt-1.5" style={{ color: 'rgba(90, 74, 61, 0.22)' }}>Use the bookmark icon on any product to save it</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -94,13 +94,13 @@ export function SavedProductsModal({ userId, onLoad, onClose }: Props) {
                   <div
                     key={sp.id}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all"
-                    style={{ background: 'rgba(255,255,255,0.8)', border: '1px solid rgba(22,163,74,0.12)', borderLeft: `3px solid ${color}` }}
+                    style={{ background: 'rgba(255,255,255,0.8)', border: '1px solid rgba(245, 158, 11, 0.12)', borderLeft: `3px solid ${color}` }}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono text-xs font-semibold uppercase truncate" style={{ color: '#14532d' }}>
+                      <p className="font-mono text-xs font-semibold uppercase truncate" style={{ color: '#1a1410' }}>
                         {sp.name || 'Untitled'}
                       </p>
-                      <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(20,83,45,0.4)' }}>
+                      <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(90, 74, 61, 0.4)' }}>
                         {sp.length} × {sp.width} × {sp.height} cm &bull; {sp.gross_weight} kg
                       </p>
                     </div>
@@ -108,20 +108,20 @@ export function SavedProductsModal({ userId, onLoad, onClose }: Props) {
                       <button
                         onClick={() => handleLoad(sp)}
                         className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-wider text-white transition-all"
-                        style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', boxShadow: '0 2px 8px rgba(22,163,74,0.3)' }}
+                        style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)' }}
                       >
-                        <Plus size={9} />
+                        <Icon name="plus" size={9} />
                         Load
                       </button>
                       <button
                         onClick={() => handleDelete(sp.id)}
                         disabled={deletingId === sp.id}
                         className="p-1.5 rounded-full transition-all disabled:opacity-40"
-                        style={{ color: 'rgba(20,83,45,0.35)' }}
+                        style={{ color: 'rgba(90, 74, 61, 0.35)' }}
                         onMouseEnter={e => (e.currentTarget.style.color = '#dc2626')}
-                        onMouseLeave={e => (e.currentTarget.style.color = 'rgba(20,83,45,0.35)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'rgba(90, 74, 61, 0.35)')}
                       >
-                        {deletingId === sp.id ? <Loader size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                        {deletingId === sp.id ? <Spinner size={11} /> : <Icon name="trash" size={11} />}
                       </button>
                     </div>
                   </div>
