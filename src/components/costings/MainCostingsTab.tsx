@@ -12,6 +12,8 @@ import {
 import {
   PRODUCT_CATEGORIES, BAO_BUN_ADDITIONAL_DUTY_PER_100KG,
 } from '../../data/costingRates';
+import { Product, NewProductInput } from '../../types/product';
+import { ProductCombobox } from './ProductCombobox';
 
 // ── Tunables ──────────────────────────────────────────────────────────────────
 
@@ -155,19 +157,22 @@ interface Props {
   scenarios: CostingScenario[];
   results: ScenarioSummary[];
   settings: CostingSettings;
-  productCodeSuggestions: string[];
+  productCatalog: Product[];
   onSetProduct: <K extends keyof CostingModelProduct>(key: K, val: CostingModelProduct[K]) => void;
   onSetContainer: <K extends keyof CostingModelContainer>(key: K, val: CostingModelContainer[K]) => void;
   onSetScenario: <K extends keyof CostingScenario>(i: number, key: K, val: CostingScenario[K]) => void;
   onAddScenario: () => void;
   onRemoveScenario: (i: number) => void;
+  onProductCatalogSelect: (p: Product) => void;
+  onProductCatalogCreate: (input: NewProductInput) => Promise<Product>;
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export function MainCostingsTab({
-  product, container, scenarios, results, settings, productCodeSuggestions,
+  product, container, scenarios, results, settings, productCatalog,
   onSetProduct, onSetContainer, onSetScenario, onAddScenario, onRemoveScenario,
+  onProductCatalogSelect, onProductCatalogCreate,
 }: Props) {
   const agentOptions = useMemo(
     () => (Object.entries(settings.agentPortRates) as [AgentPortKey, typeof settings.agentPortRates[AgentPortKey]][])
@@ -210,24 +215,15 @@ export function MainCostingsTab({
       {/* ─── 1. Product Details — BLUE ─── */}
       <Section title="Product Details" icon={<Package size={13} />} accent="blue">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Field label="Product Code">
-            <input
-              type="text"
-              list="costing-product-codes"
+          <Field label="Product Code" note={`${productCatalog.length} products in catalog — type to search or create new`}>
+            <ProductCombobox
+              products={productCatalog}
               value={product.productCode}
-              onChange={e => onSetProduct('productCode', e.target.value)}
-              placeholder="e.g. CH06"
-              className="w-full px-3 py-2.5 text-sm font-mono focus:outline-none"
-              style={{
-                background: 'rgba(255,255,255,0.85)',
-                border: '1px solid rgba(37,99,235,0.22)',
-                borderRadius: 12,
-                color: '#1e3a8a',
-              }}
+              onSelect={onProductCatalogSelect}
+              onCreate={onProductCatalogCreate}
+              onTextChange={txt => onSetProduct('productCode', txt)}
+              placeholder="e.g. C10028A"
             />
-            <datalist id="costing-product-codes">
-              {productCodeSuggestions.map(c => <option key={c} value={c} />)}
-            </datalist>
           </Field>
           <Field label="Description">
             <TextInputSm value={product.description} onChange={v => onSetProduct('description', v)} placeholder="e.g. Chicken Spring Rolls 50×60g" />

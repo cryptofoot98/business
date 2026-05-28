@@ -16,6 +16,8 @@ import {
 } from '../data/costingRates';
 import { computeCostingModelScenario } from '../utils/costingCalc';
 import { exportCostingPdf } from '../utils/costingPdf';
+import { Product, NewProductInput } from '../types/product';
+import { fetchProducts, createProduct } from '../lib/products';
 import { saveCostingCalculation, fetchCostingCalculations, deleteCostingCalculation } from '../lib/costings';
 import { MainCostingsTab } from '../components/costings/MainCostingsTab';
 import { NpdCostingsTab } from '../components/costings/NpdCostingsTab';
@@ -182,21 +184,13 @@ export function CostingsPage() {
   const [saveName, setSaveName] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Products catalog (shared across users — sourced from DataFeed)
+  const [productCatalog, setProductCatalog] = useState<Product[]>([]);
+
   const results: ScenarioSummary[] = useMemo(
     () => scenarios.map(s => computeCostingModelScenario(product, container, s, settings)),
     [product, container, scenarios, settings],
   );
-
-  // Product code autocomplete — distinct codes from saved v2 entries
-  const productCodeSuggestions = useMemo(() => {
-    const set = new Set<string>();
-    for (const s of savedList) {
-      if (isCostingModelPayload(s.inputs) && s.inputs.product.productCode) {
-        set.add(s.inputs.product.productCode);
-      }
-    }
-    return Array.from(set).sort();
-  }, [savedList]);
 
   // ── Setters ────────────────────────────────────────────────────────────────
   const setProductField = useCallback(<K extends keyof CostingModelProduct>(key: K, val: CostingModelProduct[K]) => {
@@ -233,6 +227,34 @@ export function CostingsPage() {
     };
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged)); } catch { /* ignore */ }
   }
+
+  // ── Products catalog ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!user) return;
+    fetchProducts().then(setProductCatalog).catch(e => console.error('Failed to load products:', e));
+  }, [user]);
+
+  const handleProductCatalogSelect = useCallback((p: Product) => {
+    setProduct(prev => ({
+      ...prev,
+      productCode: p.product_no,
+      description: p.description,
+      caseWeightKg: p.net_weight_kg || prev.caseWeightKg,
+      bagsPerCase: p.packs_per_case || prev.bagsPerCase,
+    }));
+    // Default each scenario's cases-per-container from the catalog row if empty
+    setScenarios(prev => prev.map(s => ({
+      ...s,
+      casesPerContainer: s.casesPerContainer > 0 ? s.casesPerContainer : p.container_fill_cases,
+    })));
+  }, []);
+
+  const handleProductCatalogCreate = useCallback(async (input: NewProductInput): Promise<Product> => {
+    if (!user) throw new Error('Not signed in');
+    const created = await createProduct(user.id, input);
+    setProductCatalog(prev => [...prev, created].sort((a, b) => a.product_no.localeCompare(b.product_no)));
+    return created;
+  }, [user]);
 
   // ── Save / load ────────────────────────────────────────────────────────────
   useEffect(() => { if (user) loadList(); }, [user]);
@@ -420,12 +442,14 @@ export function CostingsPage() {
             scenarios={scenarios}
             results={results}
             settings={settings}
-            productCodeSuggestions={productCodeSuggestions}
+            productCatalog={productCatalog}
             onSetProduct={setProductField}
             onSetContainer={setContainerField}
             onSetScenario={setScenarioField}
             onAddScenario={addScenario}
             onRemoveScenario={removeScenario}
+            onProductCatalogSelect={handleProductCatalogSelect}
+            onProductCatalogCreate={handleProductCatalogCreate}
           />
         )}
         {activeTab === 'npd' && <NpdCostingsTab settings={settings} />}
