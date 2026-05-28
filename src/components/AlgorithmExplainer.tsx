@@ -233,17 +233,22 @@ V_container   = bodyLength × W × usableHeight   (cm³)`}
 stackLimit = 1   if  fragile or not stackable
            = ∞   otherwise
 
-effectiveMax = min(quantityCap, ⌊P / m⌋)
-choose the orientation that maximises min(count, effectiveMax)`}
+effectiveMax = min(quantityCap, ⌊P / m⌋)`}
             </Formula>
             <Card accent="amber">
               <p className="text-xs leading-relaxed" style={{ color: '#78350f' }}>
-                <span className="font-semibold">Residual fill:</span> after the main block
-                there's often a strip of unused space at the back (lengthGap) and along
-                the side (widthGap). The engine recursively packs these residual zones
-                with the same orientation-search to squeeze in extra cases. It then
-                tries the alternative split (width first, then length) and keeps the
-                better total.
+                <span className="font-semibold">Exhaustive main + residual decomposition:</span>{' '}
+                the engine treats <em>every</em> orientation as a candidate main block — not
+                just the one with the biggest single-block count. For each main candidate it
+                tries three ways to slice up the L-shape of unused space:
+              </p>
+              <ul className="text-xs leading-relaxed list-disc pl-5 mt-2 space-y-1" style={{ color: '#78350f' }}>
+                <li><span className="font-semibold">Variant A:</span> back strip carries the corner ([back: lengthGap × fullWidth] + [side: mainUsedL × widthGap])</li>
+                <li><span className="font-semibold">Variant B:</span> side strip carries the corner ([side: fullLength × widthGap] + [back: lengthGap × mainUsedW])</li>
+                <li><span className="font-semibold">Variant C:</span> 4-region — every zone gets its own optimal orientation, including a dedicated corner ([back] + [side] + [corner: lengthGap × widthGap])</li>
+              </ul>
+              <p className="text-xs leading-relaxed mt-2" style={{ color: '#78350f' }}>
+                Total = mainCount + Σ residualCount. Best across (main orientation × variant) wins.
               </p>
             </Card>
           </section>
@@ -331,6 +336,31 @@ Container fill kg   = Σ gross weight of packed cases
 Centre of gravity   = weighted mean of (box centre, gross weight)
                         — used to flag axle / forklift balance issues`}
             </Formula>
+          </section>
+
+          {/* ── Centring (post-process) ── */}
+          <section>
+            <SectionTitle
+              chip="🎯"
+              title="Step 8 — Centre the packed load"
+              sub="Visual post-process — the count stays the same, only positions shift."
+            />
+            <Formula>
+              {`bbox     = bounding-box of all packed cases
+shiftX   = (innerLength − bbox.width)  ÷ 2  −  bbox.minX
+shiftY   = (innerWidth  − bbox.depth)  ÷ 2  −  bbox.minY
+each box: (x, y) ← (x + shiftX, y + shiftY)`}
+            </Formula>
+            <Card>
+              <p className="text-xs leading-relaxed" style={{ color: palette.inkMuted }}>
+                When a residual is unfillable the algorithm anchors every block at
+                (0, 0), so the loaded mass would sit flush against the back-left
+                wall with the gap concentrated on the front-right. Centring
+                distributes the gap symmetrically — the diagram reads as a
+                balanced load and the count is unchanged. Z is not shifted; cases
+                stay flush to the floor.
+              </p>
+            </Card>
           </section>
 
           {/* ── Constraints ── */}
