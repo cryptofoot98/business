@@ -11,7 +11,7 @@ import { SavedLoadsPanel } from './components/SavedLoadsPanel';
 import { ChatFAB } from './components/chat/ChatFAB';
 import { ChatPanel } from './components/chat/ChatPanel';
 import { AlgorithmExplainer } from './components/AlgorithmExplainer';
-import { Icon } from './components/Icon';
+import { Icon, Spinner } from './components/Icon';
 import { AuthPage } from './pages/AuthPage';
 import { LandingPage } from './pages/LandingPage';
 import { CostingsPage } from './pages/CostingsPage';
@@ -22,7 +22,6 @@ import { calculatePacking, calculateMultiContainer } from './utils/packing';
 import { PRODUCT_COLORS, PRODUCT_LABELS, MAX_PRODUCTS } from './utils/colors';
 import { saveLoad, SavedLoad } from './lib/loads';
 import { AIChatAction, buildChatContext } from './lib/chat';
-import { Icon, Spinner } from './components/Icon';
 
 function makeProduct(idx: number): Product {
   return {
@@ -49,16 +48,16 @@ const UNIT_MULTIPLIERS: Record<UnitSystem, number> = {
 
 function LoadingScreen() {
   return (
-    <div className="h-screen flex items-center justify-center" style={{ background: '#f0f8f0' }}>
+    <div className="h-screen flex items-center justify-center" style={{ background: '#fef7e8' }}>
       <div className="flex items-center gap-3 px-6 py-4" style={{
-        background: 'rgba(255,255,255,0.72)',
+        background: 'rgba(255,255,255,0.85)',
         backdropFilter: 'blur(24px)',
-        border: '1px solid rgba(255,255,255,0.85)',
+        border: '1px solid rgba(245,158,11,0.15)',
         borderRadius: 100,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)',
+        boxShadow: '0 4px 20px rgba(26,20,16,0.07)',
       }}>
-        <Spinner size={18}  style={{ color: '#16a34a' }} />
-        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.6)' }}>Loading…</span>
+        <Spinner size={18} style={{ color: '#f59e0b' }} />
+        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#5a4a3d' }}>Loading…</span>
       </div>
     </div>
   );
