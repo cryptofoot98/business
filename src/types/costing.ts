@@ -53,10 +53,19 @@ export interface SavedCosting {
   user_id: string;
   name: string;
   trade_route: string;
-  inputs: FoodCostingInputs;
-  results: FoodCostingResult;
+  // `inputs` / `results` are stored as JSON. Pre-v2 rows hold FoodCostingInputs/Result;
+  // v2 rows hold CostingModelPayload/CostingModelResults — discriminated by `kind`.
+  inputs: FoodCostingInputs | CostingModelPayload;
+  results: FoodCostingResult | CostingModelResults;
   created_at: string;
   updated_at: string;
+}
+
+export function isCostingModelPayload(x: unknown): x is CostingModelPayload {
+  return typeof x === 'object' && x !== null && (x as { kind?: string }).kind === 'model_v2';
+}
+export function isCostingModelResults(x: unknown): x is CostingModelResults {
+  return typeof x === 'object' && x !== null && (x as { kind?: string }).kind === 'model_v2';
 }
 
 // ── User-editable rate overrides (stored in localStorage) ─────────────────────
@@ -119,4 +128,74 @@ export interface BulkProductRow {
   productCategory: ProductCategory;
   freightCostUSD: number;
   sellingPricePerCase: number;
+}
+
+// ── Costing Model (spreadsheet-faithful 5-scenario model) ─────────────────────
+
+export type Incoterms = 'FOB' | 'CFR';
+export type SalesCurrency = 'GBP' | 'EUR';
+
+export interface CostingModelProduct {
+  productCode: string;
+  description: string;
+  productCategory: ProductCategory;   // "Meat Content"
+  bagsPerCase: number;
+  caseWeightKg: number;
+  supplier: string;
+  priceUSDPerTonne: number;
+}
+
+export interface CostingModelContainer {
+  clearanceType: ClearanceType;       // Licence | Full Duty
+  retail: boolean;                    // Yes/No (No adds £1,395/container)
+  handball: boolean;                  // Yes/No (Yes adds £625.25/container)
+  containerWeightKg: number;
+  insuranceAuto: boolean;             // auto = product cost × 0.25%
+  insuranceManualGBP: number;
+}
+
+export interface CostingScenario {
+  label: string;
+  salesCurrency: SalesCurrency;
+  eurGbpRate: number;                  // €→£ (only used when salesCurrency = EUR)
+  salesPricePerCase: number;           // expressed in salesCurrency
+  exchangeRateUSDGBP: number;          // $→£
+  casesPerContainer: number;
+  incoterms: Incoterms;                // FOB → freight charged, CFR → freight = 0
+  freightCostUSD: number;
+  agentPort: AgentPortKey;
+  transportCostGBP: number;
+  licenceCostPerKgGBP: number;         // default 0.40 per spreadsheet Q-column
+}
+
+export interface ScenarioSummary {
+  productCostGBP: number;                  // C26
+  dutyGBP: number;                         // D26
+  freightGBP: number;                      // E26
+  portClearanceTransportGBP: number;       // F26
+  licenceCostGBP: number;                  // G26
+  handballGBP: number;                     // H26
+  currencyInsuranceAdditions2GBP: number;  // I26
+  additions1GBP: number;                   // J26
+  additionalDutyGBP: number;               // K26
+  insurancePerFCLGBP: number;              // F12
+  totalCostGBP: number;                    // L26
+  costPerCaseGBP: number;                  // M26
+  costPerKgGBP: number;                    // N26
+  salesPriceGBPPerCase: number;            // R26 (FX'd from EUR if needed)
+  gmGBPPerCase: number;
+  gmPercent: number;                       // O26
+  dutyRateLabel: string;
+}
+
+export interface CostingModelPayload {
+  kind: 'model_v2';
+  product: CostingModelProduct;
+  container: CostingModelContainer;
+  scenarios: CostingScenario[];
+}
+
+export interface CostingModelResults {
+  kind: 'model_v2';
+  scenarios: ScenarioSummary[];
 }

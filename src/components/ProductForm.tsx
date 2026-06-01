@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Plus, Trash2, Upload, Download, ChevronDown, ChevronUp, AlertTriangle, Layers, Bookmark, Package, X } from 'lucide-react';
+import { Icon } from './Icon';
 import { Product, OrientationLock } from '../types';
 import { PRODUCT_COLORS, PRODUCT_LABELS, MAX_PRODUCTS } from '../utils/colors';
 import { parseCSV, downloadCSVTemplate, CSVImportResult } from '../utils/csvImport';
@@ -19,7 +19,7 @@ interface FieldProps {
 function NumericField({ label, value, onChange, unit, min = 0 }: FieldProps) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="font-mono text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.42)' }}>{label}</label>
+      <label className="font-mono text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.42)' }}>{label}</label>
       <div className="relative flex items-center">
         <input
           type="number"
@@ -30,13 +30,13 @@ function NumericField({ label, value, onChange, unit, min = 0 }: FieldProps) {
           className="w-full pl-3 pr-8 py-2 text-sm font-medium focus:outline-none transition-all placeholder:opacity-30"
           style={{
             background: 'rgba(255,255,255,0.88)',
-            border: '1px solid rgba(22,163,74,0.2)',
+            border: '1px solid rgba(245, 158, 11, 0.2)',
             borderRadius: 9,
-            color: '#14532d',
+            color: '#1a1410',
           }}
           placeholder="0"
         />
-        <span className="absolute right-2.5 font-mono text-[10px] pointer-events-none select-none" style={{ color: 'rgba(20,83,45,0.35)' }}>{unit}</span>
+        <span className="absolute right-2.5 font-mono text-[10px] pointer-events-none select-none" style={{ color: 'rgba(90, 74, 61, 0.35)' }}>{unit}</span>
       </div>
     </div>
   );
@@ -57,10 +57,10 @@ function ConstraintsPanel({ product, onUpdate, unit }: ConstraintsProps) {
   } as const;
 
   return (
-    <div className="space-y-3 pt-3" style={{ borderTop: '1px solid rgba(22,163,74,0.1)' }}>
+    <div className="space-y-3 pt-3" style={{ borderTop: '1px solid rgba(245, 158, 11, 0.1)' }}>
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
-          <label className="font-mono text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.42)' }}>Qty to ship</label>
+          <label className="font-mono text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.42)' }}>Qty to ship</label>
           <input
             type="number"
             min={0}
@@ -68,12 +68,12 @@ function ConstraintsPanel({ product, onUpdate, unit }: ConstraintsProps) {
             onChange={e => onUpdate('quantity', parseInt(e.target.value) || undefined)}
             onWheel={e => e.currentTarget.blur()}
             className="w-full px-3 py-2 text-sm font-medium focus:outline-none transition-all"
-            style={{ background: 'rgba(255,255,255,0.88)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 9, color: '#14532d' }}
+            style={{ background: 'rgba(255,255,255,0.88)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: 9, color: '#1a1410' }}
             placeholder="∞"
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="font-mono text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.42)' }}>Priority</label>
+          <label className="font-mono text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.42)' }}>Priority</label>
           <input
             type="number"
             min={1}
@@ -82,7 +82,7 @@ function ConstraintsPanel({ product, onUpdate, unit }: ConstraintsProps) {
             onChange={e => onUpdate('priority', Math.min(10, Math.max(1, parseInt(e.target.value) || 5)))}
             onWheel={e => e.currentTarget.blur()}
             className="w-full px-3 py-2 text-sm font-medium focus:outline-none transition-all"
-            style={{ background: 'rgba(255,255,255,0.88)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 9, color: '#14532d' }}
+            style={{ background: 'rgba(255,255,255,0.88)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: 9, color: '#1a1410' }}
           />
         </div>
       </div>
@@ -97,11 +97,11 @@ function ConstraintsPanel({ product, onUpdate, unit }: ConstraintsProps) {
             color: '#dc2626',
           } : {
             background: 'rgba(255,255,255,0.7)',
-            border: '1px solid rgba(22,163,74,0.15)',
-            color: 'rgba(20,83,45,0.55)',
+            border: '1px solid rgba(245, 158, 11, 0.15)',
+            color: 'rgba(90, 74, 61, 0.55)',
           }}
         >
-          <Layers size={11} strokeWidth={2} />
+          <Icon name="layers" size={11} />
           Non-stackable
         </button>
         <button
@@ -113,17 +113,17 @@ function ConstraintsPanel({ product, onUpdate, unit }: ConstraintsProps) {
             color: '#d97706',
           } : {
             background: 'rgba(255,255,255,0.7)',
-            border: '1px solid rgba(22,163,74,0.15)',
-            color: 'rgba(20,83,45,0.55)',
+            border: '1px solid rgba(245, 158, 11, 0.15)',
+            color: 'rgba(90, 74, 61, 0.55)',
           }}
         >
-          <AlertTriangle size={11} strokeWidth={2} />
+          <Icon name="alert" size={11} />
           Fragile
         </button>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="font-mono text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.42)' }}>Orientation</label>
+        <label className="font-mono text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.42)' }}>Orientation</label>
         <div className="flex gap-0.5" style={pillWrap}>
           {(['none', 'upright', 'on-side'] as OrientationLock[]).map(lock => {
             const isActive = (product.orientationLock ?? 'none') === lock;
@@ -133,14 +133,14 @@ function ConstraintsPanel({ product, onUpdate, unit }: ConstraintsProps) {
                 onClick={() => onUpdate('orientationLock', lock)}
                 className="flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all"
                 style={isActive ? {
-                  background: 'linear-gradient(135deg, #16a34a, #15803d)',
+                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
                   borderRadius: 100,
                   color: '#fff',
-                  boxShadow: '0 1px 6px rgba(22,163,74,0.3)',
+                  boxShadow: '0 1px 6px rgba(245, 158, 11, 0.3)',
                 } : {
                   background: 'transparent',
                   borderRadius: 100,
-                  color: 'rgba(20,83,45,0.5)',
+                  color: 'rgba(90, 74, 61, 0.5)',
                 }}
               >
                 {lock === 'none' ? 'Free' : lock === 'upright' ? 'Upright' : 'Side'}
@@ -224,7 +224,7 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
     <div className="space-y-3">
       {/* Toolbar */}
       <div className="flex items-center justify-between">
-        <span className="font-mono text-[10px] font-medium" style={{ color: 'rgba(20,83,45,0.38)' }}>
+        <span className="font-mono text-[10px] font-medium" style={{ color: 'rgba(90, 74, 61, 0.38)' }}>
           {products.length}/{maxProducts} products
         </span>
         <div className="flex items-center gap-1.5">
@@ -232,18 +232,18 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
             <button
               onClick={() => setSavedModalOpen(true)}
               className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all"
-              style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(22,163,74,0.18)', borderRadius: 100, color: '#15803d' }}
+              style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(245, 158, 11, 0.18)', borderRadius: 100, color: '#d97706' }}
             >
-              <Package size={10} strokeWidth={2} />
+              <Icon name="package" size={10} />
               Library
             </button>
           )}
           <button
             onClick={() => setCsvModalOpen(true)}
             className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide transition-all"
-            style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(22,163,74,0.18)', borderRadius: 100, color: '#15803d' }}
+            style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(245, 158, 11, 0.18)', borderRadius: 100, color: '#d97706' }}
           >
-            <Upload size={10} strokeWidth={2} />
+            <Icon name="upload" size={10} />
             CSV
           </button>
         </div>
@@ -259,7 +259,7 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
             className="overflow-hidden"
             style={{
               background: 'rgba(255,255,255,0.82)',
-              border: '1px solid rgba(22,163,74,0.14)',
+              border: '1px solid rgba(245, 158, 11, 0.14)',
               borderRadius: 14,
               boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
             }}
@@ -287,8 +287,8 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
                     style={{ color: saveErrorId === p.id ? '#fca5a5' : savedIds.has(p.id) ? '#fff' : 'rgba(255,255,255,0.55)' }}
                   >
                     {saveErrorId === p.id
-                      ? <X size={12} strokeWidth={2} />
-                      : <Bookmark size={12} strokeWidth={2} fill={savedIds.has(p.id) ? 'currentColor' : 'none'} />
+                      ? <Icon name="close" size={12} />
+                      : <Icon name="bookmark" size={12} fill={savedIds.has(p.id) ? 'currentColor' : 'none'} />
                     }
                   </button>
                 )}
@@ -298,7 +298,7 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
                     className="p-0.5 transition-colors"
                     style={{ color: 'rgba(255,255,255,0.6)' }}
                   >
-                    <Trash2 size={12} strokeWidth={2} />
+                    <Icon name="trash" size={12} />
                   </button>
                 )}
               </div>
@@ -321,15 +321,15 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
                 onClick={() => toggleConstraints(p.id)}
                 className="flex items-center justify-between w-full text-left py-1 group"
               >
-                <span className="flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-widest transition-colors" style={{ color: 'rgba(20,83,45,0.45)' }}>
+                <span className="flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-widest transition-colors" style={{ color: 'rgba(90, 74, 61, 0.45)' }}>
                   Constraints
                   {hasConstraints && (
                     <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#d97706' }} />
                   )}
                 </span>
                 {isExpanded
-                  ? <ChevronUp size={12} strokeWidth={2} style={{ color: 'rgba(20,83,45,0.35)' }} />
-                  : <ChevronDown size={12} strokeWidth={2} style={{ color: 'rgba(20,83,45,0.35)' }} />}
+                  ? <Icon name="chevronup" size={12} style={{ color: 'rgba(90, 74, 61, 0.35)' }} />
+                  : <Icon name="chevrondown" size={12} style={{ color: 'rgba(90, 74, 61, 0.35)' }} />}
               </button>
 
               {isExpanded && (
@@ -350,14 +350,14 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
           onClick={onAdd}
           className="w-full flex items-center justify-center gap-2 py-3 font-mono text-xs font-semibold uppercase tracking-wider transition-all"
           style={{
-            border: '1px dashed rgba(22,163,74,0.3)',
+            border: '1px dashed rgba(245, 158, 11, 0.3)',
             borderRadius: 12,
-            color: 'rgba(20,83,45,0.42)',
+            color: 'rgba(90, 74, 61, 0.42)',
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(22,163,74,0.6)'; (e.currentTarget as HTMLButtonElement).style.color = '#15803d'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(22,163,74,0.04)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(22,163,74,0.3)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(20,83,45,0.42)'; (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(245, 158, 11, 0.6)'; (e.currentTarget as HTMLButtonElement).style.color = '#d97706'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(245, 158, 11, 0.04)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(245, 158, 11, 0.3)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(90, 74, 61, 0.42)'; (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
         >
-          <Plus size={14} strokeWidth={2} />
+          <Icon name="plus" size={14} />
           Add product
         </button>
       )}
@@ -374,12 +374,12 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
       {/* CSV modal */}
       {csvModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}>
-          <div className="w-full max-w-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.97)', border: '1px solid rgba(22,163,74,0.18)', borderRadius: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
+          <div className="w-full max-w-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.97)', border: '1px solid rgba(245, 158, 11, 0.18)', borderRadius: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
             {/* Modal header */}
-            <div className="flex items-center justify-between px-5 py-4" style={{ background: 'linear-gradient(135deg, #14532d, #15803d)', borderBottom: '1px solid rgba(22,163,74,0.2)' }}>
+            <div className="flex items-center justify-between px-5 py-4" style={{ background: 'linear-gradient(135deg, #1a1410, #d97706)', borderBottom: '1px solid rgba(245, 158, 11, 0.2)' }}>
               <span className="text-sm font-semibold text-white">Import Products from CSV</span>
               <button onClick={() => { setCsvModalOpen(false); setCsvPreview(null); }} className="transition-colors" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                <X size={16} strokeWidth={2} />
+                <Icon name="close" size={16} />
               </button>
             </div>
 
@@ -393,18 +393,18 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
                 onClick={() => fileRef.current?.click()}
                 className="py-8 text-center cursor-pointer rounded-xl transition-all"
                 style={isDragging ? {
-                  background: 'rgba(22,163,74,0.08)',
-                  border: '2px dashed rgba(22,163,74,0.5)',
+                  background: 'rgba(245, 158, 11, 0.08)',
+                  border: '2px dashed rgba(245, 158, 11, 0.5)',
                 } : {
-                  background: 'rgba(22,163,74,0.04)',
-                  border: '1px dashed rgba(22,163,74,0.25)',
+                  background: 'rgba(245, 158, 11, 0.04)',
+                  border: '1px dashed rgba(245, 158, 11, 0.25)',
                 }}
               >
-                <Upload size={24} className="mx-auto mb-3" style={{ color: 'rgba(20,83,45,0.35)' }} />
-                <p className="font-mono text-xs font-medium" style={{ color: 'rgba(20,83,45,0.5)' }}>
+                <Icon name="upload" size={24} className="mx-auto mb-3" style={{ color: 'rgba(90, 74, 61, 0.35)' }} />
+                <p className="font-mono text-xs font-medium" style={{ color: 'rgba(90, 74, 61, 0.5)' }}>
                   Drop CSV here or click to browse
                 </p>
-                <p className="font-mono text-[10px] mt-1.5" style={{ color: 'rgba(20,83,45,0.32)' }}>
+                <p className="font-mono text-[10px] mt-1.5" style={{ color: 'rgba(90, 74, 61, 0.32)' }}>
                   Columns: name, length, width, height, netWeight, grossWeight, quantity
                 </p>
                 <input
@@ -419,9 +419,9 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
               <button
                 onClick={downloadCSVTemplate}
                 className="flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-all"
-                style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 100, color: '#15803d' }}
+                style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: 100, color: '#d97706' }}
               >
-                <Download size={12} strokeWidth={2} />
+                <Icon name="download" size={12} />
                 Download template
               </button>
 
@@ -436,23 +436,23 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
                   )}
 
                   {csvPreview.products.length > 0 && (
-                    <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid rgba(22,163,74,0.15)' }}>
+                    <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid rgba(245, 158, 11, 0.15)' }}>
                       <table className="w-full text-left">
                         <thead>
-                          <tr style={{ background: 'rgba(22,163,74,0.08)' }}>
+                          <tr style={{ background: 'rgba(245, 158, 11, 0.08)' }}>
                             {['Name', 'L', 'W', 'H', 'Qty'].map(h => (
-                              <th key={h} className="px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#15803d' }}>{h}</th>
+                              <th key={h} className="px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#d97706' }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {csvPreview.products.map((p, i) => (
-                            <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(22,163,74,0.03)', borderTop: '1px solid rgba(22,163,74,0.08)' }}>
-                              <td className="px-3 py-1.5 font-mono text-[10px] font-medium truncate max-w-28" style={{ color: '#14532d' }}>{p.name}</td>
-                              <td className="px-3 py-1.5 font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.6)' }}>{p.length}</td>
-                              <td className="px-3 py-1.5 font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.6)' }}>{p.width}</td>
-                              <td className="px-3 py-1.5 font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.6)' }}>{p.height}</td>
-                              <td className="px-3 py-1.5 font-mono text-[10px]" style={{ color: 'rgba(20,83,45,0.6)' }}>{p.quantity ?? '—'}</td>
+                            <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(245, 158, 11, 0.03)', borderTop: '1px solid rgba(245, 158, 11, 0.08)' }}>
+                              <td className="px-3 py-1.5 font-mono text-[10px] font-medium truncate max-w-28" style={{ color: '#1a1410' }}>{p.name}</td>
+                              <td className="px-3 py-1.5 font-mono text-[10px]" style={{ color: 'rgba(90, 74, 61, 0.6)' }}>{p.length}</td>
+                              <td className="px-3 py-1.5 font-mono text-[10px]" style={{ color: 'rgba(90, 74, 61, 0.6)' }}>{p.width}</td>
+                              <td className="px-3 py-1.5 font-mono text-[10px]" style={{ color: 'rgba(90, 74, 61, 0.6)' }}>{p.height}</td>
+                              <td className="px-3 py-1.5 font-mono text-[10px]" style={{ color: 'rgba(90, 74, 61, 0.6)' }}>{p.quantity ?? '—'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -465,14 +465,14 @@ export function ProductForm({ products, unit, userId, onUpdate, onAdd, onRemove,
                       onClick={handleImportConfirm}
                       disabled={csvPreview.products.length === 0}
                       className="flex-1 py-2.5 text-white text-xs font-semibold uppercase tracking-wider transition-all disabled:opacity-40"
-                      style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)', borderRadius: 100, boxShadow: '0 3px 12px rgba(22,163,74,0.35)' }}
+                      style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', borderRadius: 100, boxShadow: '0 3px 12px rgba(245, 158, 11, 0.35)' }}
                     >
                       Import {csvPreview.products.length} product{csvPreview.products.length !== 1 ? 's' : ''}
                     </button>
                     <button
                       onClick={() => { setCsvModalOpen(false); setCsvPreview(null); }}
                       className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all"
-                      style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 100, color: '#15803d' }}
+                      style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: 100, color: '#d97706' }}
                     >
                       Cancel
                     </button>

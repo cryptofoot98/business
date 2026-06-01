@@ -190,7 +190,7 @@ function Ground({ L, W }: { L: number; W: number }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
       <planeGeometry args={[size, size]} />
-      <meshStandardMaterial color="#2a3340" roughness={1} metalness={0} />
+      <meshStandardMaterial color="#e8dcc4" roughness={1} metalness={0} />
     </mesh>
   );
 }
@@ -318,7 +318,10 @@ export function ContainerView3D({ result, productColors, depthPct, cameraKey }: 
         near: 1,
         far: maxDim * 16,
       }}
-      style={{ background: '#1c2535' }}
+      style={{
+        // Soft warm-cream backdrop so the container reads against the page palette.
+        background: 'linear-gradient(180deg, #fef7e8 0%, #fde9c8 100%)',
+      }}
     >
       <OrbitControls
         target={[L * 0.1, H * 0.38, 0]}

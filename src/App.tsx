@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Header } from './components/Header';
 import { ContainerSelector } from './components/ContainerSelector';
 import { ProductForm } from './components/ProductForm';
@@ -9,6 +10,8 @@ import { MultiContainerPlanner } from './components/MultiContainerPlanner';
 import { SavedLoadsPanel } from './components/SavedLoadsPanel';
 import { ChatFAB } from './components/chat/ChatFAB';
 import { ChatPanel } from './components/chat/ChatPanel';
+import { AlgorithmExplainer } from './components/AlgorithmExplainer';
+import { Icon } from './components/Icon';
 import { AuthPage } from './pages/AuthPage';
 import { LandingPage } from './pages/LandingPage';
 import { CostingsPage } from './pages/CostingsPage';
@@ -19,7 +22,7 @@ import { calculatePacking, calculateMultiContainer } from './utils/packing';
 import { PRODUCT_COLORS, PRODUCT_LABELS, MAX_PRODUCTS } from './utils/colors';
 import { saveLoad, SavedLoad } from './lib/loads';
 import { AIChatAction, buildChatContext } from './lib/chat';
-import { Loader } from 'lucide-react';
+import { Icon, Spinner } from './components/Icon';
 
 function makeProduct(idx: number): Product {
   return {
@@ -46,16 +49,16 @@ const UNIT_MULTIPLIERS: Record<UnitSystem, number> = {
 
 function LoadingScreen() {
   return (
-    <div className="h-screen flex items-center justify-center" style={{ background: '#f8fafc' }}>
+    <div className="h-screen flex items-center justify-center" style={{ background: '#f0f8f0' }}>
       <div className="flex items-center gap-3 px-6 py-4" style={{
-        background: 'rgba(255,255,255,0.92)',
+        background: 'rgba(255,255,255,0.72)',
         backdropFilter: 'blur(24px)',
-        border: '1px solid #e2e8f0',
+        border: '1px solid rgba(255,255,255,0.85)',
         borderRadius: 100,
-        boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.95)',
       }}>
-        <Loader size={18} className="animate-spin" style={{ color: '#4f46e5' }} />
-        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#64748b' }}>Loading…</span>
+        <Spinner size={18}  style={{ color: '#16a34a' }} />
+        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(20,83,45,0.6)' }}>Loading…</span>
       </div>
     </div>
   );
@@ -136,8 +139,10 @@ function MainApp() {
   const [isSaving, setIsSaving] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [multiContainerIndex, setMultiContainerIndex] = useState(0);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);          // mobile open/close
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // desktop collapse to icon strip
   const [productMode, setProductMode] = useState<'single' | 'multi'>('single');
+  const [algoOpen, setAlgoOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
 
@@ -352,152 +357,194 @@ function MainApp() {
 
   const activeProductColors = products.map(p => p.color);
 
-  const [activePage, setActivePage] = useState<'calculator' | 'costings'>('calculator');
+  // ── Routing ────────────────────────────────────────────────────────────────
+  // Derive activePage from the current URL so the Header can light up the
+  // correct tab. The Routes block below renders the actual page content.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const activePage: 'calculator' | 'costings' =
+    location.pathname.startsWith('/costings') ? 'costings' : 'calculator';
 
-  return (
-    <div
-      className="flex flex-col h-screen overflow-hidden"
-      style={{ background: '#f8fafc', color: '#0f172a' }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      <Header
-        unit={unit}
-        onUnitChange={setUnit}
-        onOpenSaves={() => setSavesOpen(true)}
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={() => setSidebarOpen(o => !o)}
-        activePage={activePage}
-        onNavigate={setActivePage}
-      />
+  const navigateTo = useCallback(
+    (page: 'calculator' | 'costings') => {
+      navigate(page === 'costings' ? '/costings' : '/container');
+    },
+    [navigate],
+  );
 
-      {activePage === 'costings' && (
-        <div className="flex-1 overflow-hidden">
-          <CostingsPage />
-        </div>
-      )}
-
-      {activePage === 'calculator' && <div className="flex flex-1 overflow-hidden relative">
+  // The calculator screen content (kept inline to preserve shared state +
+  // chat context). The Routes block below mounts it at /container.
+  const calculatorContent = (
+    <div className="flex flex-1 overflow-hidden relative px-2 sm:px-3 pb-3 gap-3">
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 z-20 lg:hidden"
-            style={{ top: 56 }}
+            className="fixed inset-0 bg-black/40 z-20 lg:hidden"
+            style={{ top: 72 }}
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         <aside className={`
           fixed lg:relative
-          left-0 lg:left-auto
-          top-14 bottom-0 lg:top-auto lg:bottom-auto
+          left-2 lg:left-auto
+          top-20 bottom-3 lg:top-auto lg:bottom-auto
           z-30 lg:z-auto
-          w-80 shrink-0
+          shrink-0
           flex flex-col overflow-hidden
-          dark-chrome
-          transition-transform duration-300 ease-in-out
+          transition-all duration-300 ease-in-out
           lg:translate-x-0
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-[120%]'}
         `}
           style={{
-            background: 'rgba(241,245,249,0.97)',
-            backdropFilter: 'blur(32px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(32px) saturate(180%)',
-            borderRight: '1px solid #e2e8f0',
-            boxShadow: '2px 0 16px rgba(0,0,0,0.04)',
+            background: '#ffffff',
+            border: '1px solid rgba(26,20,16,0.06)',
+            borderRadius: 24,
+            boxShadow: '0 4px 24px rgba(26,20,16,0.06)',
+            width: sidebarCollapsed ? 64 : 320,
           }}
         >
-          <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-brut">
-            <div>
-              <p className="brut-section-label mb-4">Loading Method</p>
-              <LoadingModeSelector
-                mode={loadingMode}
-                palletConfig={palletConfig}
-                onModeChange={setLoadingMode}
-                onPalletChange={setPalletConfig}
-              />
+          {/* Collapse toggle */}
+          <button
+            onClick={() => setSidebarCollapsed(c => !c)}
+            className="hidden lg:flex shrink-0 items-center justify-center gap-1.5 px-3 py-2 text-[10px] font-semibold uppercase tracking-widest transition-colors"
+            style={{
+              color: '#5a4a3d',
+              borderBottom: '1px solid rgba(26,20,16,0.06)',
+              background: '#fffaf0',
+            }}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <span style={{ fontSize: 12 }}>{sidebarCollapsed ? '▶' : '◀'}</span>
+            {!sidebarCollapsed && <span>Collapse</span>}
+          </button>
+
+          {sidebarCollapsed ? (
+            // Collapsed mode — show only section icon stripes
+            <div className="flex-1 flex flex-col items-center gap-4 p-3">
+              <button
+                onClick={() => setSidebarCollapsed(false)}
+                className="w-10 h-10 flex items-center justify-center rounded-xl"
+                style={{ background: '#fffaf0', border: '1px solid rgba(26,20,16,0.06)' }}
+                title="Loading Method"
+              >
+                <span style={{ fontSize: 18 }}>🧱</span>
+              </button>
+              <button
+                onClick={() => setSidebarCollapsed(false)}
+                className="w-10 h-10 flex items-center justify-center rounded-xl"
+                style={{ background: '#fffaf0', border: '1px solid rgba(26,20,16,0.06)' }}
+                title="Container"
+              >
+                <span style={{ fontSize: 18 }}>🟧</span>
+              </button>
+              <button
+                onClick={() => setSidebarCollapsed(false)}
+                className="w-10 h-10 flex items-center justify-center rounded-xl"
+                style={{ background: '#fffaf0', border: '1px solid rgba(26,20,16,0.06)' }}
+                title="Products"
+              >
+                <span style={{ fontSize: 18 }}>📦</span>
+              </button>
             </div>
-
-            <div className="brut-divider" />
-
-            <div>
-              <p className="brut-section-label mb-4">Container</p>
-              <ContainerSelector
-                selected={selectedContainer}
-                onSelect={setSelectedContainer}
-              />
-            </div>
-
-            <div className="brut-divider" />
-
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <p className="brut-section-label">Products</p>
-                <div className="flex p-0.5" style={{
-                  background: 'rgba(0,0,0,0.06)',
-                  border: '1px solid rgba(0,0,0,0.08)',
-                  borderRadius: 100,
-                }}>
-                  {(['single', 'multi'] as const).map(mode => (
-                    <button
-                      key={mode}
-                      onClick={() => {
-                        setProductMode(mode);
-                        if (mode === 'single') setProducts(prev => prev.slice(0, 1));
-                      }}
-                      className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider transition-all"
-                      style={productMode === mode ? {
-                        background: 'linear-gradient(135deg, #16a34a, #15803d)',
-                        border: '1px solid rgba(255,255,255,0.28)',
-                        borderRadius: 100,
-                        color: '#fff',
-                        boxShadow: '0 2px 8px rgba(22,163,74,0.35)',
-                      } : {
-                        background: 'transparent',
-                        border: '1px solid transparent',
-                        borderRadius: 100,
-                        color: 'rgba(20,83,45,0.5)',
-                      }}
-                    >
-                      {mode === 'single' ? 'Single' : 'Multi (2–3)'}
-                    </button>
-                  ))}
-                </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-brut">
+              <div>
+                <p className="brut-section-label mb-4">Loading Method</p>
+                <LoadingModeSelector
+                  mode={loadingMode}
+                  palletConfig={palletConfig}
+                  onModeChange={setLoadingMode}
+                  onPalletChange={setPalletConfig}
+                />
               </div>
-              <ProductForm
-                products={products}
-                unit={unit}
-                userId={user?.id}
-                onUpdate={handleUpdate}
-                onAdd={handleAdd}
-                onRemove={handleRemove}
-                onImportCSV={handleImportCSV}
-                onAddProduct={handleAddProduct}
-                maxProducts={productLimit}
-              />
+
+              <div className="brut-divider" />
+
+              <div>
+                <p className="brut-section-label mb-4">Container</p>
+                <ContainerSelector
+                  selected={selectedContainer}
+                  onSelect={setSelectedContainer}
+                />
+              </div>
+
+              <div className="brut-divider" />
+
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="brut-section-label">Products</p>
+                  <div className="flex p-0.5" style={{
+                    background: '#fffaf0',
+                    border: '1px solid rgba(26,20,16,0.06)',
+                    borderRadius: 100,
+                  }}>
+                    {(['single', 'multi'] as const).map(mode => (
+                      <button
+                        key={mode}
+                        onClick={() => {
+                          setProductMode(mode);
+                          if (mode === 'single') setProducts(prev => prev.slice(0, 1));
+                        }}
+                        className="px-3 py-1 text-[9px] font-semibold uppercase tracking-wider transition-all"
+                        style={productMode === mode ? {
+                          background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                          border: '1px solid rgba(255,255,255,0.28)',
+                          borderRadius: 100,
+                          color: '#fff',
+                          boxShadow: '0 3px 12px rgba(245,158,11,0.30)',
+                        } : {
+                          background: 'transparent',
+                          border: '1px solid transparent',
+                          borderRadius: 100,
+                          color: '#a89a8d',
+                        }}
+                      >
+                        {mode === 'single' ? 'Single' : 'Multi (2–3)'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <ProductForm
+                  products={products}
+                  unit={unit}
+                  userId={user?.id}
+                  onUpdate={handleUpdate}
+                  onAdd={handleAdd}
+                  onRemove={handleRemove}
+                  onImportCSV={handleImportCSV}
+                  onAddProduct={handleAddProduct}
+                  maxProducts={productLimit}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </aside>
 
-        <main className="flex-1 flex flex-col overflow-hidden" style={{ background: 'transparent' }}>
-          <div className="flex-1 min-h-0 p-2 sm:p-4">
-            <div className="w-full h-full" style={{
+        {/* Centre — preview card. Capped width so it doesn't eat the results column. */}
+        <main className="flex-1 min-w-0 flex flex-col overflow-hidden" style={{ background: 'transparent' }}>
+          <div
+            className="flex-1 min-h-0 mx-auto w-full overflow-hidden"
+            style={{
+              maxWidth: 880,
               background: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: 16,
-              overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-            }}>
-              <ContainerView2D
-                result={packingResult}
-                productColors={activeProductColors}
-                unit={unit}
-              />
-            </div>
+              border: '1px solid rgba(26,20,16,0.06)',
+              borderRadius: 24,
+              boxShadow: '0 4px 24px rgba(26,20,16,0.06)',
+            }}
+          >
+            <ContainerView2D
+              result={packingResult}
+              productColors={activeProductColors}
+              unit={unit}
+            />
           </div>
 
-          <div className="shrink-0 overflow-y-auto max-h-48 sm:max-h-64 md:max-h-80 lg:max-h-96 p-3 sm:p-5 scrollbar-brut" style={{
-            borderTop: '1px solid #e2e8f0',
-            background: 'rgba(248,250,252,0.97)',
+          {/* Below-preview drawer is only used at < lg — see right column for desktop */}
+          <div className="lg:hidden shrink-0 overflow-y-auto max-h-48 sm:max-h-64 md:max-h-80 mt-3 p-4 scrollbar-brut" style={{
+            background: '#ffffff',
+            border: '1px solid rgba(26,20,16,0.06)',
+            borderRadius: 24,
+            boxShadow: '0 4px 24px rgba(26,20,16,0.06)',
           }}>
             {multiContainerResult && (
               <div className="mb-5">
@@ -516,7 +563,99 @@ function MainApp() {
             />
           </div>
         </main>
-      </div>}
+
+        {/* Right results column — desktop only */}
+        <aside
+          className="hidden lg:flex flex-col overflow-hidden shrink-0"
+          style={{
+            width: 380,
+            background: '#ffffff',
+            border: '1px solid rgba(26,20,16,0.06)',
+            borderRadius: 24,
+            boxShadow: '0 4px 24px rgba(26,20,16,0.06)',
+          }}
+        >
+          <div className="flex-1 overflow-y-auto p-4 scrollbar-brut">
+            {/* How-it-works pill — opens the algorithm explainer modal */}
+            <button
+              onClick={() => setAlgoOpen(true)}
+              className="w-full mb-3 flex items-center justify-between px-3 py-2 text-xs font-semibold transition-all"
+              style={{
+                background: 'linear-gradient(135deg, #fef3c7, #fed7aa)',
+                border: '1px solid rgba(245,158,11,0.25)',
+                borderRadius: 12,
+                color: '#78350f',
+              }}
+              title="See how the packing algorithm works (presentation-friendly)"
+            >
+              <span className="flex items-center gap-1.5">
+                <span style={{ fontSize: 14 }}>📐</span>
+                How it works
+              </span>
+              <Icon name="arrowright" size={11} />
+            </button>
+
+            {multiContainerResult && (
+              <div className="mb-4">
+                <MultiContainerPlanner
+                  result={multiContainerResult}
+                  selectedIndex={multiContainerIndex}
+                  onSelectContainer={idx => setMultiContainerIndex(idx)}
+                />
+                <div className="brut-divider mt-4" />
+              </div>
+            )}
+            <ResultsPanel
+              result={packingResult}
+              productColors={activeProductColors}
+              unit={unit}
+            />
+          </div>
+        </aside>
+
+        {/* Algorithm explainer modal */}
+        <AlgorithmExplainer open={algoOpen} onClose={() => setAlgoOpen(false)} />
+
+        {/* Container AI chat — scoped to /container so the panel never appears on /costings */}
+        {user && session && (
+          <>
+            <ChatPanel
+              open={chatOpen}
+              userId={user.id}
+              session={session.access_token}
+              firstName={firstName}
+              context={chatContext}
+              onApplyAction={handleAIAction}
+            />
+            <ChatFAB open={chatOpen} onClick={() => setChatOpen(o => !o)} />
+          </>
+        )}
+      </div>
+  );
+
+  return (
+    <div
+      className="flex flex-col h-screen overflow-hidden"
+      style={{ color: '#1a1410' }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <Header
+        unit={unit}
+        onUnitChange={setUnit}
+        onOpenSaves={() => setSavesOpen(true)}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen(o => !o)}
+        activePage={activePage}
+        onNavigate={navigateTo}
+      />
+
+      <Routes>
+        <Route path="/" element={<Navigate to="/container" replace />} />
+        <Route path="/container" element={calculatorContent} />
+        <Route path="/costings" element={<div className="flex-1 overflow-hidden"><CostingsPage /></div>} />
+        <Route path="*" element={<Navigate to="/container" replace />} />
+      </Routes>
 
       {user && (
         <SavedLoadsPanel
@@ -529,19 +668,6 @@ function MainApp() {
         />
       )}
 
-      {user && session && (
-        <>
-          <ChatPanel
-            open={chatOpen}
-            userId={user.id}
-            session={session.access_token}
-            firstName={firstName}
-            context={chatContext}
-            onApplyAction={handleAIAction}
-          />
-          <ChatFAB open={chatOpen} onClick={() => setChatOpen(o => !o)} />
-        </>
-      )}
     </div>
   );
 }

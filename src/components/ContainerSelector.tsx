@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ContainerType, VehicleClass } from '../types';
 import { CONTAINERS, CONTAINER_SIZES, ContainerSize, VEHICLE_CLASS_META } from '../data/containers';
-import { Thermometer, Wind, Maximize2, Grid3x3, Truck, PlaneTakeoff, Package, Layers } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface Props {
   selected: ContainerType;
@@ -9,24 +9,24 @@ interface Props {
 }
 
 const CATEGORY_ICON: Record<string, React.ReactNode> = {
-  Dry:            <Wind size={13} strokeWidth={2} />,
-  Reefer:         <Thermometer size={13} strokeWidth={2} />,
-  'Open Top':     <Maximize2 size={13} strokeWidth={2} />,
-  'Flat Rack':    <Grid3x3 size={13} strokeWidth={2} />,
-  Van:            <Truck size={13} strokeWidth={2} />,
-  Curtainsider:   <Truck size={13} strokeWidth={2} />,
-  Flatbed:        <Layers size={13} strokeWidth={2} />,
-  'Box Truck':    <Package size={13} strokeWidth={2} />,
-  LCL:            <Package size={13} strokeWidth={2} />,
-  'Air Container':<PlaneTakeoff size={13} strokeWidth={2} />,
-  'Air Pallet':   <PlaneTakeoff size={13} strokeWidth={2} />,
+  Dry:            <Icon name="wind" size={13} />,
+  Reefer:         <Icon name="thermometer" size={13} />,
+  'Open Top':     <Icon name="maximize" size={13} />,
+  'Flat Rack':    <Icon name="grid" size={13} />,
+  Van:            <Icon name="truck" size={13} />,
+  Curtainsider:   <Icon name="truck" size={13} />,
+  Flatbed:        <Icon name="layers" size={13} />,
+  'Box Truck':    <Icon name="package" size={13} />,
+  LCL:            <Icon name="package" size={13} />,
+  'Air Container':<Icon name="plane" size={13} />,
+  'Air Pallet':   <Icon name="plane" size={13} />,
 };
 
 const CLASS_ICONS: Record<VehicleClass, React.ReactNode> = {
-  container: <Grid3x3 size={13} strokeWidth={2} />,
-  truck:     <Truck size={13} strokeWidth={2} />,
-  air:       <PlaneTakeoff size={13} strokeWidth={2} />,
-  lcl:       <Package size={13} strokeWidth={2} />,
+  container: <Icon name="grid" size={13} />,
+  truck:     <Icon name="truck" size={13} />,
+  air:       <Icon name="plane" size={13} />,
+  lcl:       <Icon name="package" size={13} />,
 };
 
 const pillWrap = {
@@ -37,16 +37,16 @@ const pillWrap = {
 } as const;
 
 const pillActive = {
-  background: 'linear-gradient(135deg, #16a34a, #15803d)',
+  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
   borderRadius: 100,
   color: '#fff',
-  boxShadow: '0 2px 8px rgba(22,163,74,0.32)',
+  boxShadow: '0 2px 8px rgba(245, 158, 11, 0.32)',
 } as const;
 
 const pillIdle = {
   background: 'transparent',
   borderRadius: 100,
-  color: 'rgba(20,83,45,0.5)',
+  color: 'rgba(90, 74, 61, 0.5)',
 } as const;
 
 function VehicleCard({ container, isSelected, onClick }: {
@@ -57,15 +57,15 @@ function VehicleCard({ container, isSelected, onClick }: {
       onClick={onClick}
       className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-all"
       style={isSelected ? {
-        background: 'linear-gradient(135deg, #16a34a, #15803d)',
+        background: 'linear-gradient(135deg, #f59e0b, #d97706)',
         borderRadius: 12,
         color: '#fff',
-        boxShadow: '0 3px 14px rgba(22,163,74,0.32)',
+        boxShadow: '0 3px 14px rgba(245, 158, 11, 0.32)',
       } : {
         background: 'rgba(255,255,255,0.7)',
-        border: '1px solid rgba(22,163,74,0.14)',
+        border: '1px solid rgba(245, 158, 11, 0.14)',
         borderRadius: 12,
-        color: '#14532d',
+        color: '#1a1410',
       }}
     >
       <span style={{ opacity: isSelected ? 0.9 : 0.5 }}>
@@ -87,16 +87,16 @@ function VehicleCard({ container, isSelected, onClick }: {
 function SpecRow({ label, value }: { label: string; value: string }) {
   return (
     <>
-      <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'rgba(20,83,45,0.42)' }}>{label}</span>
-      <span className="font-mono text-xs font-semibold" style={{ color: '#14532d' }}>{value}</span>
+      <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'rgba(90, 74, 61, 0.42)' }}>{label}</span>
+      <span className="font-mono text-xs font-semibold" style={{ color: '#1a1410' }}>{value}</span>
     </>
   );
 }
 
 function ContainerSpecs({ container }: { container: ContainerType }) {
   return (
-    <div className="rounded-xl p-3 space-y-0" style={{ background: 'rgba(22,163,74,0.05)', border: '1px solid rgba(22,163,74,0.12)' }}>
-      <div className="text-xs font-semibold mb-2.5" style={{ color: '#14532d' }}>{container.name}</div>
+    <div className="rounded-xl p-3 space-y-0" style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.12)' }}>
+      <div className="text-xs font-semibold mb-2.5" style={{ color: '#1a1410' }}>{container.name}</div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
         <SpecRow label="L × W × H" value={`${container.innerLength} × ${container.innerWidth} × ${container.innerHeight} cm`} />
         <SpecRow label="Volume" value={`${container.volume} m³`} />
@@ -160,7 +160,7 @@ export function ContainerSelector({ selected, onSelect }: Props) {
         <>
           {/* Size selector */}
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(20,83,45,0.42)' }}>Size</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(90, 74, 61, 0.42)' }}>Size</p>
             <div className="flex gap-1" style={pillWrap}>
               {CONTAINER_SIZES.map(size => {
                 const hasContainers = CONTAINERS.some(c => c.sizeLabel === size && c.vehicleClass === 'container');
@@ -182,7 +182,7 @@ export function ContainerSelector({ selected, onSelect }: Props) {
 
           {/* Container type list */}
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(20,83,45,0.42)' }}>Type</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(90, 74, 61, 0.42)' }}>Type</p>
             <div className="space-y-1.5">
               {CONTAINERS.filter(c => c.sizeLabel === selectedSize && c.vehicleClass === 'container').map(container => (
                 <VehicleCard

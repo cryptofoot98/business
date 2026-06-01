@@ -1,19 +1,35 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import {
-  Save, Trash2, FolderOpen, RotateCcw, MessageCircle, X,
-  Package, Layers, BarChart2, Settings, Loader, Send, Sparkles, User,
-} from 'lucide-react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { Icon, Spinner } from '../components/Icon';
 import { useAuth } from '../contexts/AuthContext';
-import { FoodCostingInputs, FoodCostingResult, SavedCosting, AgentPortKey, CostingSettings } from '../types/costing';
 import {
-  AGENT_PORT_RATES, INSURANCE_PER_FCL_GBP, DEFAULT_TRANSPORT_COSTS, DUTY_RATES,
+  CostingSettings,
+  CostingModelProduct, CostingModelContainer, CostingScenario, ScenarioSummary,
+  CostingModelPayload, CostingModelResults, SavedCosting,
+  isCostingModelPayload,
+} from '../types/costing';
+import {
+  ImportControl, ImportControlResults, ImportControlHeader, ImportControlClearance,
+  ImportControlCosts, ImportControlProduct, SavedImportControl,
+} from '../types/importControl';
+import {
+  AGENT_PORT_RATES, INSURANCE_PER_FCL_GBP, DUTY_RATES,
+  DEFAULT_LICENCE_COST_PER_KG, DEFAULT_TRANSPORT_COSTS,
 } from '../data/costingRates';
-import { computeFoodCosting } from '../utils/costingCalc';
+import { computeCostingModelScenario, computeImportControl } from '../utils/costingCalc';
+import { exportCostingPdf } from '../utils/costingPdf';
+import { exportImportControlPdf } from '../utils/importControlPdf';
+import { Product, NewProductInput } from '../types/product';
+import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../lib/products';
 import { saveCostingCalculation, fetchCostingCalculations, deleteCostingCalculation } from '../lib/costings';
+import { saveImportControl, fetchImportControls, deleteImportControl } from '../lib/importControls';
 import { MainCostingsTab } from '../components/costings/MainCostingsTab';
 import { NpdCostingsTab } from '../components/costings/NpdCostingsTab';
 import { BulkCostingsTab } from '../components/costings/BulkCostingsTab';
 import { SettingsTab } from '../components/costings/SettingsTab';
+import { ImportControlTab } from '../components/importcontrol/ImportControlTab';
+import { ProductsTab } from '../components/products/ProductsTab';
+import { ChatFAB } from '../components/chat/ChatFAB';
+import { CostingsChatPanel } from '../components/chat/CostingsChatPanel';
 
 // ── Settings persistence ──────────────────────────────────────────────────────
 
@@ -34,42 +50,93 @@ function loadSettings(): CostingSettings {
   return { dutyRates: DUTY_RATES, agentPortRates: AGENT_PORT_RATES, insurancePerFCL: INSURANCE_PER_FCL_GBP };
 }
 
-// ── Default main-tab state ────────────────────────────────────────────────────
+// ── Defaults ──────────────────────────────────────────────────────────────────
 
-const DEFAULT_ROUTE_TRANSPORTS = { ...DEFAULT_TRANSPORT_COSTS };
-
-const DEFAULT_INPUTS: FoodCostingInputs = {
-  productName: '',
-  supplier: '',
-  costPerTonneUSD: 0,
-  caseWeightKg: 0,
-  casesPerContainer: 0,
-  exchangeRateUSDGBP: 1.27,
-  freightCostUSD: 0,
+const DEFAULT_PRODUCT: CostingModelProduct = {
+  productCode: '',
+  description: '',
   productCategory: 'meat_lt57',
+  bagsPerCase: 0,
+  caseWeightKg: 0,
+  supplier: '',
+  priceUSDPerTonne: 0,
+};
+
+const DEFAULT_CONTAINER: CostingModelContainer = {
   clearanceType: 'licence',
-  agentPort: 'ewl_london_gateway',
-  transportCostGBP: DEFAULT_ROUTE_TRANSPORTS.ewl_london_gateway,
-  handballing: false,
-  handballingCostGBP: 300,
+  retail: false,
+  handball: false,
+  containerWeightKg: 0,
   insuranceAuto: true,
   insuranceManualGBP: 0,
-  addition1Label: 'Addition 1',
-  addition1GBP: 0,
-  addition2Label: 'Addition 2',
-  addition2GBP: 0,
-  sellingPricePerCase: 0,
+};
+
+function makeDefaultScenario(i: number): CostingScenario {
+  return {
+    label: `Scenario ${i + 1}`,
+    salesCurrency: 'GBP',
+    eurGbpRate: 1.16,
+    salesPricePerCase: 0,
+    exchangeRateUSDGBP: 1.27,
+    casesPerContainer: 0,
+    incoterms: 'FOB',
+    freightCostUSD: 0,
+    agentPort: 'ewl_london_gateway',
+    transportCostGBP: DEFAULT_TRANSPORT_COSTS.ewl_london_gateway,
+    licenceCostPerKgGBP: DEFAULT_LICENCE_COST_PER_KG,
+  };
+}
+
+const DEFAULT_SCENARIOS: CostingScenario[] = Array.from({ length: 5 }, (_, i) => makeDefaultScenario(i));
+
+// Import Control defaults
+const DEFAULT_IC_HEADER: ImportControlHeader = {
+  containerNumber: '', billOfLading: '', fobAgent: 'AGT',
+  loadNumber: '', purchaseOrderNo: '', cleared: false,
+  shippingCompany: '', transportCompany: '',
+  portOfArrival: 'Felixstowe', bulkPo: '', deliveryTo: '',
+  arrivalDate: '', collectionDateFromPort: '',
+  containerGrossWeightTonnes: 17, exchangeRateUSDGBP: 1.27,
+  discountedCostGBP: 0,
+};
+const DEFAULT_IC_CLEARANCE: ImportControlClearance = {
+  ewlCharges: 0, terminalFees: 0, documentFees: 0, customsClearance: 0,
+  freightBlendedAdjustment: 0, freeTimeStorageExtra: 0,
+  portExamination: 0, portHealth: 0,
+  oceanFreightGBP: 0, oceanFreightUSD: 0,
+  loLo: 0, demurrage: 0, vehicleDetention: 0, ukTransport: 0,
+};
+const DEFAULT_IC_COSTS: ImportControlCosts = {
+  dutyFromHMCustoms: 0, handball: 0, packagingCosts: 0,
+  insurancePerContainer: 0, thaiDutyOnPackaging: 0, bagWastageGL: 0,
+  licenceCost: 0, additionsLC: 0, additions2: 0, commissions: 0,
+};
+function makeDefaultIcProduct(): ImportControlProduct {
+  return {
+    productCode: '', productDescription: '',
+    caseCount: 0, caseWeight: 0, quantity: 0,
+    poCostUSD: 0, productCostUSD: 0, salesPricePerCase: 0,
+    catalogContainerFillKg: 0,
+  };
+}
+const DEFAULT_IMPORT_CONTROL: ImportControl = {
+  header: DEFAULT_IC_HEADER,
+  clearance: DEFAULT_IC_CLEARANCE,
+  costs: DEFAULT_IC_COSTS,
+  products: [makeDefaultIcProduct()],
 };
 
 // ── Tab definition ────────────────────────────────────────────────────────────
 
-type Tab = 'main' | 'npd' | 'bulk' | 'settings';
+type Tab = 'main' | 'npd' | 'bulk' | 'import_control' | 'products' | 'settings';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: 'main',     label: 'Main Costings',  icon: <Package size={12} /> },
-  { id: 'npd',      label: 'NPD Costings',   icon: <BarChart2 size={12} /> },
-  { id: 'bulk',     label: 'Bulk Costings',  icon: <Layers size={12} /> },
-  { id: 'settings', label: 'Workings',       icon: <Settings size={12} /> },
+  { id: 'main',           label: 'Costing Model',   icon: <Icon name="package" size={12} /> },
+  { id: 'npd',            label: 'NPD Costings',    icon: <Icon name="barchart" size={12} /> },
+  { id: 'bulk',           label: 'Bulk Costings',   icon: <Icon name="layers" size={12} /> },
+  { id: 'import_control', label: 'Import Control',  icon: <Icon name="ship" size={12} /> },
+  { id: 'products',       label: 'Products',        icon: <Icon name="database" size={12} /> },
+  { id: 'settings',       label: 'Workings',        icon: <Icon name="settings" size={12} /> },
 ];
 
 // ── Saved panel modal ─────────────────────────────────────────────────────────
@@ -83,224 +150,59 @@ function SavedPanel({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(6px)' }}
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-md rounded-2xl overflow-hidden"
-        style={{ background: '#ffffff', border: '1px solid #e2e8f0', boxShadow: '0 24px 64px rgba(0,0,0,0.18)' }}>
+        style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(245, 158, 11, 0.2)', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
         <div className="flex items-center justify-between px-5 py-4"
-          style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', borderBottom: '1px solid rgba(79,70,229,0.2)' }}>
+          style={{ background: 'linear-gradient(135deg, #1a1410, #d97706)', borderBottom: '1px solid rgba(245, 158, 11, 0.2)' }}>
           <div className="flex items-center gap-2.5">
-            <FolderOpen size={14} className="text-white/80" />
+            <Icon name="folder" size={14} className="text-white/80" />
             <span className="text-sm font-bold uppercase tracking-tight text-white">Saved Calculations</span>
           </div>
           <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.5)' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
             onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}>
-            <X size={16} />
+            <Icon name="close" size={16} />
           </button>
         </div>
-        <div className="p-4 max-h-96 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#e2e8f0 transparent' }}>
+        <div className="p-4 max-h-96 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(245, 158, 11, 0.2) transparent' }}>
           {loading ? (
-            <div className="flex justify-center py-8"><Loader size={18} className="animate-spin" style={{ color: '#94a3b8' }} /></div>
+            <div className="flex justify-center py-8"><Spinner size={18}  style={{ color: 'rgba(90, 74, 61, 0.3)' }} /></div>
           ) : list.length === 0 ? (
             <div className="text-center py-8">
-              <Package size={28} className="mx-auto mb-3" style={{ color: '#cbd5e1' }} />
-              <p className="font-mono text-xs uppercase tracking-widest" style={{ color: '#94a3b8' }}>No saved calculations yet</p>
+              <Icon name="package" size={28} className="mx-auto mb-3" style={{ color: 'rgba(90, 74, 61, 0.15)' }} />
+              <p className="font-mono text-xs uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.3)' }}>No saved calculations yet</p>
             </div>
           ) : (
             <div className="space-y-2">
-              {list.map(s => (
-                <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                  style={{ background: '#f8fafc', border: s.id === currentId ? '1.5px solid rgba(79,70,229,0.4)' : '1px solid #e2e8f0' }}>
-                  <button className="flex-1 text-left" onClick={() => { onLoad(s); onClose(); }}>
-                    <p className="font-bold text-sm" style={{ color: '#0f172a' }}>{s.name}</p>
-                    <p className="font-mono text-[10px] mt-0.5" style={{ color: '#94a3b8' }}>
-                      {s.inputs.productName || '—'} · {new Date(s.updated_at).toLocaleDateString('en-GB')}
-                    </p>
-                  </button>
-                  <button onClick={() => onDelete(s.id)} className="p-1.5 rounded-full" style={{ color: '#cbd5e1' }}
-                    onMouseEnter={e => (e.currentTarget.style.color = '#dc2626')}
-                    onMouseLeave={e => (e.currentTarget.style.color = '#cbd5e1')}>
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              ))}
+              {list.map(s => {
+                const isV2 = isCostingModelPayload(s.inputs);
+                const subtitle = isV2
+                  ? `${s.inputs.product.productCode || s.inputs.product.description || '—'} · ${s.inputs.scenarios.length} scenarios`
+                  : `${s.inputs.productName || '—'}`;
+                return (
+                  <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                    style={{ background: 'rgba(255,255,255,0.8)', border: s.id === currentId ? '1.5px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(245, 158, 11, 0.12)' }}>
+                    <button className="flex-1 text-left" onClick={() => { onLoad(s); onClose(); }}>
+                      <p className="font-bold text-sm" style={{ color: '#1a1410' }}>{s.name}</p>
+                      <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(90, 74, 61, 0.45)' }}>
+                        {subtitle} · {new Date(s.updated_at).toLocaleDateString('en-GB')}
+                        {!isV2 && <span className="ml-1.5 px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(202,138,4,0.15)', color: '#92400e' }}>legacy</span>}
+                      </p>
+                    </button>
+                    <button onClick={() => onDelete(s.id)} className="p-1.5 rounded-full" style={{ color: 'rgba(90, 74, 61, 0.3)' }}
+                      onMouseEnter={e => (e.currentTarget.style.color = '#dc2626')}
+                      onMouseLeave={e => (e.currentTarget.style.color = 'rgba(90, 74, 61, 0.3)')}>
+                      <Icon name="trash" size={12} />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Costings chat panel ───────────────────────────────────────────────────────
-
-function SimpleChatPanel({ inputs, result, onClose }: {
-  inputs: FoodCostingInputs; result: FoodCostingResult; onClose: () => void;
-}) {
-  const { session, profile } = useAuth();
-  const firstName = profile?.full_name?.split(' ')[0] ?? '';
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
-  const [inputText, setInputText] = useState('');
-  const [loading, setLoading] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const taRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
-
-  useEffect(() => {
-    function outside(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        const fab = document.getElementById('costings-advisor-fab');
-        if (fab?.contains(e.target as Node)) return;
-        onClose();
-      }
-    }
-    document.addEventListener('mousedown', outside);
-    return () => document.removeEventListener('mousedown', outside);
-  }, [onClose]);
-
-  async function send() {
-    const content = inputText.trim();
-    if (!content || loading) return;
-    const next = [...messages, { role: 'user' as const, content }];
-    setMessages(next);
-    setInputText('');
-    setLoading(true);
-    try {
-      const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const ctx = `Current food import costing:
-Product: ${inputs.productName} (${inputs.supplier})
-Cost/tonne: $${inputs.costPerTonneUSD} | Case weight: ${inputs.caseWeightKg}kg | Cases/container: ${inputs.casesPerContainer}
-Exchange rate: $${inputs.exchangeRateUSDGBP}/£ | Freight: $${inputs.freightCostUSD}/FCL
-Category: ${inputs.productCategory} | Clearance: ${inputs.clearanceType}
-Route: ${AGENT_PORT_RATES[inputs.agentPort]?.label} | Transport: £${inputs.transportCostGBP}/FCL
-Results: Cost/case: £${result.totalCostPerCase.toFixed(4)} | Cost/kg: £${result.costPerKg.toFixed(4)} | GM: ${result.gmPercent.toFixed(1)}%`;
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/costing-chat`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ messages: next.map(m => ({ role: m.role, content: m.content })), context: ctx }),
-        }
-      );
-      const data = await resp.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.message ?? 'I could not get a response.' }]);
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' }]);
-    } finally {
-      setLoading(false);
-      setTimeout(() => taRef.current?.focus(), 50);
-    }
-  }
-
-  return (
-    <div
-      ref={panelRef}
-      className="fixed bottom-20 right-5 z-40 flex flex-col"
-      style={{
-        width: 380, maxWidth: 'calc(100vw - 2.5rem)',
-        height: 'min(520px, calc(100vh - 120px))',
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: 20,
-        boxShadow: '-4px 0 24px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.10)',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3.5"
-        style={{ borderBottom: '1px solid #f1f5f9' }}>
-        <div className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center w-8 h-8 rounded-xl" style={{ background: '#eef2ff' }}>
-            <Sparkles size={15} style={{ color: '#4f46e5' }} />
-            <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border-2 border-white" />
-          </div>
-          <div>
-            <p className="font-semibold text-xs" style={{ color: '#0f172a' }}>Costings Advisor</p>
-            <p className="font-mono text-[9px] mt-0.5" style={{ color: '#94a3b8' }}>AI · costs · margins · duties</p>
-          </div>
-        </div>
-        <button onClick={onClose} className="p-1 rounded-lg" style={{ color: '#94a3b8' }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#0f172a')}
-          onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}>
-          <X size={15} />
-        </button>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0" style={{ scrollbarWidth: 'thin', scrollbarColor: '#e2e8f0 transparent' }}>
-        {messages.length === 0 && (
-          <div className="flex items-end gap-2">
-            <div className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center" style={{ background: '#eef2ff', border: '1px solid #e0e7ff' }}>
-              <Sparkles size={11} style={{ color: '#4f46e5' }} />
-            </div>
-            <div className="max-w-[82%] px-3 py-2 text-xs leading-relaxed" style={{
-              background: '#f8fafc', border: '1px solid #e2e8f0',
-              borderRadius: '14px 14px 14px 4px', color: '#334155',
-            }}>
-              Hi {firstName || 'there'}. I can see your current costing. Ask me about margins, duty rates, route comparisons, or how to improve your landed cost.
-            </div>
-          </div>
-        )}
-        {messages.map((msg, i) => {
-          const isUser = msg.role === 'user';
-          return (
-            <div key={i} className={`flex items-end gap-2 ${isUser ? 'flex-row-reverse' : ''}`}>
-              <div className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center"
-                style={{
-                  background: isUser ? '#4f46e5' : '#eef2ff',
-                  border: isUser ? '1px solid #4338ca' : '1px solid #e0e7ff',
-                }}>
-                {isUser
-                  ? <User size={10} style={{ color: '#fff' }} />
-                  : <Sparkles size={10} style={{ color: '#4f46e5' }} />}
-              </div>
-              <div className="max-w-[82%] px-3 py-2 text-xs leading-relaxed" style={{
-                borderRadius: isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                background: isUser ? '#4f46e5' : '#f8fafc',
-                border: isUser ? '1px solid #4338ca' : '1px solid #e2e8f0',
-                color: isUser ? '#fff' : '#334155',
-                boxShadow: isUser ? '0 2px 8px rgba(79,70,229,0.18)' : 'none',
-              }}>
-                {msg.content}
-              </div>
-            </div>
-          );
-        })}
-        {loading && (
-          <div className="flex items-end gap-2">
-            <div className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center" style={{ background: '#eef2ff', border: '1px solid #e0e7ff' }}>
-              <Sparkles size={10} style={{ color: '#4f46e5' }} />
-            </div>
-            <div className="px-3 py-2.5 rounded-2xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '14px 14px 14px 4px' }}>
-              <div className="flex gap-1.5 items-center">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: `${i * 120}ms` }} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        <div ref={endRef} />
-      </div>
-
-      {/* Input */}
-      <div className="shrink-0 p-3 flex gap-2" style={{ borderTop: '1px solid #f1f5f9' }}>
-        <textarea
-          ref={taRef} value={inputText} onChange={e => setInputText(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-          placeholder="Ask about costs, margins, duties…" rows={2} disabled={loading}
-          className="flex-1 px-3 py-2 text-xs font-mono focus:outline-none resize-none disabled:opacity-50"
-          style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, color: '#0f172a' }}
-        />
-        <button onClick={send} disabled={loading || !inputText.trim()}
-          className="w-9 shrink-0 flex items-center justify-center rounded-xl transition-all disabled:opacity-40"
-          style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', boxShadow: '0 2px 8px rgba(79,70,229,0.25)' }}>
-          <Send size={13} className="text-white" />
-        </button>
       </div>
     </div>
   );
@@ -314,9 +216,10 @@ export function CostingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('main');
   const [settings, setSettings] = useState<CostingSettings>(loadSettings);
 
-  // Main tab state
-  const [inputs, setInputs] = useState<FoodCostingInputs>(DEFAULT_INPUTS);
-  const [routeTransports, setRouteTransports] = useState<Record<AgentPortKey, number>>({ ...DEFAULT_ROUTE_TRANSPORTS });
+  // Main tab state — Costing Model triplet
+  const [product, setProduct]     = useState<CostingModelProduct>(DEFAULT_PRODUCT);
+  const [container, setContainer] = useState<CostingModelContainer>(DEFAULT_CONTAINER);
+  const [scenarios, setScenarios] = useState<CostingScenario[]>(DEFAULT_SCENARIOS);
 
   // Save/load state
   const [savedList, setSavedList] = useState<SavedCosting[]>([]);
@@ -326,14 +229,58 @@ export function CostingsPage() {
   const [saving, setSaving] = useState(false);
   const [saveName, setSaveName] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Products catalog (shared across users — sourced from DataFeed)
+  const [productCatalog, setProductCatalog] = useState<Product[]>([]);
+
+  // Import Control tab state
+  const [importControl, setImportControl] = useState<ImportControl>(DEFAULT_IMPORT_CONTROL);
+  const [icSavedList, setIcSavedList] = useState<SavedImportControl[]>([]);
+  const [icCurrentId, setIcCurrentId] = useState<string | null>(null);
+  const [icShowSaved, setIcShowSaved] = useState(false);
+  const [icSaving, setIcSaving] = useState(false);
+  const [icSaveName, setIcSaveName] = useState('');
+  const [icSaveError, setIcSaveError] = useState<string | null>(null);
+
+  // Costings AI chat — separate from the container chat
   const [chatOpen, setChatOpen] = useState(false);
 
-  const result = useMemo(() => computeFoodCosting(inputs, settings), [inputs, settings]);
+  const results: ScenarioSummary[] = useMemo(
+    () => scenarios.map(s => computeCostingModelScenario(product, container, s, settings)),
+    [product, container, scenarios, settings],
+  );
 
-  const set = useCallback(<K extends keyof FoodCostingInputs>(key: K, value: FoodCostingInputs[K]) => {
-    setInputs(prev => ({ ...prev, [key]: value }));
+  const icResults: ImportControlResults = useMemo(
+    () => computeImportControl(importControl),
+    [importControl],
+  );
+
+  // ── Setters ────────────────────────────────────────────────────────────────
+  const setProductField = useCallback(<K extends keyof CostingModelProduct>(key: K, val: CostingModelProduct[K]) => {
+    setProduct(prev => ({ ...prev, [key]: val }));
   }, []);
 
+  const setContainerField = useCallback(<K extends keyof CostingModelContainer>(key: K, val: CostingModelContainer[K]) => {
+    setContainer(prev => ({ ...prev, [key]: val }));
+  }, []);
+
+  const setScenarioField = useCallback(<K extends keyof CostingScenario>(i: number, key: K, val: CostingScenario[K]) => {
+    setScenarios(prev => {
+      const next = [...prev];
+      next[i] = { ...next[i], [key]: val };
+      return next;
+    });
+  }, []);
+
+  const addScenario = useCallback(() => {
+    setScenarios(prev => prev.length >= 5 ? prev : [...prev, makeDefaultScenario(prev.length)]);
+  }, []);
+
+  const removeScenario = useCallback((i: number) => {
+    setScenarios(prev => prev.length <= 1 ? prev : prev.filter((_, idx) => idx !== i));
+  }, []);
+
+  // ── Settings ───────────────────────────────────────────────────────────────
   function updateSettings(s: CostingSettings) {
     setSettings(s);
     const merged: CostingSettings = {
@@ -344,6 +291,87 @@ export function CostingsPage() {
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged)); } catch { /* ignore */ }
   }
 
+  // ── Products catalog ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!user) return;
+    fetchProducts().then(setProductCatalog).catch(e => console.error('Failed to load products:', e));
+  }, [user]);
+
+  const handleProductCatalogSelect = useCallback((p: Product) => {
+    setProduct(prev => ({
+      ...prev,
+      productCode: p.product_no,
+      description: p.description,
+      caseWeightKg: p.net_weight_kg || prev.caseWeightKg,
+      bagsPerCase: p.packs_per_case || prev.bagsPerCase,
+    }));
+    // Default each scenario's cases-per-container from the catalog row if empty
+    setScenarios(prev => prev.map(s => ({
+      ...s,
+      casesPerContainer: s.casesPerContainer > 0 ? s.casesPerContainer : p.container_fill_cases,
+    })));
+  }, []);
+
+  const handleProductCatalogCreate = useCallback(async (input: NewProductInput): Promise<Product> => {
+    if (!user) throw new Error('Not signed in');
+    const created = await createProduct(user.id, input);
+    setProductCatalog(prev => [...prev, created].sort((a, b) => a.product_no.localeCompare(b.product_no)));
+    return created;
+  }, [user]);
+
+  const handleProductCatalogUpdate = useCallback(async (id: string, patch: Partial<NewProductInput>): Promise<Product> => {
+    const updated = await updateProduct(id, patch);
+    setProductCatalog(prev => prev.map(p => (p.id === id ? updated : p))
+      .sort((a, b) => a.product_no.localeCompare(b.product_no)));
+    return updated;
+  }, []);
+
+  const handleProductCatalogDelete = useCallback(async (id: string): Promise<void> => {
+    await deleteProduct(id);
+    setProductCatalog(prev => prev.filter(p => p.id !== id));
+  }, []);
+
+  // ── Import Control setters ────────────────────────────────────────────────
+  const setIcHeader = useCallback(<K extends keyof ImportControlHeader>(key: K, val: ImportControlHeader[K]) => {
+    setImportControl(prev => ({ ...prev, header: { ...prev.header, [key]: val } }));
+  }, []);
+  const setIcClearance = useCallback(<K extends keyof ImportControlClearance>(key: K, val: ImportControlClearance[K]) => {
+    setImportControl(prev => ({ ...prev, clearance: { ...prev.clearance, [key]: val } }));
+  }, []);
+  const setIcCosts = useCallback(<K extends keyof ImportControlCosts>(key: K, val: ImportControlCosts[K]) => {
+    setImportControl(prev => ({ ...prev, costs: { ...prev.costs, [key]: val } }));
+  }, []);
+  const setIcProduct = useCallback(<K extends keyof ImportControlProduct>(i: number, key: K, val: ImportControlProduct[K]) => {
+    setImportControl(prev => {
+      const next = [...prev.products];
+      next[i] = { ...next[i], [key]: val };
+      return { ...prev, products: next };
+    });
+  }, []);
+  const addIcProduct = useCallback(() => {
+    setImportControl(prev => prev.products.length >= 4 ? prev : { ...prev, products: [...prev.products, makeDefaultIcProduct()] });
+  }, []);
+  const removeIcProduct = useCallback((i: number) => {
+    setImportControl(prev => prev.products.length <= 1 ? prev : { ...prev, products: prev.products.filter((_, idx) => idx !== i) });
+  }, []);
+
+  const handleIcProductCatalogSelect = useCallback((i: number, p: Product) => {
+    setImportControl(prev => {
+      const next = [...prev.products];
+      const existing = next[i];
+      next[i] = {
+        ...existing,
+        productCode: p.product_no,
+        productDescription: p.description,
+        caseWeight: existing.caseWeight > 0 ? existing.caseWeight : p.net_weight_kg,
+        caseCount: existing.caseCount > 0 ? existing.caseCount : p.container_fill_cases,
+        catalogContainerFillKg: p.container_fill_kg || existing.catalogContainerFillKg,
+      };
+      return { ...prev, products: next };
+    });
+  }, []);
+
+  // ── Save / load ────────────────────────────────────────────────────────────
   useEffect(() => { if (user) loadList(); }, [user]);
 
   async function loadList() {
@@ -357,7 +385,9 @@ export function CostingsPage() {
     if (!user || !saveName.trim()) { setSaveError('Enter a name first.'); return; }
     setSaving(true); setSaveError(null);
     try {
-      const saved = await saveCostingCalculation(user.id, saveName.trim(), inputs, result, currentId ?? undefined);
+      const payload: CostingModelPayload = { kind: 'model_v2', product, container, scenarios };
+      const resultsPayload: CostingModelResults = { kind: 'model_v2', scenarios: results };
+      const saved = await saveCostingCalculation(user.id, saveName.trim(), payload, resultsPayload, currentId ?? undefined);
       if (saved) {
         setCurrentId(saved.id);
         setSavedList(prev => {
@@ -371,10 +401,47 @@ export function CostingsPage() {
   }
 
   function handleLoad(s: SavedCosting) {
-    setInputs(s.inputs);
-    setCurrentId(s.id);
-    setSaveName(s.name);
-    setActiveTab('main');
+    if (isCostingModelPayload(s.inputs)) {
+      setProduct(s.inputs.product);
+      setContainer(s.inputs.container);
+      setScenarios(s.inputs.scenarios);
+      setCurrentId(s.id);
+      setSaveName(s.name);
+      setActiveTab('main');
+    } else {
+      // Legacy single-scenario entry — load what we can into Product Details + Scenario 1
+      const legacy = s.inputs;
+      setProduct({
+        productCode: '',
+        description: legacy.productName,
+        productCategory: legacy.productCategory,
+        bagsPerCase: 0,
+        caseWeightKg: legacy.caseWeightKg,
+        supplier: legacy.supplier,
+        priceUSDPerTonne: legacy.costPerTonneUSD,
+      });
+      setContainer({
+        clearanceType: legacy.clearanceType,
+        retail: false,
+        handball: legacy.handballing,
+        containerWeightKg: 0,
+        insuranceAuto: legacy.insuranceAuto,
+        insuranceManualGBP: legacy.insuranceManualGBP,
+      });
+      const s1: CostingScenario = {
+        ...makeDefaultScenario(0),
+        salesPricePerCase: legacy.sellingPricePerCase,
+        exchangeRateUSDGBP: legacy.exchangeRateUSDGBP,
+        casesPerContainer: legacy.casesPerContainer,
+        freightCostUSD: legacy.freightCostUSD,
+        agentPort: legacy.agentPort,
+        transportCostGBP: legacy.transportCostGBP,
+      };
+      setScenarios([s1, ...DEFAULT_SCENARIOS.slice(1, 5).map((_, i) => makeDefaultScenario(i + 1))]);
+      setCurrentId(null); // Don't overwrite the legacy record on next save
+      setSaveName(`${s.name} (migrated)`);
+      setActiveTab('main');
+    }
   }
 
   async function handleDelete(id: string) {
@@ -386,81 +453,177 @@ export function CostingsPage() {
   }
 
   function handleReset() {
-    setInputs(DEFAULT_INPUTS);
-    setRouteTransports({ ...DEFAULT_ROUTE_TRANSPORTS });
+    setProduct(DEFAULT_PRODUCT);
+    setContainer(DEFAULT_CONTAINER);
+    setScenarios(DEFAULT_SCENARIOS.map((_, i) => makeDefaultScenario(i)));
     setCurrentId(null);
     setSaveName('');
     setSaveError(null);
   }
 
-  function handleSelectRoute(key: AgentPortKey) {
-    setInputs(prev => ({ ...prev, agentPort: key, transportCostGBP: routeTransports[key] ?? 0 }));
+  function handleExportPdf() {
+    exportCostingPdf({
+      name: saveName.trim() || product.productCode || product.description || 'Costing',
+      product, container, scenarios, results, settings,
+    });
   }
 
-  function handleRouteTransportChange(key: AgentPortKey, val: number) {
-    setRouteTransports(prev => ({ ...prev, [key]: val }));
-    if (inputs.agentPort === key) setInputs(prev => ({ ...prev, transportCostGBP: val }));
+  // ── Import Control save / load / reset / PDF ─────────────────────────────
+  useEffect(() => { if (user) loadIcList(); }, [user]);
+
+  async function loadIcList() {
+    try { setIcSavedList(await fetchImportControls(user!.id)); }
+    catch (e) { console.error(e); }
+  }
+
+  async function handleIcSave() {
+    if (!user || !icSaveName.trim()) { setIcSaveError('Enter a name first.'); return; }
+    setIcSaving(true); setIcSaveError(null);
+    try {
+      const saved = await saveImportControl(user.id, icSaveName.trim(), importControl, icResults, icCurrentId ?? undefined);
+      if (saved) {
+        setIcCurrentId(saved.id);
+        setIcSavedList(prev => {
+          const idx = prev.findIndex(s => s.id === saved.id);
+          if (idx >= 0) { const n = [...prev]; n[idx] = saved; return n; }
+          return [saved, ...prev];
+        });
+      }
+    } catch (e) { setIcSaveError(e instanceof Error ? e.message : String(e)); }
+    finally { setIcSaving(false); }
+  }
+
+  function handleIcLoad(s: SavedImportControl) {
+    setImportControl(s.data);
+    setIcCurrentId(s.id);
+    setIcSaveName(s.name);
+    setActiveTab('import_control');
+  }
+
+  async function handleIcDelete(id: string) {
+    try {
+      await deleteImportControl(id);
+      setIcSavedList(prev => prev.filter(s => s.id !== id));
+      if (icCurrentId === id) setIcCurrentId(null);
+    } catch (e) { console.error(e); }
+  }
+
+  function handleIcReset() {
+    setImportControl(DEFAULT_IMPORT_CONTROL);
+    setIcCurrentId(null);
+    setIcSaveName('');
+    setIcSaveError(null);
+  }
+
+  function handleIcExportPdf() {
+    exportImportControlPdf({
+      name: icSaveName.trim() || importControl.header.containerNumber || 'Import Control',
+      ic: importControl, results: icResults,
+    });
   }
 
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'transparent' }}>
 
-      {/* Header */}
+      {/* Header — warm orange gradient strip with title + actions + tab bar */}
       <div
-        className="shrink-0"
+        className="shrink-0 mx-3 mt-3 overflow-hidden"
         style={{
-          background: 'rgba(255,255,255,0.97)',
-          backdropFilter: 'blur(24px)',
-          borderBottom: '1px solid #e2e8f0',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+          background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 50%, #c2410c 100%)',
+          borderRadius: 24,
+          boxShadow: '0 10px 30px rgba(217,119,6,0.25), 0 4px 12px rgba(0,0,0,0.06)',
+          border: '1px solid rgba(255,255,255,0.20)',
         }}
       >
-        {/* Title row */}
         <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h2 className="font-black text-sm uppercase tracking-widest" style={{ color: '#0f172a' }}>Food Import Costing</h2>
-            <p className="font-mono text-[10px] mt-0.5" style={{ color: '#94a3b8' }}>
-              Live cost-per-case · duty lookup · route comparison
+            <h2 className="font-black text-sm uppercase tracking-widest text-white">Food Import Costing</h2>
+            <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              5-scenario costing model · spreadsheet-faithful
             </p>
           </div>
 
-          {/* Save controls — only relevant on Main tab */}
           {activeTab === 'main' && (
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => { setShowSaved(true); if (!showSaved) loadList(); }}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all hover:bg-slate-50"
-                style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 100, color: '#334155', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                <FolderOpen size={12} /> Saved
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
+                <Icon name="folder" size={12} /> Saved
               </button>
               <button
                 onClick={handleReset}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all hover:bg-slate-50"
-                style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 100, color: '#334155', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                <RotateCcw size={12} /> Reset
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
+                <Icon name="reset" size={12} /> Reset
+              </button>
+              <button
+                onClick={handleExportPdf}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
+                <Icon name="filedown" size={12} /> PDF
               </button>
               <input
                 type="text" value={saveName} onChange={e => { setSaveName(e.target.value); setSaveError(null); }}
                 onKeyDown={e => e.key === 'Enter' && handleSave()}
                 placeholder="Calculation name…"
                 className="px-3 py-2 text-xs font-mono focus:outline-none w-40"
-                style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, color: '#0f172a' }}
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, color: '#fff' }}
               />
               <button
                 onClick={handleSave} disabled={saving}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
-                style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', borderRadius: 100, color: '#fff', boxShadow: '0 2px 8px rgba(79,70,229,0.28)' }}>
-                {saving ? <Loader size={12} className="animate-spin" /> : <Save size={12} />}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
+                style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 100, color: '#d97706' }}>
+                {saving ? <Spinner size={12} /> : <Icon name="save" size={12} />}
+                Save
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'import_control' && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => { setIcShowSaved(true); if (!icShowSaved) loadIcList(); }}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
+                <Icon name="folder" size={12} /> Saved
+              </button>
+              <button
+                onClick={handleIcReset}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
+                <Icon name="reset" size={12} /> Reset
+              </button>
+              <button
+                onClick={handleIcExportPdf}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 100, color: '#fff' }}>
+                <Icon name="filedown" size={12} /> PDF
+              </button>
+              <input
+                type="text" value={icSaveName} onChange={e => { setIcSaveName(e.target.value); setIcSaveError(null); }}
+                onKeyDown={e => e.key === 'Enter' && handleIcSave()}
+                placeholder="Container name…"
+                className="px-3 py-2 text-xs font-mono focus:outline-none w-40"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, color: '#fff' }}
+              />
+              <button
+                onClick={handleIcSave} disabled={icSaving}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider disabled:opacity-40"
+                style={{ background: 'rgba(255,255,255,0.95)', borderRadius: 100, color: '#d97706' }}>
+                {icSaving ? <Spinner size={12} /> : <Icon name="save" size={12} />}
                 Save
               </button>
             </div>
           )}
         </div>
         {saveError && activeTab === 'main' && (
-          <p className="px-4 pb-2 font-mono text-[10px]" style={{ color: '#e11d48' }}>{saveError}</p>
+          <p className="px-4 pb-2 font-mono text-[10px] text-red-300">{saveError}</p>
+        )}
+        {icSaveError && activeTab === 'import_control' && (
+          <p className="px-4 pb-2 font-mono text-[10px] text-red-300">{icSaveError}</p>
         )}
 
-        {/* Tab bar */}
         <div className="flex px-4 gap-0.5">
           {TABS.map(tab => {
             const active = activeTab === tab.id;
@@ -471,9 +634,9 @@ export function CostingsPage() {
                 className="flex items-center gap-1.5 px-3.5 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-all"
                 style={{
                   borderRadius: '10px 10px 0 0',
-                  background: active ? 'rgba(79,70,229,0.08)' : 'transparent',
-                  color: active ? '#4f46e5' : '#94a3b8',
-                  borderBottom: active ? '2px solid #4f46e5' : '2px solid transparent',
+                  background: active ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.08)',
+                  color: active ? '#d97706' : 'rgba(255,255,255,0.6)',
+                  borderBottom: active ? '2px solid #f59e0b' : '2px solid transparent',
                 }}
               >
                 <span style={{ opacity: active ? 1 : 0.7 }}>{tab.icon}</span>
@@ -488,21 +651,50 @@ export function CostingsPage() {
       <div className="flex-1 overflow-hidden flex flex-col">
         {activeTab === 'main' && (
           <MainCostingsTab
-            inputs={inputs}
-            result={result}
-            routeTransports={routeTransports}
+            product={product}
+            container={container}
+            scenarios={scenarios}
+            results={results}
             settings={settings}
-            onSet={set}
-            onSelectRoute={handleSelectRoute}
-            onRouteTransportChange={handleRouteTransportChange}
+            productCatalog={productCatalog}
+            onSetProduct={setProductField}
+            onSetContainer={setContainerField}
+            onSetScenario={setScenarioField}
+            onAddScenario={addScenario}
+            onRemoveScenario={removeScenario}
+            onProductCatalogSelect={handleProductCatalogSelect}
+            onProductCatalogCreate={handleProductCatalogCreate}
           />
         )}
         {activeTab === 'npd' && <NpdCostingsTab settings={settings} />}
         {activeTab === 'bulk' && <BulkCostingsTab settings={settings} />}
+        {activeTab === 'import_control' && (
+          <ImportControlTab
+            ic={importControl}
+            results={icResults}
+            productCatalog={productCatalog}
+            onSetHeader={setIcHeader}
+            onSetClearance={setIcClearance}
+            onSetCosts={setIcCosts}
+            onSetProduct={setIcProduct}
+            onAddProduct={addIcProduct}
+            onRemoveProduct={removeIcProduct}
+            onProductCatalogSelect={handleIcProductCatalogSelect}
+            onProductCatalogCreate={handleProductCatalogCreate}
+          />
+        )}
+        {activeTab === 'products' && (
+          <ProductsTab
+            products={productCatalog}
+            onCreate={handleProductCatalogCreate}
+            onUpdate={handleProductCatalogUpdate}
+            onDelete={handleProductCatalogDelete}
+          />
+        )}
         {activeTab === 'settings' && <SettingsTab settings={settings} onUpdate={updateSettings} />}
       </div>
 
-      {/* Saved modal */}
+      {/* Saved modal — Costing Model */}
       {showSaved && (
         <SavedPanel
           list={savedList} loading={loadingList} currentId={currentId}
@@ -510,24 +702,85 @@ export function CostingsPage() {
         />
       )}
 
-      {/* Chat FAB */}
-      <button
-        id="costings-advisor-fab"
-        onClick={() => setChatOpen(o => !o)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 flex items-center justify-center transition-transform duration-200 hover:scale-105 active:scale-95"
-        style={{
-          background: 'linear-gradient(135deg, #4f46e5, #4338ca)',
-          borderRadius: '100%',
-          boxShadow: '0 4px 20px rgba(79,70,229,0.45), 0 2px 8px rgba(0,0,0,0.12)',
-        }}
-        aria-label={chatOpen ? 'Close Costings Advisor' : 'Open Costings Advisor'}
-      >
-        {chatOpen ? <X size={22} style={{ color: '#fff' }} /> : <MessageCircle size={22} style={{ color: '#fff' }} />}
-      </button>
+      {/* Saved modal — Import Control */}
+      {icShowSaved && (
+        <IcSavedPanel
+          list={icSavedList} currentId={icCurrentId}
+          onLoad={handleIcLoad} onDelete={handleIcDelete} onClose={() => setIcShowSaved(false)}
+        />
+      )}
 
-      {chatOpen && (
-        <SimpleChatPanel inputs={inputs} result={result} onClose={() => setChatOpen(false)} />
+      {/* Costings AI advisor — scoped to /costings */}
+      {user && (
+        <>
+          <CostingsChatPanel
+            open={chatOpen}
+            product={product}
+            container={container}
+            scenarios={scenarios}
+            results={results}
+            onClose={() => setChatOpen(false)}
+          />
+          <ChatFAB open={chatOpen} onClick={() => setChatOpen(o => !o)} />
+        </>
       )}
     </div>
   );
 }
+
+// ── Import Control saved-panel modal ─────────────────────────────────────────
+
+function IcSavedPanel({
+  list, currentId, onLoad, onDelete, onClose,
+}: {
+  list: SavedImportControl[]; currentId: string | null;
+  onLoad: (s: SavedImportControl) => void; onDelete: (id: string) => void; onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="w-full max-w-md rounded-2xl overflow-hidden"
+        style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(245, 158, 11, 0.2)', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}>
+        <div className="flex items-center justify-between px-5 py-4"
+          style={{ background: 'linear-gradient(135deg, #1a1410, #d97706)' }}>
+          <div className="flex items-center gap-2.5">
+            <Icon name="ship" size={14} className="text-white/80" />
+            <span className="text-sm font-bold uppercase tracking-tight text-white">Saved Containers</span>
+          </div>
+          <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <Icon name="close" size={16} />
+          </button>
+        </div>
+        <div className="p-4 max-h-96 overflow-y-auto">
+          {list.length === 0 ? (
+            <div className="text-center py-8">
+              <Icon name="ship" size={28} className="mx-auto mb-3" style={{ color: 'rgba(90, 74, 61, 0.15)' }} />
+              <p className="text-xs uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.3)' }}>No saved containers yet</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {list.map(s => (
+                <div key={s.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.8)', border: s.id === currentId ? '1.5px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(245, 158, 11, 0.12)' }}>
+                  <button className="flex-1 text-left" onClick={() => { onLoad(s); onClose(); }}>
+                    <p className="font-bold text-sm" style={{ color: '#1a1410' }}>{s.name}</p>
+                    <p className="font-mono text-[10px] mt-0.5" style={{ color: 'rgba(90, 74, 61, 0.45)' }}>
+                      {s.data?.header?.containerNumber || '—'} · {s.data?.products?.length ?? 0} products · {new Date(s.updated_at).toLocaleDateString('en-GB')}
+                    </p>
+                  </button>
+                  <button onClick={() => onDelete(s.id)} className="p-1.5 rounded-full" style={{ color: 'rgba(90, 74, 61, 0.3)' }}>
+                    <Icon name="trash" size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+

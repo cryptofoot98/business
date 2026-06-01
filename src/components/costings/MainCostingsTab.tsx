@@ -1,429 +1,594 @@
-import { Package, Truck, Zap, ArrowLeftRight, Shield, TrendingUp, TrendingDown, Check } from 'lucide-react';
+import { useMemo } from 'react';
+import { Icon } from '../Icon';
 import {
-  NumInput, TextInput, SelectInput, Field, Section, CostBar, gmColor,
+  NumInputSm, SelectInputSm, TextInputSm, Field, Section, gmColor,
 } from './shared';
-import { FoodCostingInputs, FoodCostingResult, CostingSettings, AgentPortKey } from '../../types/costing';
-import { PRODUCT_CATEGORIES, AGENT_PORT_RATES, INSURANCE_PER_FCL_GBP } from '../../data/costingRates';
-import { computeFoodCosting } from '../../utils/costingCalc';
+import {
+  CostingModelProduct, CostingModelContainer, CostingScenario, ScenarioSummary,
+  CostingSettings, AgentPortKey, Incoterms, SalesCurrency,
+} from '../../types/costing';
+import {
+  PRODUCT_CATEGORIES, BAO_BUN_ADDITIONAL_DUTY_PER_100KG,
+} from '../../data/costingRates';
+import { Product, NewProductInput } from '../../types/product';
+import { ProductCombobox } from './ProductCombobox';
 
-// ── Results panel ─────────────────────────────────────────────────────────────
+// ── Tunables ──────────────────────────────────────────────────────────────────
 
-function ResultsPanel({ inputs, result }: { inputs: FoodCostingInputs; result: FoodCostingResult }) {
-  const fmt2 = (v: number) => v.toFixed(2);
-  const fmt4 = (v: number) => v.toFixed(4);
-  const gc = gmColor(result.gmPercent);
+const MAX_SCENARIOS = 5;
+const ROW_LABEL_WIDTH = 180;
+const COL_MIN_WIDTH  = 156;
 
-  const bars: { label: string; value: number; color: string }[] = [
-    { label: 'Product cost',  value: result.productCostPerCase,   color: '#4f46e5' },
-    { label: 'Freight',       value: result.freightPerCase,        color: '#6366f1' },
-    { label: 'Duty',          value: result.dutyPerCase,           color: '#f59e0b' },
-    { label: 'Port clearance',value: result.portClearancePerCase,  color: '#0891b2' },
-    { label: 'Transport',     value: result.transportPerCase,      color: '#8b5cf6' },
-    { label: 'Handballing',   value: result.handballingPerCase,    color: '#ec4899' },
-    { label: 'Insurance',     value: result.insurancePerCase,      color: '#059669' },
-    { label: inputs.addition1Label || 'Addition 1', value: result.addition1PerCase, color: '#14b8a6' },
-    { label: inputs.addition2Label || 'Addition 2', value: result.addition2PerCase, color: '#0d9488' },
-  ].filter(b => b.value > 0);
+const fmtGBP = (v: number) => v.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtGBP4 = (v: number) => v.toLocaleString('en-GB', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 
+// ── Scenario colour palette (one per scenario, up to 5) ──────────────────────
+// Distinct accents — violet / indigo / teal / amber / rose — applied to each
+// scenario column header so values are easy to track across the two tables.
+
+export interface ScenarioPaletteEntry {
+  name: string;
+  headerFrom: string;
+  headerTo: string;
+  headerText: string;
+  tint: string;          // subtle column background
+  border: string;        // column border accent
+  chip: string;          // small label chip background
+}
+
+export const SCENARIO_PALETTE: ScenarioPaletteEntry[] = [
+  { name: 'violet', headerFrom: '#7c3aed', headerTo: '#6d28d9', headerText: '#4c1d95', tint: 'rgba(168, 85, 247, 0.05)', border: 'rgba(168, 85, 247, 0.22)', chip: 'rgba(168, 85, 247, 0.12)' },
+  { name: 'indigo', headerFrom: '#4f46e5', headerTo: '#4338ca', headerText: '#312e81', tint: 'rgba(79,70,229,0.05)',  border: 'rgba(79,70,229,0.22)',  chip: 'rgba(79,70,229,0.12)'  },
+  { name: 'teal',   headerFrom: '#0d9488', headerTo: '#0f766e', headerText: '#134e4a', tint: 'rgba(13,148,136,0.05)', border: 'rgba(13,148,136,0.22)', chip: 'rgba(13,148,136,0.12)' },
+  { name: 'amber',  headerFrom: '#f59e0b', headerTo: '#d97706', headerText: '#78350f', tint: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.28)', chip: 'rgba(245,158,11,0.14)' },
+  { name: 'rose',   headerFrom: '#e11d48', headerTo: '#be123c', headerText: '#881337', tint: 'rgba(225,29,72,0.05)',  border: 'rgba(225,29,72,0.22)',  chip: 'rgba(225,29,72,0.12)'  },
+];
+
+const paletteFor = (i: number) => SCENARIO_PALETTE[i % SCENARIO_PALETTE.length];
+
+// ── Yes / No segmented toggle ─────────────────────────────────────────────────
+
+function YesNo({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="space-y-4">
-      {/* Key metrics */}
-      <div style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', borderRadius: 16, padding: '20px 20px 16px' }}>
-        <p className="font-mono text-[9px] uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>Cost per case</p>
-        <span className="text-4xl font-black text-white">£{fmt2(result.totalCostPerCase)}</span>
-        <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
-          <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>Cost / kg</p>
-            <p className="font-bold text-sm text-white mt-0.5">£{fmt4(result.costPerKg)}</p>
-          </div>
-          <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>Total / container</p>
-            <p className="font-bold text-sm text-white mt-0.5">£{result.totalCostPerContainer.toLocaleString('en-GB', { maximumFractionDigits: 2 })}</p>
-          </div>
-          <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.45)' }}>Duty rate</p>
-            <p className="font-bold text-sm text-white mt-0.5">{result.dutyRateLabel}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* GM card */}
-      {inputs.sellingPricePerCase > 0 && (
-        <div style={{ background: '#ffffff', border: `1px solid ${gc}30`, borderRadius: 16, padding: '16px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: '#94a3b8' }}>Gross Margin</p>
-              <div className="flex items-center gap-2">
-                {result.gmPercent >= 0
-                  ? <TrendingUp size={16} style={{ color: gc }} />
-                  : <TrendingDown size={16} style={{ color: gc }} />}
-                <span className="text-3xl font-black" style={{ color: gc }}>{result.gmPercent.toFixed(1)}%</span>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="font-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: '#94a3b8' }}>GP / case</p>
-              <p className="font-bold text-lg" style={{ color: gc }}>
-                {result.gmGBPPerCase >= 0 ? '+' : ''}£{fmt2(result.gmGBPPerCase)}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cost breakdown */}
-      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-        <div className="px-4 py-3" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-          <p className="font-bold text-[10px] uppercase tracking-widest" style={{ color: '#334155' }}>Cost breakdown / case</p>
-        </div>
-        <div className="p-4 space-y-2.5">
-          {bars.length === 0 ? (
-            <p className="font-mono text-[10px] text-center py-4" style={{ color: '#cbd5e1' }}>Enter product details to see breakdown</p>
-          ) : (
-            bars.map(b => (
-              <CostBar key={b.label} label={b.label} value={b.value} total={result.totalCostPerCase} color={b.color} />
-            ))
-          )}
-        </div>
-        {bars.length > 0 && (
-          <div className="px-4 pb-4 space-y-0.5">
-            {[
-              { label: 'Product cost',   value: result.productCostPerCase },
-              { label: 'Freight',        value: result.freightPerCase },
-              { label: 'Duty',           value: result.dutyPerCase },
-              { label: 'Port clearance', value: result.portClearancePerCase },
-              { label: 'Transport',      value: result.transportPerCase },
-              ...(result.handballingPerCase > 0 ? [{ label: 'Handballing', value: result.handballingPerCase }] : []),
-              { label: 'Insurance',      value: result.insurancePerCase },
-              ...(result.addition1PerCase > 0 ? [{ label: inputs.addition1Label || 'Addition 1', value: result.addition1PerCase }] : []),
-              ...(result.addition2PerCase > 0 ? [{ label: inputs.addition2Label || 'Addition 2', value: result.addition2PerCase }] : []),
-            ].map(row => (
-              <div key={row.label} className="flex items-center justify-between py-1.5" style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <span className="font-mono text-[10px]" style={{ color: '#64748b' }}>{row.label}</span>
-                <span className="font-mono text-[10px] font-bold" style={{ color: '#1e293b' }}>£{row.value.toFixed(4)}</span>
-              </div>
-            ))}
-            <div className="flex items-center justify-between pt-2 mt-1">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wide" style={{ color: '#334155' }}>Total cost / case</span>
-              <span className="font-mono text-sm font-black" style={{ color: '#0f172a' }}>£{fmt2(result.totalCostPerCase)}</span>
-            </div>
-          </div>
-        )}
-      </div>
+    <div className="inline-flex rounded-lg overflow-hidden" style={{ border: '1px solid rgba(217,119,6,0.25)' }}>
+      {([['Yes', true], ['No', false]] as const).map(([label, val]) => (
+        <button
+          key={label}
+          onClick={() => onChange(val)}
+          className="px-3 py-1.5 text-xs font-mono font-bold transition-colors"
+          style={{
+            background: value === val ? 'linear-gradient(135deg, #d97706, #b45309)' : 'rgba(255,255,255,0.85)',
+            color: value === val ? '#fff' : '#92400e',
+            minWidth: 48,
+          }}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   );
 }
 
-// ── Route comparison ──────────────────────────────────────────────────────────
+// ── Summary row component ─────────────────────────────────────────────────────
 
-function RouteCompare({
-  inputs, routeTransports, settings,
-  onSelectRoute, onTransportChange,
+function SummaryRow({
+  label, values, bestIdx, format = fmtGBP, isTotal = false, isMargin = false, marginPercents,
 }: {
-  inputs: FoodCostingInputs;
-  routeTransports: Record<AgentPortKey, number>;
-  settings: CostingSettings;
-  onSelectRoute: (key: AgentPortKey) => void;
-  onTransportChange: (key: AgentPortKey, val: number) => void;
+  label: string;
+  values: number[];
+  bestIdx: number;
+  format?: (v: number) => string;
+  isTotal?: boolean;
+  isMargin?: boolean;
+  marginPercents?: number[];
 }) {
-  const agentRates = settings.agentPortRates;
-  const keys = Object.keys(agentRates) as AgentPortKey[];
-
   return (
-    <div className="space-y-2">
-      <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>
-        Compare all routes — enter transport (£/container) then click to select
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {keys.map(key => {
-          const info = agentRates[key];
-          const portInputs: FoodCostingInputs = { ...inputs, agentPort: key, transportCostGBP: routeTransports[key] ?? 0 };
-          const portResult = computeFoodCosting(portInputs, settings);
-          const isSelected = inputs.agentPort === key;
-
-          return (
-            <div
-              key={key}
-              style={{
-                background: isSelected ? 'rgba(79,70,229,0.05)' : '#ffffff',
-                border: isSelected ? '1.5px solid rgba(79,70,229,0.35)' : '1px solid #e2e8f0',
-                borderRadius: 12,
-                overflow: 'hidden',
-              }}
-            >
-              <div className="px-3 py-2.5" style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-bold text-xs truncate" style={{ color: '#0f172a' }}>{info.agent}</p>
-                    <p className="font-mono text-[9px] truncate" style={{ color: '#94a3b8' }}>{info.port}</p>
-                  </div>
-                  {isSelected && (
-                    <span className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full font-mono text-[8px] font-bold uppercase"
-                      style={{ background: 'rgba(79,70,229,0.1)', color: '#4f46e5', border: '1px solid rgba(79,70,229,0.2)' }}>
-                      <Check size={8} /> Active
-                    </span>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-1 mt-2 text-[9px] font-mono" style={{ color: '#94a3b8' }}>
-                  <span>Health: £{info.healthExamGBP.toFixed(2)}</span>
-                  <span>Port: £{info.portChargesGBP.toFixed(2)}</span>
-                </div>
-              </div>
-              <div className="px-3 py-2 flex items-center gap-2">
-                <span className="font-mono text-[9px] shrink-0" style={{ color: '#94a3b8' }}>Transport £</span>
-                <input
-                  type="number" min={0} step={10}
-                  value={routeTransports[key] ?? ''}
-                  onChange={e => onTransportChange(key, parseFloat(e.target.value) || 0)}
-                  className="flex-1 px-2 py-1 text-xs font-mono focus:outline-none rounded-lg min-w-0"
-                  style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#0f172a' }}
-                />
-              </div>
-              <div className="px-3 pb-2.5 flex items-center justify-between gap-2">
-                <div>
-                  <span className="font-mono text-[9px]" style={{ color: '#94a3b8' }}>Total / case: </span>
-                  <span className="font-mono text-xs font-black" style={{ color: '#0f172a' }}>£{portResult.totalCostPerCase.toFixed(2)}</span>
-                </div>
-                {!isSelected && (
-                  <button
-                    onClick={() => onSelectRoute(key)}
-                    className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide rounded-full"
-                    style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', color: '#fff' }}
-                  >
-                    Use
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <tr>
+      <td
+        className="px-3 py-2 text-[11px] uppercase tracking-wider sticky left-0 z-[1]"
+        style={{
+          background: isTotal ? 'rgba(245, 158, 11, 0.12)' : 'rgba(245, 158, 11, 0.05)',
+          color: isTotal ? '#1a1410' : 'rgba(90, 74, 61, 0.65)',
+          fontWeight: isTotal ? 800 : 600,
+          width: ROW_LABEL_WIDTH,
+          minWidth: ROW_LABEL_WIDTH,
+          borderBottom: isTotal ? '2px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(245, 158, 11, 0.12)',
+          borderRight: '1px solid rgba(245, 158, 11, 0.18)',
+        }}
+      >
+        {label}
+      </td>
+      {values.map((v, i) => {
+        const p = paletteFor(i);
+        const isBest = isMargin && i === bestIdx && marginPercents && marginPercents.some(pp => pp !== 0);
+        const colour = isMargin && marginPercents ? gmColor(marginPercents[i]) : (isTotal ? '#1a1410' : '#d97706');
+        return (
+          <td
+            key={i}
+            className="px-3 py-2 text-right font-mono"
+            style={{
+              background: isBest ? 'rgba(245, 158, 11, 0.14)' : p.tint,
+              borderBottom: isTotal ? '2px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(245, 158, 11, 0.12)',
+              borderRight: '1px solid rgba(245, 158, 11, 0.10)',
+              color: colour,
+              fontWeight: isTotal || isMargin ? 800 : 600,
+              fontSize: isTotal || isMargin ? 13 : 11,
+            }}
+          >
+            {format(v)}
+          </td>
+        );
+      })}
+    </tr>
   );
 }
 
-// ── Main costings form ────────────────────────────────────────────────────────
+// ── Scenario input row ────────────────────────────────────────────────────────
+
+function ScenarioRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <tr>
+      <td
+        className="px-3 py-1.5 text-[11px] uppercase tracking-wider sticky left-0 z-[1]"
+        style={{
+          background: 'rgba(99,102,241,0.06)',
+          color: 'rgba(67,56,202,0.85)',
+          fontWeight: 600,
+          width: ROW_LABEL_WIDTH,
+          minWidth: ROW_LABEL_WIDTH,
+          borderBottom: '1px solid rgba(99,102,241,0.18)',
+          borderRight: '1px solid rgba(99,102,241,0.22)',
+        }}
+      >
+        {label}
+      </td>
+      {children}
+    </tr>
+  );
+}
+
+// ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
-  inputs: FoodCostingInputs;
-  result: FoodCostingResult;
-  routeTransports: Record<AgentPortKey, number>;
+  product: CostingModelProduct;
+  container: CostingModelContainer;
+  scenarios: CostingScenario[];
+  results: ScenarioSummary[];
   settings: CostingSettings;
-  onSet: <K extends keyof FoodCostingInputs>(key: K, val: FoodCostingInputs[K]) => void;
-  onSelectRoute: (key: AgentPortKey) => void;
-  onRouteTransportChange: (key: AgentPortKey, val: number) => void;
+  productCatalog: Product[];
+  onSetProduct: <K extends keyof CostingModelProduct>(key: K, val: CostingModelProduct[K]) => void;
+  onSetContainer: <K extends keyof CostingModelContainer>(key: K, val: CostingModelContainer[K]) => void;
+  onSetScenario: <K extends keyof CostingScenario>(i: number, key: K, val: CostingScenario[K]) => void;
+  onAddScenario: () => void;
+  onRemoveScenario: (i: number) => void;
+  onProductCatalogSelect: (p: Product) => void;
+  onProductCatalogCreate: (input: NewProductInput) => Promise<Product>;
 }
 
-export function MainCostingsTab({
-  inputs, result, routeTransports, settings,
-  onSet, onSelectRoute, onRouteTransportChange,
-}: Props) {
-  const agentRates = settings.agentPortRates;
-  const agentOptions = (Object.entries(agentRates) as [AgentPortKey, typeof agentRates[AgentPortKey]][])
-    .map(([k, v]) => ({ value: k, label: v.label }));
+// ── Main ──────────────────────────────────────────────────────────────────────
 
-  const insuranceDefault = settings.insurancePerFCL;
+export function MainCostingsTab({
+  product, container, scenarios, results, settings, productCatalog,
+  onSetProduct, onSetContainer, onSetScenario, onAddScenario, onRemoveScenario,
+  onProductCatalogSelect, onProductCatalogCreate,
+}: Props) {
+  const agentOptions = useMemo(
+    () => (Object.entries(settings.agentPortRates) as [AgentPortKey, typeof settings.agentPortRates[AgentPortKey]][])
+      .map(([k, v]) => ({ value: k, label: v.label })),
+    [settings.agentPortRates],
+  );
+
+  // Find scenario with best (highest) GM% for highlighting
+  const bestIdx = useMemo(() => {
+    if (results.length === 0) return -1;
+    let best = 0;
+    for (let i = 1; i < results.length; i++) {
+      if (results[i].gmPercent > results[best].gmPercent) best = i;
+    }
+    return best;
+  }, [results]);
+
+  // Insurance read-out uses the first scenario's product cost (matches spreadsheet F12 = scenario 1)
+  const insurancePreview = results[0]?.insurancePerFCLGBP ?? 0;
+  // Additional Duty read-out (per kg)
+  const additionalDutyPerKgPreview = product.productCategory === 'bao_bun'
+    ? (container.containerWeightKg / 100) * BAO_BUN_ADDITIONAL_DUTY_PER_100KG
+        / Math.max(product.caseWeightKg * (scenarios[0]?.casesPerContainer || 0), 1)
+    : 0;
+
+  // Per-column tint + gridlines for the scenario input table
+  const colStyle = (i: number): React.CSSProperties => {
+    const p = paletteFor(i);
+    return {
+      minWidth: COL_MIN_WIDTH,
+      background: p.tint,
+      borderRight: '1px solid rgba(99,102,241,0.15)',
+      borderBottom: '1px solid rgba(99,102,241,0.15)',
+    };
+  };
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] min-h-full">
+    <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
-        {/* ── Left: form ── */}
-        <div className="p-4 space-y-3 xl:overflow-y-auto" style={{ borderRight: '1px solid #e2e8f0' }}>
+      {/* ─── 1. Product Details — BLUE ─── */}
+      <Section title="Product Details" icon={<Icon name="package" size={13} />} accent="blue">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Field label="Product Code" filled={product.productCode.trim().length > 0} note={`${productCatalog.length} products in catalog — type to search or create new`}>
+            <ProductCombobox
+              products={productCatalog}
+              value={product.productCode}
+              onSelect={onProductCatalogSelect}
+              onCreate={onProductCatalogCreate}
+              onTextChange={txt => onSetProduct('productCode', txt)}
+              placeholder="e.g. C10028A"
+            />
+          </Field>
+          <Field label="Description" filled={product.description.trim().length > 0}>
+            <TextInputSm value={product.description} onChange={v => onSetProduct('description', v)} placeholder="e.g. Chicken Spring Rolls 50×60g" />
+          </Field>
+          <Field label="Meat Content / Category">
+            <SelectInputSm value={product.productCategory} onChange={v => onSetProduct('productCategory', v)} options={PRODUCT_CATEGORIES} />
+          </Field>
+          <Field label="Bags per Case" filled={product.bagsPerCase > 0}>
+            <NumInputSm value={product.bagsPerCase} onChange={v => onSetProduct('bagsPerCase', Math.max(0, Math.floor(v)))} step={1} placeholder="50" />
+          </Field>
+          <Field label="Case Weight (kg)" filled={product.caseWeightKg > 0}>
+            <NumInputSm value={product.caseWeightKg} onChange={v => onSetProduct('caseWeightKg', v)} step={0.1} placeholder="10.00" />
+          </Field>
+          <Field label="Supplier" filled={product.supplier.trim().length > 0}>
+            <TextInputSm value={product.supplier} onChange={v => onSetProduct('supplier', v)} placeholder="e.g. Thai Foods Co." />
+          </Field>
+          <Field label="Price (USD / tonne)" filled={product.priceUSDPerTonne > 0}>
+            <NumInputSm value={product.priceUSDPerTonne} onChange={v => onSetProduct('priceUSDPerTonne', v)} prefix="$" placeholder="1500.00" />
+          </Field>
+        </div>
+      </Section>
 
-          <Section title="Product & Rates" icon={<Package size={13} />}>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Product name">
-                <TextInput value={inputs.productName} onChange={v => onSet('productName', v)} placeholder="e.g. Chicken Spring Rolls" />
-              </Field>
-              <Field label="Supplier">
-                <TextInput value={inputs.supplier} onChange={v => onSet('supplier', v)} placeholder="e.g. Thai Foods Co." />
-              </Field>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Cost per tonne (USD)" note="Ex-works or FOB cost">
-                <NumInput value={inputs.costPerTonneUSD} onChange={v => onSet('costPerTonneUSD', v)} prefix="$" placeholder="1500.00" />
-              </Field>
-              <Field label="Case weight (kg)" note="Gross weight per case">
-                <NumInput value={inputs.caseWeightKg} onChange={v => onSet('caseWeightKg', v)} suffix="kg" step={0.1} placeholder="10.00" />
-              </Field>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Cases per container" note="Number of cases in 1 FCL">
-                <NumInput value={inputs.casesPerContainer} onChange={v => onSet('casesPerContainer', Math.max(1, Math.floor(v)))} step={1} placeholder="1000" />
-              </Field>
-              <Field label="USD → GBP exchange rate">
-                <NumInput value={inputs.exchangeRateUSDGBP} onChange={v => onSet('exchangeRateUSDGBP', v)} min={0.01} step={0.001} placeholder="1.270" />
-              </Field>
-            </div>
-          </Section>
-
-          <Section title="Freight" icon={<Truck size={13} />}>
-            <Field label="Freight cost per container (USD)" note="Total ocean freight for 1 FCL">
-              <NumInput value={inputs.freightCostUSD} onChange={v => onSet('freightCostUSD', v)} prefix="$" placeholder="3500.00" />
-            </Field>
-            <div className="p-3 rounded-xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-              <p className="font-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: '#94a3b8' }}>
-                Using rate: $1 = £{(1 / inputs.exchangeRateUSDGBP).toFixed(4)}
-              </p>
-              <p className="font-mono text-[10px] font-bold" style={{ color: '#1e293b' }}>
-                Freight per case: £{inputs.casesPerContainer > 0 && inputs.freightCostUSD > 0
-                  ? (inputs.freightCostUSD / inputs.exchangeRateUSDGBP / inputs.casesPerContainer).toFixed(4)
-                  : '—'}
-              </p>
-            </div>
-          </Section>
-
-          <Section title="Classification & Duty" icon={<Zap size={13} />}>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Product category" note="Determines duty rate">
-                <SelectInput value={inputs.productCategory} onChange={v => onSet('productCategory', v)} options={PRODUCT_CATEGORIES} />
-              </Field>
-              <Field label="Clearance type">
-                <SelectInput
-                  value={inputs.clearanceType} onChange={v => onSet('clearanceType', v)}
-                  options={[
-                    { value: 'licence', label: 'Licence (lower rate)' },
-                    { value: 'full_duty', label: 'Full Duty' },
-                  ]}
-                />
-              </Field>
-            </div>
-            <div className="p-3 rounded-xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-              <p className="font-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: '#94a3b8' }}>Applicable duty rate</p>
-              <p className="font-mono text-sm font-black" style={{ color: '#0f172a' }}>{result.dutyRateLabel}</p>
-              {inputs.caseWeightKg > 0 && (
-                <p className="font-mono text-[10px] mt-0.5" style={{ color: '#64748b' }}>
-                  = £{result.dutyPerCase.toFixed(4)}/case at {inputs.caseWeightKg}kg/case
-                </p>
-              )}
-            </div>
-          </Section>
-
-          <Section title="Import Route" icon={<ArrowLeftRight size={13} />}>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Customs agent & port">
-                <SelectInput
-                  value={inputs.agentPort}
-                  onChange={v => { onSet('agentPort', v); onSet('transportCostGBP', routeTransports[v] ?? 0); }}
-                  options={agentOptions}
-                />
-              </Field>
-              <Field label="Transport: port → warehouse (£/container)">
-                <NumInput
-                  value={inputs.transportCostGBP}
-                  onChange={v => { onSet('transportCostGBP', v); onRouteTransportChange(inputs.agentPort, v); }}
-                  prefix="£" placeholder="650.00"
-                />
-              </Field>
-            </div>
-
-            {(() => {
-              const info = agentRates[inputs.agentPort];
-              return (
-                <div className="p-3 rounded-xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>Health exam</p>
-                      <p className="font-mono text-xs font-bold mt-0.5" style={{ color: '#1e293b' }}>£{info.healthExamGBP.toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>Port charges</p>
-                      <p className="font-mono text-xs font-bold mt-0.5" style={{ color: '#1e293b' }}>£{info.portChargesGBP.toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>Total</p>
-                      <p className="font-mono text-xs font-bold mt-0.5" style={{ color: '#1e293b' }}>£{(info.healthExamGBP + info.portChargesGBP).toFixed(2)}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, padding: '12px' }}>
-              <p className="font-bold text-[10px] uppercase tracking-widest mb-2.5" style={{ color: '#334155' }}>Compare all routes</p>
-              <RouteCompare
-                inputs={inputs} routeTransports={routeTransports} settings={settings}
-                onSelectRoute={onSelectRoute} onTransportChange={onRouteTransportChange}
-              />
-            </div>
-          </Section>
-
-          <Section title="Optional Costs" icon={<Shield size={13} />} defaultOpen={false}>
-            <div className="p-3 rounded-xl space-y-2" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input type="checkbox" checked={inputs.handballing} onChange={e => onSet('handballing', e.target.checked)}
-                  className="w-3.5 h-3.5" style={{ accentColor: '#4f46e5' }} />
-                <span className="font-mono text-xs font-bold" style={{ color: '#334155' }}>Handballing (manual unloading)</span>
-              </label>
-              {inputs.handballing && (
-                <Field label="Handballing cost (£/container)">
-                  <NumInput value={inputs.handballingCostGBP} onChange={v => onSet('handballingCostGBP', v)} prefix="£" />
-                </Field>
-              )}
-            </div>
-
-            <div className="p-3 rounded-xl space-y-2" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-              <p className="font-mono text-[10px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>Insurance</p>
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input type="checkbox" checked={inputs.insuranceAuto} onChange={e => onSet('insuranceAuto', e.target.checked)}
-                  className="w-3.5 h-3.5" style={{ accentColor: '#4f46e5' }} />
-                <span className="font-mono text-xs" style={{ color: '#334155' }}>
-                  Auto: £{insuranceDefault}/FCL flat rate
-                </span>
-              </label>
-              {!inputs.insuranceAuto && (
-                <Field label="Manual insurance (£/container)">
-                  <NumInput value={inputs.insuranceManualGBP} onChange={v => onSet('insuranceManualGBP', v)} prefix="£" />
-                </Field>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Addition 1 label">
-                <TextInput value={inputs.addition1Label} onChange={v => onSet('addition1Label', v)} placeholder="e.g. Labelling" />
-              </Field>
-              <Field label="Addition 1 (£/container)">
-                <NumInput value={inputs.addition1GBP} onChange={v => onSet('addition1GBP', v)} prefix="£" />
-              </Field>
-              <Field label="Addition 2 label">
-                <TextInput value={inputs.addition2Label} onChange={v => onSet('addition2Label', v)} placeholder="e.g. Palletising" />
-              </Field>
-              <Field label="Addition 2 (£/container)">
-                <NumInput value={inputs.addition2GBP} onChange={v => onSet('addition2GBP', v)} prefix="£" />
-              </Field>
-            </div>
-          </Section>
-
-          <Section title="Selling Price & Margin" icon={<TrendingUp size={13} />}>
-            <Field label="Selling price per case (£)" note="Enter target selling price to calculate gross margin">
-              <NumInput value={inputs.sellingPricePerCase} onChange={v => onSet('sellingPricePerCase', v)} prefix="£" placeholder="0.00" />
-            </Field>
-            {inputs.sellingPricePerCase > 0 && result.totalCostPerCase > 0 && (
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { label: 'Cost / case', value: `£${result.totalCostPerCase.toFixed(2)}` },
-                  { label: 'GP / case',   value: `${result.gmGBPPerCase >= 0 ? '+' : ''}£${result.gmGBPPerCase.toFixed(2)}` },
-                  { label: 'Margin',      value: `${result.gmPercent.toFixed(1)}%` },
-                ].map(cell => (
-                  <div key={cell.label} className="p-2.5 text-center rounded-xl"
-                    style={{ background: 'rgba(79,70,229,0.05)', border: '1px solid rgba(79,70,229,0.12)' }}>
-                    <p className="font-mono text-[9px] uppercase tracking-wider" style={{ color: '#94a3b8' }}>{cell.label}</p>
-                    <p className="font-mono font-black text-sm mt-1" style={{ color: result.gmPercent >= 0 ? '#0f172a' : '#dc2626' }}>{cell.value}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Section>
+      {/* ─── 2. Container Details — AMBER ─── */}
+      <Section title="Container Details" icon={<Icon name="container" size={13} />} accent="amber">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Field label="Clearance Type">
+            <SelectInputSm
+              value={container.clearanceType}
+              onChange={v => onSetContainer('clearanceType', v)}
+              options={[
+                { value: 'licence',   label: 'Licence' },
+                { value: 'full_duty', label: 'Full Duty' },
+              ]}
+            />
+          </Field>
+          <Field label="Container Weight (kg)" filled={container.containerWeightKg > 0} note="Used to compute Bao Bun additional duty">
+            <NumInputSm value={container.containerWeightKg} onChange={v => onSetContainer('containerWeightKg', v)} step={50} placeholder="17000" />
+          </Field>
+          <Field label="Retail?">
+            <YesNo value={container.retail} onChange={v => onSetContainer('retail', v)} />
+          </Field>
+          <Field label="Handball?">
+            <YesNo value={container.handball} onChange={v => onSetContainer('handball', v)} />
+          </Field>
         </div>
 
-        {/* ── Right: results ── */}
-        <div className="p-4 xl:overflow-y-auto" style={{ background: 'rgba(238,242,255,0.25)' }}>
-          <div className="xl:sticky xl:top-4">
-            <ResultsPanel inputs={inputs} result={result} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
+          <div className="p-3 rounded-xl" style={{ background: 'rgba(217,119,6,0.06)', border: '1px solid rgba(217,119,6,0.18)' }}>
+            <label className="flex items-center gap-2 cursor-pointer mb-2">
+              <input
+                type="checkbox"
+                checked={container.insuranceAuto}
+                onChange={e => onSetContainer('insuranceAuto', e.target.checked)}
+                className="w-3.5 h-3.5"
+                style={{ accentColor: '#d97706' }}
+              />
+              <span className="font-mono text-xs font-bold" style={{ color: '#92400e' }}>
+                Auto Insurance (Product Cost × 0.25%)
+              </span>
+            </label>
+            {container.insuranceAuto ? (
+              <p className="font-mono text-[11px]" style={{ color: '#92400e' }}>
+                Calculated: <span className="font-bold">£{fmtGBP(insurancePreview)}</span> / container (based on Scenario 1)
+              </p>
+            ) : (
+              <Field label="Manual Insurance (£/container)" filled={container.insuranceManualGBP > 0}>
+                <NumInputSm value={container.insuranceManualGBP} onChange={v => onSetContainer('insuranceManualGBP', v)} prefix="£" placeholder="200" />
+              </Field>
+            )}
+          </div>
+
+          <div className="p-3 rounded-xl" style={{ background: 'rgba(217,119,6,0.06)', border: '1px solid rgba(217,119,6,0.18)' }}>
+            <p className="font-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: 'rgba(146,64,14,0.7)' }}>
+              Additional Duty
+            </p>
+            {product.productCategory === 'bao_bun' ? (
+              <p className="font-mono text-[11px]" style={{ color: '#92400e' }}>
+                Bao Bun rule: <span className="font-bold">£{BAO_BUN_ADDITIONAL_DUTY_PER_100KG}/100kg</span> of container weight
+                <br />
+                = <span className="font-bold">£{fmtGBP4(additionalDutyPerKgPreview)}/kg</span>
+              </p>
+            ) : (
+              <p className="font-mono text-[11px]" style={{ color: 'rgba(146,64,14,0.65)' }}>
+                Not applicable to this category (Bao Bun only).
+              </p>
+            )}
           </div>
         </div>
+      </Section>
 
-      </div>
+      {/* ─── 3. Costing Scenarios — colour-coded per column ─── */}
+      <Section title={`Costing Scenarios (${scenarios.length}/${MAX_SCENARIOS})`} icon={<Icon name="columns" size={13} />} accent="violet">
+        <div className="overflow-x-auto" style={{ borderRadius: 12, border: '1px solid rgba(99,102,241,0.22)' }}>
+          <table className="w-full text-xs" style={{ minWidth: ROW_LABEL_WIDTH + COL_MIN_WIDTH * scenarios.length, borderCollapse: 'separate', borderSpacing: 0 }}>
+            <thead>
+              <tr>
+                <th
+                  className="px-3 py-2 text-[11px] uppercase tracking-widest text-left sticky left-0 z-[2]"
+                  style={{
+                    background: 'rgba(99,102,241,0.10)',
+                    color: '#3730a3',
+                    width: ROW_LABEL_WIDTH, minWidth: ROW_LABEL_WIDTH,
+                    fontWeight: 700,
+                    borderRight: '1px solid rgba(99,102,241,0.22)',
+                    borderBottom: '1px solid rgba(99,102,241,0.22)',
+                  }}
+                >
+                  Field
+                </th>
+                {scenarios.map((s, i) => {
+                  const p = paletteFor(i);
+                  return (
+                    <th
+                      key={i}
+                      className="px-2 py-2 text-left"
+                      style={{
+                        background: `linear-gradient(135deg, ${p.headerFrom}, ${p.headerTo})`,
+                        borderRight: '1px solid rgba(0,0,0,0.08)',
+                        borderBottom: `2px solid ${p.headerTo}`,
+                        minWidth: COL_MIN_WIDTH,
+                      }}
+                    >
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={s.label}
+                          onChange={e => onSetScenario(i, 'label', e.target.value)}
+                          className="flex-1 min-w-0 px-2 py-1 text-xs font-bold focus:outline-none"
+                          style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 6, color: p.headerText }}
+                        />
+                        {scenarios.length > 1 && (
+                          <button
+                            onClick={() => onRemoveScenario(i)}
+                            className="p-1 rounded transition-colors"
+                            style={{ color: 'rgba(255,255,255,0.75)' }}
+                            onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.75)')}
+                            title="Remove scenario"
+                          >
+                            <Icon name="trash" size={11} />
+                          </button>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              <ScenarioRow label="Sales Currency">
+                {scenarios.map((s, i) => (
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
+                    <SelectInputSm
+                      value={s.salesCurrency}
+                      onChange={v => onSetScenario(i, 'salesCurrency', v as SalesCurrency)}
+                      options={[{ value: 'GBP', label: 'GBP £' }, { value: 'EUR', label: 'EUR €' }]}
+                    />
+                  </td>
+                ))}
+              </ScenarioRow>
+              <ScenarioRow label="€ → £ Rate">
+                {scenarios.map((s, i) => (
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
+                    <NumInputSm
+                      value={s.eurGbpRate}
+                      onChange={v => onSetScenario(i, 'eurGbpRate', v)}
+                      step={0.001}
+                      placeholder="1.16"
+                    />
+                  </td>
+                ))}
+              </ScenarioRow>
+              <ScenarioRow label="Sales Price / Case">
+                {scenarios.map((s, i) => (
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
+                    <NumInputSm
+                      value={s.salesPricePerCase}
+                      onChange={v => onSetScenario(i, 'salesPricePerCase', v)}
+                      prefix={s.salesCurrency === 'GBP' ? '£' : '€'}
+                      placeholder="0.00"
+                    />
+                  </td>
+                ))}
+              </ScenarioRow>
+              <ScenarioRow label="$ → £ Rate">
+                {scenarios.map((s, i) => (
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
+                    <NumInputSm value={s.exchangeRateUSDGBP} onChange={v => onSetScenario(i, 'exchangeRateUSDGBP', v)} step={0.001} placeholder="1.27" />
+                  </td>
+                ))}
+              </ScenarioRow>
+              <ScenarioRow label="Cases / Container">
+                {scenarios.map((s, i) => (
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
+                    <NumInputSm value={s.casesPerContainer} onChange={v => onSetScenario(i, 'casesPerContainer', Math.max(0, Math.floor(v)))} step={1} placeholder="1500" />
+                  </td>
+                ))}
+              </ScenarioRow>
+              <ScenarioRow label="Incoterms">
+                {scenarios.map((s, i) => (
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
+                    <SelectInputSm
+                      value={s.incoterms}
+                      onChange={v => onSetScenario(i, 'incoterms', v as Incoterms)}
+                      options={[{ value: 'FOB', label: 'FOB' }, { value: 'CFR', label: 'CFR' }]}
+                    />
+                  </td>
+                ))}
+              </ScenarioRow>
+              <ScenarioRow label="Freight Cost $">
+                {scenarios.map((s, i) => (
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
+                    <NumInputSm value={s.freightCostUSD} onChange={v => onSetScenario(i, 'freightCostUSD', v)} prefix="$" step={50} placeholder="3500" />
+                  </td>
+                ))}
+              </ScenarioRow>
+              <ScenarioRow label="Customs Agent / Port">
+                {scenarios.map((s, i) => (
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
+                    <SelectInputSm value={s.agentPort} onChange={v => onSetScenario(i, 'agentPort', v)} options={agentOptions} />
+                  </td>
+                ))}
+              </ScenarioRow>
+              <ScenarioRow label="Transport £/Container">
+                {scenarios.map((s, i) => (
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
+                    <NumInputSm value={s.transportCostGBP} onChange={v => onSetScenario(i, 'transportCostGBP', v)} prefix="£" step={10} placeholder="550" />
+                  </td>
+                ))}
+              </ScenarioRow>
+              <ScenarioRow label="Licence Cost £/kg">
+                {scenarios.map((s, i) => (
+                  <td key={i} className="px-2 py-1.5" style={colStyle(i)}>
+                    <NumInputSm value={s.licenceCostPerKgGBP} onChange={v => onSetScenario(i, 'licenceCostPerKgGBP', v)} prefix="£" step={0.01} placeholder="0.40" />
+                  </td>
+                ))}
+              </ScenarioRow>
+            </tbody>
+          </table>
+        </div>
+
+        {scenarios.length < MAX_SCENARIOS && (
+          <button
+            onClick={onAddScenario}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors"
+            style={{
+              background: 'rgba(168, 85, 247, 0.10)',
+              color: '#6d28d9',
+              border: '1px solid rgba(168, 85, 247, 0.25)',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(168, 85, 247, 0.18)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(168, 85, 247, 0.10)')}
+          >
+            <Icon name="plus" size={12} /> Add scenario
+          </button>
+        )}
+      </Section>
+
+      {/* ─── 4. Summary — colour-coded per column ─── */}
+      <Section title="Summary" icon={<Icon name="trophy" size={13} />} accent="green">
+        <div className="overflow-x-auto" style={{ borderRadius: 12, border: '1px solid rgba(245, 158, 11, 0.22)' }}>
+          <table className="w-full text-xs" style={{ minWidth: ROW_LABEL_WIDTH + COL_MIN_WIDTH * scenarios.length, borderCollapse: 'separate', borderSpacing: 0 }}>
+            <thead>
+              <tr>
+                <th
+                  className="px-3 py-2 text-[11px] uppercase tracking-widest text-left sticky left-0 z-[2]"
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.12)',
+                    color: '#1a1410',
+                    width: ROW_LABEL_WIDTH, minWidth: ROW_LABEL_WIDTH,
+                    fontWeight: 700,
+                    borderRight: '1px solid rgba(245, 158, 11, 0.22)',
+                    borderBottom: '2px solid rgba(245, 158, 11, 0.25)',
+                  }}
+                >
+                  Costing Scenario
+                </th>
+                {scenarios.map((s, i) => {
+                  const p = paletteFor(i);
+                  return (
+                    <th
+                      key={i}
+                      className="px-3 py-2 text-right text-xs"
+                      style={{
+                        background: `linear-gradient(135deg, ${p.headerFrom}, ${p.headerTo})`,
+                        borderRight: '1px solid rgba(0,0,0,0.08)',
+                        borderBottom: `2px solid ${p.headerTo}`,
+                        color: '#fff',
+                        minWidth: COL_MIN_WIDTH,
+                        fontWeight: 800,
+                      }}
+                    >
+                      <div className="flex items-center justify-end gap-1.5">
+                        {i === bestIdx && results[i].gmPercent > 0 && <Icon name="trophy" size={10} style={{ color: '#fde68a' }} />}
+                        {s.label}
+                      </div>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              <SummaryRow label="Product Cost £"             values={results.map(r => r.productCostGBP)} bestIdx={bestIdx} />
+              <SummaryRow label="Duty"                        values={results.map(r => r.dutyGBP)} bestIdx={bestIdx} />
+              <SummaryRow label="Freight"                     values={results.map(r => r.freightGBP)} bestIdx={bestIdx} />
+              <SummaryRow label="Port Clearance + Transport"  values={results.map(r => r.portClearanceTransportGBP)} bestIdx={bestIdx} />
+              <SummaryRow label="Licence Cost"                values={results.map(r => r.licenceCostGBP)} bestIdx={bestIdx} />
+              <SummaryRow label="Handball"                    values={results.map(r => r.handballGBP)} bestIdx={bestIdx} />
+              <SummaryRow label="Currency / Insurance / Add 2" values={results.map(r => r.currencyInsuranceAdditions2GBP)} bestIdx={bestIdx} />
+              <SummaryRow label="Additions 1"                 values={results.map(r => r.additions1GBP)} bestIdx={bestIdx} />
+              <SummaryRow label="Additional Duty"             values={results.map(r => r.additionalDutyGBP)} bestIdx={bestIdx} />
+              <SummaryRow label="Insurance"                   values={results.map(r => r.insurancePerFCLGBP)} bestIdx={bestIdx} />
+              <SummaryRow label="Total Cost"                  values={results.map(r => r.totalCostGBP)} bestIdx={bestIdx} isTotal />
+              <SummaryRow label="Cost / Case"                 values={results.map(r => r.costPerCaseGBP)} bestIdx={bestIdx} isTotal />
+              <SummaryRow label="Cost / KG"                   values={results.map(r => r.costPerKgGBP)} bestIdx={bestIdx} format={fmtGBP4} isTotal />
+              <SummaryRow
+                label="Gross Margin %"
+                values={results.map(r => r.gmPercent)}
+                bestIdx={bestIdx}
+                isMargin
+                marginPercents={results.map(r => r.gmPercent)}
+                format={v => `${v.toFixed(1)}%`}
+              />
+            </tbody>
+          </table>
+        </div>
+
+        {/* GM headline cards beneath the table — colour-coded per scenario */}
+        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(scenarios.length, 5)}, minmax(0, 1fr))` }}>
+          {results.map((r, i) => {
+            const p = paletteFor(i);
+            const gc = gmColor(r.gmPercent);
+            const isBest = i === bestIdx && r.gmPercent > 0;
+            return (
+              <div
+                key={i}
+                className="p-3 rounded-xl"
+                style={{
+                  background: p.tint,
+                  border: `1.5px solid ${isBest ? 'rgba(245, 158, 11, 0.55)' : p.border}`,
+                  boxShadow: isBest ? '0 0 0 1px rgba(245, 158, 11, 0.25)' : 'none',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider"
+                    style={{ background: p.chip, color: p.headerText, fontWeight: 700 }}
+                  >
+                    {scenarios[i]?.label ?? `Scenario ${i + 1}`}
+                  </span>
+                  {isBest && <Icon name="trophy" size={11} style={{ color: '#ca8a04' }} />}
+                </div>
+                <div className="flex items-center gap-1.5 mt-2">
+                  {r.gmPercent >= 0
+                    ? <Icon name="trendingup" size={13} style={{ color: gc }} />
+                    : <Icon name="trendingdown" size={13} style={{ color: gc }} />}
+                  <span className="text-xl font-black" style={{ color: gc }}>{r.gmPercent.toFixed(1)}%</span>
+                </div>
+                <p className="font-mono text-[10px] mt-1" style={{ color: 'rgba(90, 74, 61, 0.6)' }}>
+                  £{fmtGBP(r.costPerCaseGBP)}/case · £{fmtGBP4(r.costPerKgGBP)}/kg
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </Section>
+
     </div>
   );
 }

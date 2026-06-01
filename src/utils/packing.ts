@@ -168,71 +168,190 @@ function packBlockWithResidual(
   visualBudget: number,
 ): { count: number; positions: Omit<PackedBox, 'productId'>[]; mainOrientation: Orientation; zones?: PackingZoneData[]; zoneSplitAxis?: 'height' | 'width' | 'length' } {
 
-  // Strategy 1: main block + length residual + width residual (3-region decomposition)
-  const main = packBlock(
-    availableLength, availableWidth, availableHeight,
-    orientations, maxStackLayers, effectiveMax,
-    false, originX, originY, originZ, visualBudget,
-  );
+  // Strategy 1 (exhaustive): try every orientation as the main block, and for each
+  // try three residual decompositions of the L-shape negative space. Pick the best
+  // total across all (main orientation × decomposition) pairs.
+  //
+  //   Variant A — back strip carries the corner (legacy 3-region):
+  //     [main]
+  //     [back  lengthGap × availW]   <- spans full width including corner
+  //     [side  mainUsedL × widthGap]
+  //
+  //   Variant B — side strip carries the corner:
+  //     [main]
+  //     [side  availL × widthGap]    <- spans full length including corner
+  //     [back  lengthGap × mainUsedW]
+  //
+  //   Variant C — 4-region, every zone independent:
+  //     [main]
+  //     [back  lengthGap × mainUsedW]
+  //     [side  mainUsedL × widthGap]
+  //     [corner lengthGap × widthGap]
+  //
+  // The main contribution beyond the previous implementation is iterating over
+  // every orientation as the main (not just the highest-count single orientation)
+  // and adding Variant B / C so the corner area isn't trapped under a single
+  // shared orientation with the rest of the residual strip.
 
-  const [mainBL, mainBW] = main.orientation;
-  const mainUsedLength = main.nX * mainBL;
-  const mainUsedWidth = main.nY * mainBW;
-  const lengthGap = availableLength - mainUsedLength;
-  const widthGap = availableWidth - mainUsedWidth;
-  const remAfterMain = effectiveMax - main.count;
+  type S1Zone = {
+    count: number;
+    ori: Orientation;
+    dimL: number;
+    dimW: number;
+    offsetX: number;   // relative to originX
+    offsetY: number;   // relative to originY
+  };
+  type S1Plan = {
+    total: number;
+    mainOri: Orientation;
+    mainNX: number; mainNY: number; mainNZ: number;
+    residuals: S1Zone[];
+  };
 
-  // Length residual: (cL-usedL) × cW × cH
-  const residualL = lengthGap > 0 && remAfterMain > 0 ? packBlock(
-    lengthGap, availableWidth, availableHeight,
-    orientations, maxStackLayers, remAfterMain,
-    false, originX + mainUsedLength, originY, originZ, visualBudget,
-  ) : { count: 0, orientation: main.orientation, nX: 0, nY: 0, nZ: 0, positions: [] };
+  let s1Best: S1Plan | null = null;
+  const noBlock = { count: 0, orientation: orientations[0] ?? [1, 1, 1] as Orientation, nX: 0, nY: 0, nZ: 0, positions: [] };
 
-  // Width residual: usedL × (cW-usedW) × cH — fills the side strip alongside the main block
-  const remAfterL = Math.max(0, remAfterMain - residualL.count);
-  const residualW = widthGap > 0 && remAfterL > 0 ? packBlock(
-    mainUsedLength > 0 ? mainUsedLength : availableLength, widthGap, availableHeight,
-    orientations, maxStackLayers, remAfterL,
-    false, originX, originY + mainUsedWidth, originZ, visualBudget,
-  ) : { count: 0, orientation: main.orientation, nX: 0, nY: 0, nZ: 0, positions: [] };
+  for (const mainOri of orientations) {
+    const [mBL, mBW, mBH] = mainOri;
+    const nXm = Math.floor(availableLength / mBL);
+    const nYm = Math.floor(availableWidth / mBW);
+    const nZmRaw = Math.floor(availableHeight / mBH);
+    const nZm = maxStackLayers === Infinity ? nZmRaw : Math.min(nZmRaw, maxStackLayers);
+    if (nXm === 0 || nYm === 0 || nZm === 0) continue;
 
-  const strategy1Count = main.count + residualL.count + residualW.count;
+    const mainCnt = Math.min(nXm * nYm * nZm, effectiveMax);
+    const mUsedL = nXm * mBL;
+    const mUsedW = nYm * mBW;
+    const lGap = availableLength - mUsedL;
+    const wGap = availableWidth - mUsedW;
+    const remainA = effectiveMax - mainCnt;
+
+    // ── Variant A ─────────────────────────────────────────────────────────
+    const aBack = (remainA > 0 && lGap > 0) ? packBlock(
+      lGap, availableWidth, availableHeight,
+      orientations, maxStackLayers, remainA,
+      false, 0, 0, 0, 0,
+    ) : noBlock;
+    const remAa = remainA - aBack.count;
+    const aSide = (remAa > 0 && wGap > 0 && mUsedL > 0) ? packBlock(
+      mUsedL, wGap, availableHeight,
+      orientations, maxStackLayers, remAa,
+      false, 0, 0, 0, 0,
+    ) : noBlock;
+    const totalA = mainCnt + aBack.count + aSide.count;
+
+    // ── Variant B ─────────────────────────────────────────────────────────
+    const bSide = (remainA > 0 && wGap > 0) ? packBlock(
+      availableLength, wGap, availableHeight,
+      orientations, maxStackLayers, remainA,
+      false, 0, 0, 0, 0,
+    ) : noBlock;
+    const remBb = remainA - bSide.count;
+    const bBack = (remBb > 0 && lGap > 0 && mUsedW > 0) ? packBlock(
+      lGap, mUsedW, availableHeight,
+      orientations, maxStackLayers, remBb,
+      false, 0, 0, 0, 0,
+    ) : noBlock;
+    const totalB = mainCnt + bSide.count + bBack.count;
+
+    // ── Variant C ─ 4-region (independent corner) ─────────────────────────
+    const cBack = (remainA > 0 && lGap > 0 && mUsedW > 0) ? packBlock(
+      lGap, mUsedW, availableHeight,
+      orientations, maxStackLayers, remainA,
+      false, 0, 0, 0, 0,
+    ) : noBlock;
+    const remCb = remainA - cBack.count;
+    const cSide = (remCb > 0 && wGap > 0 && mUsedL > 0) ? packBlock(
+      mUsedL, wGap, availableHeight,
+      orientations, maxStackLayers, remCb,
+      false, 0, 0, 0, 0,
+    ) : noBlock;
+    const remCs = remCb - cSide.count;
+    const cCorner = (remCs > 0 && lGap > 0 && wGap > 0) ? packBlock(
+      lGap, wGap, availableHeight,
+      orientations, maxStackLayers, remCs,
+      false, 0, 0, 0, 0,
+    ) : noBlock;
+    const totalC = mainCnt + cBack.count + cSide.count + cCorner.count;
+
+    // Pick best variant for this main orientation
+    let plan: S1Plan;
+    if (totalA >= totalB && totalA >= totalC) {
+      plan = {
+        total: totalA, mainOri, mainNX: nXm, mainNY: nYm, mainNZ: nZm,
+        residuals: [
+          { count: aBack.count, ori: aBack.orientation, dimL: lGap,    dimW: availableWidth, offsetX: mUsedL, offsetY: 0      },
+          { count: aSide.count, ori: aSide.orientation, dimL: mUsedL,  dimW: wGap,           offsetX: 0,      offsetY: mUsedW },
+        ].filter(z => z.count > 0),
+      };
+    } else if (totalB >= totalC) {
+      plan = {
+        total: totalB, mainOri, mainNX: nXm, mainNY: nYm, mainNZ: nZm,
+        residuals: [
+          { count: bSide.count, ori: bSide.orientation, dimL: availableLength, dimW: wGap,    offsetX: 0,      offsetY: mUsedW },
+          { count: bBack.count, ori: bBack.orientation, dimL: lGap,            dimW: mUsedW,  offsetX: mUsedL, offsetY: 0      },
+        ].filter(z => z.count > 0),
+      };
+    } else {
+      plan = {
+        total: totalC, mainOri, mainNX: nXm, mainNY: nYm, mainNZ: nZm,
+        residuals: [
+          { count: cBack.count,   ori: cBack.orientation,   dimL: lGap,   dimW: mUsedW, offsetX: mUsedL, offsetY: 0      },
+          { count: cSide.count,   ori: cSide.orientation,   dimL: mUsedL, dimW: wGap,   offsetX: 0,      offsetY: mUsedW },
+          { count: cCorner.count, ori: cCorner.orientation, dimL: lGap,   dimW: wGap,   offsetX: mUsedL, offsetY: mUsedW },
+        ].filter(z => z.count > 0),
+      };
+    }
+
+    if (s1Best === null || plan.total > s1Best.total) {
+      s1Best = plan;
+    }
+  }
+
+  const strategy1Count = s1Best ? s1Best.total : 0;
   let strategy1Positions: Omit<PackedBox, 'productId'>[] = [];
+  const mainOrientationForS1: Orientation = s1Best ? s1Best.mainOri : (orientations[0] ?? [1, 1, 1]);
 
-  if (generatePositions && strategy1Count > 0) {
-    const total = strategy1Count;
-    const b1 = Math.min(main.count, Math.round(visualBudget * main.count / total));
-    const b2 = Math.min(residualL.count, Math.round(visualBudget * residualL.count / total));
-    const b3 = Math.min(residualW.count, visualBudget - b1 - b2);
+  if (generatePositions && s1Best && s1Best.total > 0) {
+    const mCnt = s1Best.mainNX * s1Best.mainNY * s1Best.mainNZ;
+    const total = mCnt + s1Best.residuals.reduce((s, r) => s + r.count, 0);
+    const limitMain = Math.min(mCnt, Math.round(visualBudget * mCnt / total));
 
-    const [mBL, mBW, mBH] = main.orientation;
-    const { positions: p1 } = main.count > 0 ? countAndPositions(
+    const [mBL, mBW, mBH] = s1Best.mainOri;
+    const { positions: pMain } = countAndPositions(
       availableLength, availableWidth, availableHeight,
-      mBL, mBW, mBH, b1,
+      mBL, mBW, mBH, limitMain,
       maxStackLayers === Infinity ? Infinity : maxStackLayers,
       originX, originY, originZ,
-    ) : { positions: [] };
+    );
+    strategy1Positions = [...pMain];
+    let budgetLeft = visualBudget - pMain.length;
 
-    const [rLbL, rLbW, rLbH] = residualL.orientation;
-    const { positions: p2 } = residualL.count > 0 ? countAndPositions(
-      lengthGap, availableWidth, availableHeight,
-      rLbL, rLbW, rLbH, b2,
-      maxStackLayers === Infinity ? Infinity : maxStackLayers,
-      originX + mainUsedLength, originY, originZ,
-    ) : { positions: [] };
-
-    const [rWbL, rWbW, rWbH] = residualW.orientation;
-    const effMainLen = mainUsedLength > 0 ? mainUsedLength : availableLength;
-    const { positions: p3 } = residualW.count > 0 ? countAndPositions(
-      effMainLen, widthGap, availableHeight,
-      rWbL, rWbW, rWbH, b3,
-      maxStackLayers === Infinity ? Infinity : maxStackLayers,
-      originX, originY + mainUsedWidth, originZ,
-    ) : { positions: [] };
-
-    strategy1Positions = [...p1, ...p2, ...p3];
+    for (const r of s1Best.residuals) {
+      if (budgetLeft <= 0) break;
+      const limitR = Math.min(r.count, Math.round(visualBudget * r.count / total), budgetLeft);
+      if (limitR <= 0) continue;
+      const [rBL, rBW, rBH] = r.ori;
+      const { positions } = countAndPositions(
+        r.dimL, r.dimW, availableHeight,
+        rBL, rBW, rBH, limitR,
+        maxStackLayers === Infinity ? Infinity : maxStackLayers,
+        originX + r.offsetX, originY + r.offsetY, originZ,
+      );
+      strategy1Positions.push(...positions);
+      budgetLeft -= positions.length;
+    }
   }
+
+  // Compatibility shim — older code below refers to `main` as the winning main block.
+  const main = {
+    count: strategy1Count,
+    orientation: mainOrientationForS1,
+    nX: s1Best?.mainNX ?? 0,
+    nY: s1Best?.mainNY ?? 0,
+    nZ: s1Best?.mainNZ ?? 0,
+    positions: [] as Omit<PackedBox, 'productId'>[],
+  };
 
   let bestHeightZones: PackingZoneData[] = [];
   let bestWidthZones: PackingZoneData[] = [];
@@ -259,8 +378,17 @@ function packBlockWithResidual(
         const nYLow = Math.floor(availableWidth / bW1);
         const countLow = Math.min(nXLow * nYLow * lowLayers, effectiveMax);
 
-        const nXHigh = Math.floor(availableLength / bL2);
-        const nYHigh = Math.floor(availableWidth / bW2);
+        // Stability constraint: upper layer footprint must NOT extend past the
+        // lower layer footprint, otherwise the upper cases would overhang into
+        // empty space. Previously this was unchecked and produced visually
+        // floating boxes in the 3D view.
+        const lowFootprintL = nXLow * bL1;
+        const lowFootprintW = nYLow * bW1;
+        const upperMaxL = Math.min(availableLength, lowFootprintL);
+        const upperMaxW = Math.min(availableWidth,  lowFootprintW);
+
+        const nXHigh = Math.floor(upperMaxL / bL2);
+        const nYHigh = Math.floor(upperMaxW / bW2);
         const nZHigh = Math.floor(highHeight / bH2);
         const countHigh = Math.min(nXHigh * nYHigh * nZHigh, Math.max(0, effectiveMax - countLow));
 
@@ -518,8 +646,232 @@ function packBlockWithResidual(
     }
   }
 
+  // ── Strategy 6 — Layer-based packing with intra-layer mixed orientations ────
+  // For each candidate layer-height bH, find every orientation pair (A, B) that
+  // shares that height. Pack each layer as a 2-zone or 4-zone L-shape mix of
+  // A and B footprints. Stack identical layers up to the container height with
+  // stack-limit checks.
+  //
+  // This is the closest deterministic approximation of how a human loader
+  // splits a layer (left columns one rotation, right columns another) — the
+  // pattern visible in the supplier's loading photos. Because every layer
+  // shares the same boundary, every case is supported by the case below it,
+  // so the resulting stack is physically stable.
+
+  interface LayerZone {
+    ori: Orientation;
+    nL: number;          // case count along length
+    nW: number;          // case count along width
+    offsetX: number;     // offset from origin within the layer
+    offsetY: number;
+  }
+  interface LayerPlan {
+    zones: LayerZone[];
+    casesPerLayer: number;
+  }
+
+  function bestSingleOrientationLayer(L: number, W: number, oris: Orientation[]): LayerPlan {
+    let bestCnt = 0;
+    let bestOri: Orientation = oris[0];
+    let bestNL = 0, bestNW = 0;
+    for (const o of oris) {
+      const [oL, oW] = o;
+      const nL = Math.floor(L / oL);
+      const nW = Math.floor(W / oW);
+      const cnt = nL * nW;
+      if (cnt > bestCnt) {
+        bestCnt = cnt; bestOri = o; bestNL = nL; bestNW = nW;
+      }
+    }
+    return {
+      zones: bestCnt > 0 ? [{ ori: bestOri, nL: bestNL, nW: bestNW, offsetX: 0, offsetY: 0 }] : [],
+      casesPerLayer: bestCnt,
+    };
+  }
+
+  function bestMixedLayer(L: number, W: number, oris: Orientation[]): LayerPlan {
+    let best = bestSingleOrientationLayer(L, W, oris);
+
+    // 2-zone width split: A occupies (L × mA*aW), B occupies (L × mB*bW)
+    for (let i = 0; i < oris.length; i++) {
+      for (let j = 0; j < oris.length; j++) {
+        if (i === j) continue;
+        const [aL, aW] = oris[i];
+        const [bL, bW] = oris[j];
+        const maxMA = Math.floor(W / aW);
+        for (let mA = 1; mA <= maxMA; mA++) {
+          const usedW = mA * aW;
+          const remW = W - usedW;
+          const mB = Math.floor(remW / bW);
+          if (mB === 0) continue;
+          const nLa = Math.floor(L / aL);
+          const nLb = Math.floor(L / bL);
+          const cnt = nLa * mA + nLb * mB;
+          if (cnt > best.casesPerLayer) {
+            best = {
+              casesPerLayer: cnt,
+              zones: [
+                { ori: oris[i], nL: nLa, nW: mA, offsetX: 0,      offsetY: 0      },
+                { ori: oris[j], nL: nLb, nW: mB, offsetX: 0,      offsetY: usedW  },
+              ],
+            };
+          }
+        }
+      }
+    }
+
+    // 2-zone length split: A occupies (nA*aL × W), B occupies (nB*bL × W)
+    for (let i = 0; i < oris.length; i++) {
+      for (let j = 0; j < oris.length; j++) {
+        if (i === j) continue;
+        const [aL, aW] = oris[i];
+        const [bL, bW] = oris[j];
+        const maxNA = Math.floor(L / aL);
+        for (let nA = 1; nA <= maxNA; nA++) {
+          const usedL = nA * aL;
+          const remL = L - usedL;
+          const nB = Math.floor(remL / bL);
+          if (nB === 0) continue;
+          const mWa = Math.floor(W / aW);
+          const mWb = Math.floor(W / bW);
+          const cnt = nA * mWa + nB * mWb;
+          if (cnt > best.casesPerLayer) {
+            best = {
+              casesPerLayer: cnt,
+              zones: [
+                { ori: oris[i], nL: nA, nW: mWa, offsetX: 0,     offsetY: 0 },
+                { ori: oris[j], nL: nB, nW: mWb, offsetX: usedL, offsetY: 0 },
+              ],
+            };
+          }
+        }
+      }
+    }
+
+    // 4-zone L-shape: main A in the (nA*aL × mA*aW) bottom-left, with B filling
+    // the back strip, side strip and corner. Each residual zone tries every
+    // height-matched orientation independently.
+    for (const oA of oris) {
+      const [aL, aW] = oA;
+      const nA_L = Math.floor(L / aL);
+      const nA_W = Math.floor(W / aW);
+      if (nA_L === 0 || nA_W === 0) continue;
+      const usedL = nA_L * aL;
+      const usedW = nA_W * aW;
+      const remL = L - usedL;
+      const remW = W - usedW;
+      if (remL === 0 && remW === 0) continue;          // no L-shape gap
+
+      // Inner helper: best count of any orientation fitting (lDim × wDim)
+      const bestRect = (lDim: number, wDim: number): { cnt: number; ori: Orientation; nL: number; nW: number } => {
+        let bestCnt = 0;
+        let bestOri: Orientation = oA;
+        let bestNL = 0, bestNW = 0;
+        if (lDim <= 0 || wDim <= 0) return { cnt: 0, ori: bestOri, nL: 0, nW: 0 };
+        for (const o of oris) {
+          const [oL, oW] = o;
+          const nL = Math.floor(lDim / oL);
+          const nW = Math.floor(wDim / oW);
+          const cnt = nL * nW;
+          if (cnt > bestCnt) {
+            bestCnt = cnt; bestOri = o; bestNL = nL; bestNW = nW;
+          }
+        }
+        return { cnt: bestCnt, ori: bestOri, nL: bestNL, nW: bestNW };
+      };
+
+      const back   = bestRect(remL, usedW);                  // back strip (behind main)
+      const side   = bestRect(usedL, remW);                  // side strip (next to main)
+      const corner = bestRect(remL, remW);                   // back-right corner
+      const cnt = nA_L * nA_W + back.cnt + side.cnt + corner.cnt;
+      if (cnt > best.casesPerLayer) {
+        best = {
+          casesPerLayer: cnt,
+          zones: [
+            { ori: oA,          nL: nA_L,    nW: nA_W,    offsetX: 0,     offsetY: 0 },
+            ...(back.cnt   > 0 ? [{ ori: back.ori,   nL: back.nL,   nW: back.nW,   offsetX: usedL, offsetY: 0     }] : []),
+            ...(side.cnt   > 0 ? [{ ori: side.ori,   nL: side.nL,   nW: side.nW,   offsetX: 0,     offsetY: usedW }] : []),
+            ...(corner.cnt > 0 ? [{ ori: corner.ori, nL: corner.nL, nW: corner.nW, offsetX: usedL, offsetY: usedW }] : []),
+          ],
+        };
+      }
+    }
+
+    return best;
+  }
+
+  // Group orientations by height — each height defines a layer thickness, and
+  // every orientation in the group has the same layer thickness so mixing them
+  // within a layer keeps the top flat and stable.
+  const heightGroups = new Map<number, Orientation[]>();
+  for (const o of orientations) {
+    const h = o[2];
+    if (!heightGroups.has(h)) heightGroups.set(h, []);
+    heightGroups.get(h)!.push(o);
+  }
+
+  let bestS6Count = 0;
+  let bestS6LayerH = 0;
+  let bestS6Plan: LayerPlan = { zones: [], casesPerLayer: 0 };
+  let bestS6Layers = 0;
+  let bestS6MainOri: Orientation = orientations[0] ?? [1, 1, 1];
+
+  for (const [layerH, oris] of heightGroups.entries()) {
+    const maxLayers = maxStackLayers === Infinity
+      ? Math.floor(availableHeight / layerH)
+      : Math.min(Math.floor(availableHeight / layerH), maxStackLayers);
+    if (maxLayers === 0) continue;
+
+    const layer = bestMixedLayer(availableLength, availableWidth, oris);
+    if (layer.casesPerLayer === 0) continue;
+
+    // Cap by effectiveMax and convert to number of full layers we can afford.
+    const desiredLayers = layer.casesPerLayer > 0
+      ? Math.min(maxLayers, Math.floor(effectiveMax / layer.casesPerLayer))
+      : maxLayers;
+    const total = desiredLayers * layer.casesPerLayer;
+    if (total > bestS6Count) {
+      bestS6Count = total;
+      bestS6LayerH = layerH;
+      bestS6Plan = layer;
+      bestS6Layers = desiredLayers;
+      bestS6MainOri = layer.zones[0]?.ori ?? orientations[0];
+    }
+  }
+
+  let bestS6Positions: Omit<PackedBox, 'productId'>[] = [];
+  if (generatePositions && bestS6Count > 0 && bestS6Plan.zones.length > 0) {
+    let budget = visualBudget;
+    outer:
+    for (let layerIdx = 0; layerIdx < bestS6Layers; layerIdx++) {
+      const z = layerIdx * bestS6LayerH;
+      for (const zone of bestS6Plan.zones) {
+        const [oL, oW] = zone.ori;
+        for (let ix = 0; ix < zone.nL; ix++) {
+          for (let iy = 0; iy < zone.nW; iy++) {
+            if (budget <= 0) break outer;
+            bestS6Positions.push({
+              x: originX + zone.offsetX + ix * oL,
+              y: originY + zone.offsetY + iy * oW,
+              z: originZ + z,
+              l: oL,
+              w: oW,
+              h: bestS6LayerH,
+            });
+            budget--;
+          }
+        }
+      }
+    }
+  }
+
   // Pick the best strategy
-  const best = Math.max(strategy1Count, bestHeightSplitCount, bestWidthSplitCount, bestLengthSplitCount);
+  const best = Math.max(strategy1Count, bestHeightSplitCount, bestWidthSplitCount, bestLengthSplitCount, bestS6Count);
+
+  if (best === bestS6Count && bestS6Count > 0) {
+    // For S6, return the winning layer orientation as the "main" for the legend
+    return { count: bestS6Count, positions: bestS6Positions, mainOrientation: bestS6MainOri };
+  }
 
   if (best === bestLengthSplitCount && bestLengthSplitCount >= bestWidthSplitCount && bestLengthSplitCount > strategy1Count && bestLengthSplitCount >= bestHeightSplitCount) {
     return { count: bestLengthSplitCount, positions: bestLengthSplitPositions, mainOrientation: bestLengthSplitOrientation, zones: bestLengthZones, zoneSplitAxis: 'length' };
@@ -1439,6 +1791,33 @@ export function calculatePacking(
           productResults.splice(0, productResults.length, ...updatedResults);
           allPackedBoxes.push(...extraBoxes);
         }
+      }
+    }
+  }
+
+  // ── Visual: centre the packed load along the length & width axes ───────────
+  // The algorithm anchors every block at (originX, originY). When a residual is
+  // unfillable, that leaves the cases flush against the back-left wall with all
+  // the gap on the front-right. Centring distributes the gap so the diagram
+  // reads as a balanced load. Z (height) is NOT shifted — cases stay flush to
+  // the floor (reefer floor clearance is already baked into floorOriginZ).
+  if (allPackedBoxes.length > 0) {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const b of allPackedBoxes) {
+      if (b.x < minX) minX = b.x;
+      if (b.x + b.l > maxX) maxX = b.x + b.l;
+      if (b.y < minY) minY = b.y;
+      if (b.y + b.w > maxY) maxY = b.y + b.w;
+    }
+    const usedX = maxX - minX;
+    const usedY = maxY - minY;
+    // Shift such that the loaded block is centred inside the container's footprint.
+    const shiftX = (container.innerLength - usedX) / 2 - minX;
+    const shiftY = (container.innerWidth  - usedY) / 2 - minY;
+    if (Math.abs(shiftX) > 0.5 || Math.abs(shiftY) > 0.5) {
+      for (const b of allPackedBoxes) {
+        b.x += shiftX;
+        b.y += shiftY;
       }
     }
   }

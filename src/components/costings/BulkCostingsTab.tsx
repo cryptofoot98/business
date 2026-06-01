@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Icon } from '../Icon';
 import { NumInputSm, SelectInputSm, TextInputSm, Field, Section, gmColor } from './shared';
 import { BulkSharedSettings, BulkProductRow, CostingSettings, AgentPortKey } from '../../types/costing';
 import { PRODUCT_CATEGORIES, DEFAULT_TRANSPORT_COSTS } from '../../data/costingRates';
@@ -99,11 +99,11 @@ export function BulkCostingsTab({ settings }: Props) {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: '#94a3b8' }}>Insurance</p>
+            <p className="font-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: 'rgba(90, 74, 61, 0.52)' }}>Insurance</p>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={shared.insuranceAuto} onChange={e => setSharedField('insuranceAuto', e.target.checked)}
-                className="w-3 h-3" style={{ accentColor: '#4f46e5' }} />
-              <span className="font-mono text-[10px]" style={{ color: '#334155' }}>
+                className="w-3 h-3" style={{ accentColor: '#f59e0b' }} />
+              <span className="font-mono text-[10px]" style={{ color: '#1a1410' }}>
                 Auto £{settings.insurancePerFCL}/FCL
               </span>
             </label>
@@ -114,11 +114,11 @@ export function BulkCostingsTab({ settings }: Props) {
             )}
           </div>
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: '#94a3b8' }}>Handballing</p>
+            <p className="font-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: 'rgba(90, 74, 61, 0.52)' }}>Handballing</p>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={shared.handballing} onChange={e => setSharedField('handballing', e.target.checked)}
-                className="w-3 h-3" style={{ accentColor: '#4f46e5' }} />
-              <span className="font-mono text-[10px]" style={{ color: '#334155' }}>
+                className="w-3 h-3" style={{ accentColor: '#f59e0b' }} />
+              <span className="font-mono text-[10px]" style={{ color: '#1a1410' }}>
                 {shared.handballing ? `£${shared.handballingCostGBP}` : 'No'}
               </span>
             </label>
@@ -146,13 +146,13 @@ export function BulkCostingsTab({ settings }: Props) {
         {(() => {
           const info = agentRates[shared.agentPort];
           return (
-            <div className="p-3 rounded-xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-              <div className="flex flex-wrap gap-4 text-[10px] font-mono" style={{ color: '#64748b' }}>
-                <span>Agent: <b style={{ color: '#0f172a' }}>{info.agent}</b></span>
-                <span>Port: <b style={{ color: '#0f172a' }}>{info.port}</b></span>
-                <span>Health exam: <b style={{ color: '#0f172a' }}>£{info.healthExamGBP.toFixed(2)}</b></span>
-                <span>Port charges: <b style={{ color: '#0f172a' }}>£{info.portChargesGBP.toFixed(2)}</b></span>
-                <span>Total port: <b style={{ color: '#0f172a' }}>£{(info.healthExamGBP + info.portChargesGBP).toFixed(2)}</b></span>
+            <div className="p-3 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.04)', border: '1px solid rgba(245, 158, 11, 0.12)' }}>
+              <div className="flex flex-wrap gap-4 text-[10px] font-mono" style={{ color: 'rgba(90, 74, 61, 0.55)' }}>
+                <span>Agent: <b style={{ color: '#1a1410' }}>{info.agent}</b></span>
+                <span>Port: <b style={{ color: '#1a1410' }}>{info.port}</b></span>
+                <span>Health exam: <b style={{ color: '#1a1410' }}>£{info.healthExamGBP.toFixed(2)}</b></span>
+                <span>Port charges: <b style={{ color: '#1a1410' }}>£{info.portChargesGBP.toFixed(2)}</b></span>
+                <span>Total port: <b style={{ color: '#1a1410' }}>£{(info.healthExamGBP + info.portChargesGBP).toFixed(2)}</b></span>
               </div>
             </div>
           );
@@ -160,8 +160,8 @@ export function BulkCostingsTab({ settings }: Props) {
       </Section>
 
       {/* Product table */}
-      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-        <div className="flex items-center justify-between px-4 py-3" style={{ background: 'linear-gradient(135deg, #4f46e5, #4338ca)', borderBottom: '1px solid rgba(79,70,229,0.2)' }}>
+      <div style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(245, 158, 11, 0.18)', borderRadius: 16, overflow: 'hidden' }}>
+        <div className="flex items-center justify-between px-4 py-3" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', borderBottom: '1px solid rgba(245, 158, 11, 0.25)' }}>
           <div>
             <p className="font-bold text-xs uppercase tracking-widest text-white">Products</p>
             <p className="font-mono text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>Each product shares the container settings above</p>
@@ -171,17 +171,17 @@ export function BulkCostingsTab({ settings }: Props) {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase"
             style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }}
           >
-            <Plus size={10} /> Add product
+            <Icon name="plus" size={10} /> Add product
           </button>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs" style={{ minWidth: 1100 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+              <tr style={{ borderBottom: '1px solid rgba(245, 158, 11, 0.15)', background: 'rgba(245, 158, 11, 0.04)' }}>
                 {['Product', 'Supplier', '$/tonne', 'kg/case', 'Cases', 'Category', 'Freight (USD)', 'Sell £/case', 'Cost/case', 'Cost/kg', 'GM%', 'GP/case', ''].map(h => (
                   <th key={h} className="px-3 py-2 text-left font-mono text-[9px] uppercase tracking-widest whitespace-nowrap"
-                    style={{ color: '#94a3b8' }}>{h}</th>
+                    style={{ color: 'rgba(90, 74, 61, 0.5)' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -191,7 +191,7 @@ export function BulkCostingsTab({ settings }: Props) {
                 const gc = gmColor(r.gmPercent);
                 const hasPrice = p.sellingPricePerCase > 0;
                 return (
-                  <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <tr key={p.id} style={{ borderBottom: '1px solid rgba(245, 158, 11, 0.07)' }}>
                     <td className="px-2 py-2" style={{ minWidth: 130 }}>
                       <TextInputSm value={p.productName} onChange={v => setProduct(p.id, 'productName', v)} placeholder="Product name" />
                     </td>
@@ -217,25 +217,25 @@ export function BulkCostingsTab({ settings }: Props) {
                       <NumInputSm value={p.sellingPricePerCase} onChange={v => setProduct(p.id, 'sellingPricePerCase', v)} prefix="£" placeholder="0" />
                     </td>
                     {/* Results */}
-                    <td className="px-3 py-2 font-mono text-xs font-black whitespace-nowrap" style={{ color: '#0f172a', minWidth: 75 }}>
+                    <td className="px-3 py-2 font-mono text-xs font-black whitespace-nowrap" style={{ color: '#1a1410', minWidth: 75 }}>
                       £{r.totalCostPerCase.toFixed(2)}
                     </td>
-                    <td className="px-3 py-2 font-mono text-[10px] whitespace-nowrap" style={{ color: '#64748b', minWidth: 75 }}>
+                    <td className="px-3 py-2 font-mono text-[10px] whitespace-nowrap" style={{ color: 'rgba(90, 74, 61, 0.7)', minWidth: 75 }}>
                       £{r.costPerKg.toFixed(4)}
                     </td>
-                    <td className="px-3 py-2 font-mono text-xs font-black whitespace-nowrap" style={{ color: hasPrice ? gc : '#cbd5e1', minWidth: 65 }}>
+                    <td className="px-3 py-2 font-mono text-xs font-black whitespace-nowrap" style={{ color: hasPrice ? gc : 'rgba(90, 74, 61, 0.25)', minWidth: 65 }}>
                       {hasPrice ? `${r.gmPercent.toFixed(1)}%` : '—'}
                     </td>
-                    <td className="px-3 py-2 font-mono text-[10px] whitespace-nowrap" style={{ color: hasPrice ? gc : '#cbd5e1', minWidth: 75 }}>
+                    <td className="px-3 py-2 font-mono text-[10px] whitespace-nowrap" style={{ color: hasPrice ? gc : 'rgba(90, 74, 61, 0.25)', minWidth: 75 }}>
                       {hasPrice ? `${r.gmGBPPerCase >= 0 ? '+' : ''}£${r.gmGBPPerCase.toFixed(2)}` : '—'}
                     </td>
                     <td className="px-2 py-2">
                       {products.length > 1 && (
                         <button onClick={() => removeProduct(p.id)} className="p-1 rounded"
-                          style={{ color: '#cbd5e1' }}
+                          style={{ color: 'rgba(90, 74, 61, 0.3)' }}
                           onMouseEnter={e => (e.currentTarget.style.color = '#dc2626')}
-                          onMouseLeave={e => (e.currentTarget.style.color = '#cbd5e1')}>
-                          <Trash2 size={12} />
+                          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(90, 74, 61, 0.3)')}>
+                          <Icon name="trash" size={12} />
                         </button>
                       )}
                     </td>
@@ -247,18 +247,18 @@ export function BulkCostingsTab({ settings }: Props) {
         </div>
 
         {/* Summary footer */}
-        <div className="px-4 py-3 flex flex-wrap gap-6 items-center" style={{ borderTop: '2px solid #e2e8f0', background: '#f8fafc' }}>
+        <div className="px-4 py-3 flex flex-wrap gap-6 items-center" style={{ borderTop: '2px solid rgba(245, 158, 11, 0.15)', background: 'rgba(245, 158, 11, 0.04)' }}>
           <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>Products</p>
-            <p className="font-bold text-sm" style={{ color: '#0f172a' }}>{products.length}</p>
+            <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.45)' }}>Products</p>
+            <p className="font-bold text-sm" style={{ color: '#1a1410' }}>{products.length}</p>
           </div>
           <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>Total container cost</p>
-            <p className="font-bold text-sm" style={{ color: '#0f172a' }}>£{totalContainerCost.toLocaleString('en-GB', { maximumFractionDigits: 2 })}</p>
+            <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.45)' }}>Total container cost</p>
+            <p className="font-bold text-sm" style={{ color: '#1a1410' }}>£{totalContainerCost.toLocaleString('en-GB', { maximumFractionDigits: 2 })}</p>
           </div>
           <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>Avg cost / case</p>
-            <p className="font-bold text-sm" style={{ color: '#0f172a' }}>
+            <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.45)' }}>Avg cost / case</p>
+            <p className="font-bold text-sm" style={{ color: '#1a1410' }}>
               {(() => {
                 const total = results.reduce((s, r) => s + r.totalCostPerCase, 0);
                 return `£${(total / results.length).toFixed(2)}`;
@@ -266,8 +266,8 @@ export function BulkCostingsTab({ settings }: Props) {
             </p>
           </div>
           <div>
-            <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: '#94a3b8' }}>Total cases</p>
-            <p className="font-bold text-sm" style={{ color: '#0f172a' }}>
+            <p className="font-mono text-[9px] uppercase tracking-widest" style={{ color: 'rgba(90, 74, 61, 0.45)' }}>Total cases</p>
+            <p className="font-bold text-sm" style={{ color: '#1a1410' }}>
               {products.reduce((s, p) => s + (p.casesPerContainer || 0), 0).toLocaleString()}
             </p>
           </div>
