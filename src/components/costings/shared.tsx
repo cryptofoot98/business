@@ -152,8 +152,8 @@ export function SelectInput<T extends string>({
       value={value} onChange={e => onChange(e.target.value as T)}
       className="w-full px-3 py-2.5 text-sm focus:outline-none appearance-none"
       style={{
-        background: INPUT_BG,
-        border: `1px solid ${INPUT_BORDER}`,
+        background: INPUT_BG_EMPTY,
+        border: `1px solid ${INPUT_BORDER_EMPTY}`,
         borderRadius: 12,
         color: INPUT_INK,
       }}
@@ -174,8 +174,8 @@ export function SelectInputSm<T extends string>({
       value={value} onChange={e => onChange(e.target.value as T)}
       className="w-full px-2 py-1.5 text-xs focus:outline-none appearance-none"
       style={{
-        background: INPUT_BG,
-        border: `1px solid ${INPUT_BORDER}`,
+        background: INPUT_BG_EMPTY,
+        border: `1px solid ${INPUT_BORDER_EMPTY}`,
         borderRadius: 8,
         color: INPUT_INK,
       }}
