@@ -104,12 +104,17 @@ export function ProductCombobox({
     }
   };
 
+  // Filled-state visual cue: warm cream wash + amber border once the user
+  // picks or types a product code, matching the rest of the form inputs.
+  const filled = query.trim().length > 0;
+
   return (
     <div ref={rootRef} className="relative" style={{ width: '100%' }}>
       <div className="flex items-center overflow-hidden" style={{
-        background: 'rgba(255,255,255,0.85)',
-        border: `1px solid ${accentColor}33`,
+        background: filled ? '#fffcf2' : '#ffffff',
+        border: `1px solid ${filled ? 'rgba(245,158,11,0.40)' : 'rgba(26,20,16,0.10)'}`,
         borderRadius: 12,
+        transition: 'background 150ms ease, border-color 150ms ease',
       }}>
         <input
           ref={inputRef}

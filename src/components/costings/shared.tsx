@@ -3,13 +3,25 @@ import { Icon } from '../Icon';
 import { palette, shadows, radii } from '../../data/designTokens';
 
 // ── Shared input styling tokens ──────────────────────────────────────────────
+//
+// Inputs visually distinguish empty vs filled state so a long form is easy to
+// scan. The signal is intentionally subtle — a warm cream wash + slightly
+// stronger amber border on filled inputs, plus an optional 5-px amber dot
+// next to the Field label. Nothing flashy, just enough that a glance shows
+// which fields are still to do.
 
-const INPUT_BG       = palette.surface;
-const INPUT_BORDER   = 'rgba(26, 20, 16, 0.10)';
+const INPUT_BG_EMPTY   = palette.surface;                  // #ffffff
+const INPUT_BG_FILLED  = '#fffcf2';                        // very pale amber wash
+const INPUT_BORDER_EMPTY  = 'rgba(26, 20, 16, 0.10)';
+const INPUT_BORDER_FILLED = 'rgba(245, 158, 11, 0.40)';
 const INPUT_INK      = palette.ink;
 const AFFIX_BG       = palette.surfaceTint;
 const AFFIX_TEXT     = palette.amberDeep;
 const AFFIX_BORDER   = 'rgba(245, 158, 11, 0.20)';
+
+const inputBg     = (filled: boolean) => filled ? INPUT_BG_FILLED : INPUT_BG_EMPTY;
+const inputBorder = (filled: boolean) => filled ? INPUT_BORDER_FILLED : INPUT_BORDER_EMPTY;
+const TRANSITION  = 'background 150ms ease, border-color 150ms ease';
 
 // ── Numeric input with optional prefix/suffix ─────────────────────────────────
 
@@ -19,11 +31,13 @@ export function NumInput({
   value: number; onChange: (v: number) => void;
   prefix?: string; suffix?: string; placeholder?: string; step?: number; min?: number;
 }) {
+  const filled = value > 0;
   return (
     <div className="flex items-center overflow-hidden" style={{
-      background: INPUT_BG,
-      border: `1px solid ${INPUT_BORDER}`,
+      background: inputBg(filled),
+      border: `1px solid ${inputBorder(filled)}`,
       borderRadius: 12,
+      transition: TRANSITION,
     }}>
       {prefix && (
         <span className="px-2.5 py-2.5 font-mono text-xs font-bold select-none shrink-0"
@@ -54,12 +68,14 @@ export function NumInputSm({
   value: number; onChange: (v: number) => void;
   prefix?: string; placeholder?: string; step?: number; min?: number;
 }) {
+  const filled = value > 0;
   return (
     <div className="flex items-center overflow-hidden" style={{
-      background: INPUT_BG,
-      border: `1px solid ${INPUT_BORDER}`,
+      background: inputBg(filled),
+      border: `1px solid ${inputBorder(filled)}`,
       borderRadius: 8,
       minWidth: 0,
+      transition: TRANSITION,
     }}>
       {prefix && (
         <span className="px-1.5 py-1.5 font-mono text-[10px] font-bold select-none shrink-0"
@@ -84,16 +100,18 @@ export function TextInput({
 }: {
   value: string; onChange: (v: string) => void; placeholder?: string;
 }) {
+  const filled = value.trim().length > 0;
   return (
     <input
       type="text" value={value} placeholder={placeholder}
       onChange={e => onChange(e.target.value)}
-      className="w-full px-3 py-2.5 text-sm focus:outline-none transition-colors"
+      className="w-full px-3 py-2.5 text-sm focus:outline-none"
       style={{
-        background: INPUT_BG,
-        border: `1px solid ${INPUT_BORDER}`,
+        background: inputBg(filled),
+        border: `1px solid ${inputBorder(filled)}`,
         borderRadius: 12,
         color: INPUT_INK,
+        transition: TRANSITION,
       }}
     />
   );
@@ -104,16 +122,18 @@ export function TextInputSm({
 }: {
   value: string; onChange: (v: string) => void; placeholder?: string;
 }) {
+  const filled = value.trim().length > 0;
   return (
     <input
       type="text" value={value} placeholder={placeholder}
       onChange={e => onChange(e.target.value)}
       className="w-full px-2 py-1.5 text-xs focus:outline-none"
       style={{
-        background: INPUT_BG,
-        border: `1px solid ${INPUT_BORDER}`,
+        background: inputBg(filled),
+        border: `1px solid ${inputBorder(filled)}`,
         borderRadius: 8,
         color: INPUT_INK,
+        transition: TRANSITION,
       }}
     />
   );
@@ -166,12 +186,28 @@ export function SelectInputSm<T extends string>({
 }
 
 // ── Field label wrapper ───────────────────────────────────────────────────────
+// Pass `filled` when the wrapped input has a user-entered value — the label
+// gets a small amber dot. The dot is purely indicative (a second-layer cue
+// alongside the input's own cream/amber wash) and shouldn't change layout.
 
-export function Field({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) {
+export function Field({ label, note, filled, children }: {
+  label: string; note?: string; filled?: boolean; children: React.ReactNode;
+}) {
   return (
     <div>
-      <label className="block text-[10px] uppercase tracking-widest mb-1.5" style={{ color: palette.inkFaint, fontWeight: 600 }}>
-        {label}
+      <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest mb-1.5" style={{ color: filled ? palette.amberDeep : palette.inkFaint, fontWeight: 600, transition: 'color 150ms ease' }}>
+        <span>{label}</span>
+        {filled && (
+          <span
+            aria-hidden
+            className="inline-block shrink-0"
+            style={{
+              width: 5, height: 5, borderRadius: 9999,
+              background: palette.amber,
+              boxShadow: '0 0 6px rgba(245,158,11,0.45)',
+            }}
+          />
+        )}
       </label>
       {children}
       {note && <p className="text-[10px] mt-1" style={{ color: palette.inkFaint }}>{note}</p>}

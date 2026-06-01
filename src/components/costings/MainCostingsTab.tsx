@@ -213,7 +213,7 @@ export function MainCostingsTab({
       {/* ─── 1. Product Details — BLUE ─── */}
       <Section title="Product Details" icon={<Icon name="package" size={13} />} accent="blue">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Field label="Product Code" note={`${productCatalog.length} products in catalog — type to search or create new`}>
+          <Field label="Product Code" filled={product.productCode.trim().length > 0} note={`${productCatalog.length} products in catalog — type to search or create new`}>
             <ProductCombobox
               products={productCatalog}
               value={product.productCode}
@@ -223,22 +223,22 @@ export function MainCostingsTab({
               placeholder="e.g. C10028A"
             />
           </Field>
-          <Field label="Description">
+          <Field label="Description" filled={product.description.trim().length > 0}>
             <TextInputSm value={product.description} onChange={v => onSetProduct('description', v)} placeholder="e.g. Chicken Spring Rolls 50×60g" />
           </Field>
           <Field label="Meat Content / Category">
             <SelectInputSm value={product.productCategory} onChange={v => onSetProduct('productCategory', v)} options={PRODUCT_CATEGORIES} />
           </Field>
-          <Field label="Bags per Case">
+          <Field label="Bags per Case" filled={product.bagsPerCase > 0}>
             <NumInputSm value={product.bagsPerCase} onChange={v => onSetProduct('bagsPerCase', Math.max(0, Math.floor(v)))} step={1} placeholder="50" />
           </Field>
-          <Field label="Case Weight (kg)">
+          <Field label="Case Weight (kg)" filled={product.caseWeightKg > 0}>
             <NumInputSm value={product.caseWeightKg} onChange={v => onSetProduct('caseWeightKg', v)} step={0.1} placeholder="10.00" />
           </Field>
-          <Field label="Supplier">
+          <Field label="Supplier" filled={product.supplier.trim().length > 0}>
             <TextInputSm value={product.supplier} onChange={v => onSetProduct('supplier', v)} placeholder="e.g. Thai Foods Co." />
           </Field>
-          <Field label="Price (USD / tonne)">
+          <Field label="Price (USD / tonne)" filled={product.priceUSDPerTonne > 0}>
             <NumInputSm value={product.priceUSDPerTonne} onChange={v => onSetProduct('priceUSDPerTonne', v)} prefix="$" placeholder="1500.00" />
           </Field>
         </div>
@@ -257,7 +257,7 @@ export function MainCostingsTab({
               ]}
             />
           </Field>
-          <Field label="Container Weight (kg)" note="Used to compute Bao Bun additional duty">
+          <Field label="Container Weight (kg)" filled={container.containerWeightKg > 0} note="Used to compute Bao Bun additional duty">
             <NumInputSm value={container.containerWeightKg} onChange={v => onSetContainer('containerWeightKg', v)} step={50} placeholder="17000" />
           </Field>
           <Field label="Retail?">
@@ -287,7 +287,7 @@ export function MainCostingsTab({
                 Calculated: <span className="font-bold">£{fmtGBP(insurancePreview)}</span> / container (based on Scenario 1)
               </p>
             ) : (
-              <Field label="Manual Insurance (£/container)">
+              <Field label="Manual Insurance (£/container)" filled={container.insuranceManualGBP > 0}>
                 <NumInputSm value={container.insuranceManualGBP} onChange={v => onSetContainer('insuranceManualGBP', v)} prefix="£" placeholder="200" />
               </Field>
             )}
